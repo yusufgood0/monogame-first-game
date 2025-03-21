@@ -41,16 +41,8 @@ namespace first_game
 
             return true; // No obstacles in the way
         }
-        public static void move(int _index)
-        {
-            Vector2 _speed = (target[_index] - position[_index])/20;
-            _speed.Normalize();
-            position[_index] += _speed;
-
-        }
         public static void Step(int _index)
         {
-            move(_index);
 
             Vector2 _difference = target[_index] - position[_index]; //X and Y difference 
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
@@ -60,8 +52,8 @@ namespace first_game
             }
             if (_distance > 10)
             {
-                float _ratio = movementSpeed / _distance;
-                position[_index] += _difference * _ratio;
+                _difference.Normalize();
+                position[_index] += _difference*movementSpeed;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
@@ -85,45 +77,47 @@ namespace first_game
         public static Texture2D textures;
         public const int width = 30;
         public const int height = 50;
-        public const float movementSpeed = 3f;
+        public static float movementSpeed = 3f;
 
         public static Rectangle textureRectangle = new Rectangle(0, 0, width, height);
-        public static Rectangle collideRectangle = new Rectangle((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2, width, height);
+        public static Vector2 position = new Vector2((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2);
+        public static Rectangle collideRectangle = new Rectangle((int)position.X, (int)position.Y, width, height);
         public static Vector2  speed = new Vector2(0f, 0f);
 
         public static void Step()
         {
-            collideRectangle.X += (int)speed.X;
+            if (speed != new Vector2(0, 0))
+            speed.Normalize();
+
+            position.X += (int)(speed.X * movementSpeed);
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                if (new Rectangle((int)position.X, (int)position.Y, width, height).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
-                    if (collideRectangle.X > Tiles.collideRectangle[index].X)
-                        collideRectangle.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width;
+                    if (position.X > Tiles.collideRectangle[index].X)
+                        position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width;
                     else
                     {
-                        collideRectangle.X = Tiles.collideRectangle[index].X - collideRectangle.Width;
+                        position.X = Tiles.collideRectangle[index].X - width;
                     }
                 }
             }
 
-            collideRectangle.Y += (int)speed.Y;
+            position.Y += (int)(speed.Y*movementSpeed);
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                if (new Rectangle((int)position.X, (int)position.Y, width, height).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
 
-                    if (collideRectangle.Y > Tiles.collideRectangle[index].Y)
-                        collideRectangle.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height;
+                    if (position.Y > Tiles.collideRectangle[index].Y)
+                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height;
                     else
                     {
-                        collideRectangle.Y = Tiles.collideRectangle[index].Y - collideRectangle.Height;
+                        position.Y = Tiles.collideRectangle[index].Y - height;
                     }
                 }
             }
-
-            speed.X /= 2.5f;
-            speed.Y /= 2.5f;
+            collideRectangle = new Rectangle((int)position.X, (int)position.Y, width, height);
         }
         public static void Setup(Texture2D _player)
         {
@@ -139,6 +133,7 @@ namespace first_game
         public const int rows = 15;
         public const int tileXY = 60;
         public const int numTiles = columns * rows;
+
 
         public static Texture2D[] textures = new Texture2D[3];
         public static Vector2[] textureArray = new Vector2[3];
@@ -190,10 +185,22 @@ namespace first_game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-
+        KeyboardState movementKeyboardState;
+        KeyboardState previousKeyboardState;
         KeyboardState keyboardState;
-        double gametimer;
-        double tps = 30;
+
+
+
+        Texture2D blankTexture;
+
+        int gametimer;
+        int tps = 30;
+        readonly int maxDashCharge = 3;
+        readonly int dashCooldown = 1500; //how long a dash cooldown is in ms
+        readonly int dashLength = 70; //how long a dash is in ms
+        int dashing = 0;
+        int dashTimer = 0;
+        int timeElapsed;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -207,6 +214,10 @@ namespace first_game
             Enemy.Setup(Content.Load<Texture2D>("tiles"));
             Player.Setup(Content.Load<Texture2D>("tiles"));
             Tiles.Setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
+
+            blankTexture = new Texture2D(GraphicsDevice, 1, 1);
+            blankTexture.SetData(new[] { Color.Red }); // Fills the texture with white
+
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200));
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 100));
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 50));
@@ -228,30 +239,55 @@ namespace first_game
 
         protected override void Update(GameTime gameTime)
         {
-            
-            gametimer += gameTime.ElapsedGameTime.Milliseconds;
+            timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
+            gametimer += timeElapsed;
             while (gametimer > 1000 / tps)
             {
+                keyboardState = Keyboard.GetState();
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                     Exit();
 
                 keyboardState = Keyboard.GetState();
-                if (keyboardState.IsKeyDown(Keys.Up))
+                
+
+                if (dashing < 0)
+                {
+                    Player.movementSpeed = 3;
+                    movementKeyboardState = Keyboard.GetState();
+                    if (dashTimer < (maxDashCharge * dashCooldown))
+                    {
+                        dashTimer += timeElapsed;
+                    }
+
+                    if (dashTimer > dashCooldown && keyboardState.IsKeyDown(Keys.LeftShift) && !previousKeyboardState.IsKeyDown(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
+                    {
+                        dashTimer -= dashCooldown;
+                        dashing = dashLength;
+                    }
+                }
+                else
+                {
+                    Player.movementSpeed = 15;
+                    dashing -= timeElapsed;
+                }
+                Player.speed = new Vector2(0, 0);
+                if (movementKeyboardState.IsKeyDown(Keys.W))
                 {
                     Player.speed.Y -= Player.movementSpeed;
                 }
-                if (keyboardState.IsKeyDown(Keys.Down))
+                if (movementKeyboardState.IsKeyDown(Keys.S))
                 {
                     Player.speed.Y += Player.movementSpeed;
                 }
-                if (keyboardState.IsKeyDown(Keys.Left))
+                if (movementKeyboardState.IsKeyDown(Keys.A))
                 {
                     Player.speed.X -= Player.movementSpeed;
                 }
-                if (keyboardState.IsKeyDown(Keys.Right))
+                if (movementKeyboardState.IsKeyDown(Keys.D))
                 {
                     Player.speed.X += Player.movementSpeed;
                 }
+
 
                 Player.Step();
                 for (int i = 0; i < Enemy.collideRectangle.Count; i++) {
@@ -259,6 +295,7 @@ namespace first_game
                 }
 
 
+                previousKeyboardState = Keyboard.GetState();
                 gametimer -= 1000 / tps;
             }
             // TODO: Add your update logic here
@@ -272,7 +309,6 @@ namespace first_game
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
 
-
             for (int index = 0; index < Tiles.numTiles; index++)
             {
                 _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
@@ -282,7 +318,15 @@ namespace first_game
                 _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(Enemy.collideRectangle[index].Width/2, Enemy.collideRectangle[index].Height/2), SpriteEffects.None, 0f);
             }
 
-            _spriteBatch.Draw(Player.textures, Player.collideRectangle, Player.textureRectangle, Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+            _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+            
+            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+            for (int i = 1; i <= maxDashCharge; i++)
+            {
+                _spriteBatch.Draw(blankTexture, new Rectangle(32 + i*(150 / maxDashCharge), 32, 5, 16), null, Color.Blue, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+
+            }
+
 
             _spriteBatch.End();
             base.Draw(gameTime);
