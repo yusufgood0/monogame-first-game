@@ -32,7 +32,7 @@ namespace first_game
 
                 for (int index = 0; index < Tiles.numTiles; index++)
                 {
-                    if (Tiles.collideRectangle[index].Contains(checkPoint) && Tiles.tileType[index] == 1)
+                    if (Tiles.collideRectangle[index].Contains(checkPoint) && Tiles.tileType[index] != 0)
                     {
                         return false;
                     }
@@ -41,9 +41,18 @@ namespace first_game
 
             return true; // No obstacles in the way
         }
+        public static void move(int _index)
+        {
+            Vector2 _speed = (target[_index] - position[_index])/20;
+            _speed.Normalize();
+            position[_index] += _speed;
+
+        }
         public static void Step(int _index)
         {
-            Vector2 _difference = new Vector2(position[_index].X - target[_index].X, position[_index].Y - target[_index].Y); //X and Y difference 
+            move(_index);
+
+            Vector2 _difference = target[_index] - position[_index]; //X and Y difference 
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
             if (SightLine(new Vector2(Player.collideRectangle.X + (width / 2), Player.collideRectangle.Y + (height / 2)), position[_index]))
             {
@@ -52,13 +61,9 @@ namespace first_game
             if (_distance > 10)
             {
                 float _ratio = movementSpeed / _distance;
-                position[_index] = new Vector2(position[_index].X - _difference.X * _ratio, position[_index].Y - _difference.Y * _ratio);
+                position[_index] += _difference * _ratio;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
-            
-
-
-
 
         }
 
@@ -80,7 +85,7 @@ namespace first_game
         public static Texture2D textures;
         public const int width = 30;
         public const int height = 50;
-        public const float movementSpeed = 2.5f;
+        public const float movementSpeed = 3f;
 
         public static Rectangle textureRectangle = new Rectangle(0, 0, width, height);
         public static Rectangle collideRectangle = new Rectangle((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2, width, height);
@@ -91,7 +96,7 @@ namespace first_game
             collideRectangle.X += (int)speed.X;
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] == 1)
+                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
                     if (collideRectangle.X > Tiles.collideRectangle[index].X)
                         collideRectangle.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width;
@@ -105,7 +110,7 @@ namespace first_game
             collideRectangle.Y += (int)speed.Y;
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] == 1)
+                if (Player.collideRectangle.Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
 
                     if (collideRectangle.Y > Tiles.collideRectangle[index].Y)
@@ -117,8 +122,8 @@ namespace first_game
                 }
             }
 
-            speed.X /= 1.5f;
-            speed.Y /= 1.5f;
+            speed.X /= 2.5f;
+            speed.Y /= 2.5f;
         }
         public static void Setup(Texture2D _player)
         {
@@ -135,7 +140,8 @@ namespace first_game
         public const int tileXY = 60;
         public const int numTiles = columns * rows;
 
-        public static Texture2D[] textures = new Texture2D[2];
+        public static Texture2D[] textures = new Texture2D[3];
+        public static Vector2[] textureArray = new Vector2[3];
         public static Rectangle[] textureRectangle = new Rectangle[numTiles];
         public static Rectangle[] collideRectangle = new Rectangle[numTiles];
         public static int[] tileType = {
@@ -146,7 +152,7 @@ namespace first_game
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+                1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
@@ -157,18 +163,23 @@ namespace first_game
 
         };
 
-        public static void Setup(Texture2D _tiles, Texture2D _dirt)
+        public static void Setup(Texture2D _tiles, Texture2D _dirt, Texture2D _bricks)
         {
             textures[0] = _dirt;
+            textureArray[0] = new Vector2(4, 4);
             textures[1] = _tiles;
+            textureArray[1] = new Vector2(4, 4);
+            textures[2] = _bricks;
+            textureArray[2] = new Vector2(1, 1);
 
             for (int _columns = 0; _columns < columns; _columns++)
             {
                 for (int _rows = 0; _rows < rows; _rows++)
                 {
-                    int index = _columns * rows + _rows;
-                    collideRectangle[index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
-                    textureRectangle[index] = new Rectangle(Generator.Next(0,4) * 128, Generator.Next(0, 4)*128, 128, 128);
+                    int _index = _columns * rows + _rows;
+                    int _tileXY = textures[tileType[_index]].Height/ (int)textureArray[tileType[_index]].Y;
+                    collideRectangle[_index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
+                    textureRectangle[_index] = new Rectangle(Generator.Next((int)textureArray[tileType[_index]].X) * _tileXY, Generator.Next((int)textureArray[tileType[_index]].Y) * _tileXY, _tileXY, _tileXY);
                 }
             }
 
@@ -181,7 +192,8 @@ namespace first_game
         private SpriteBatch _spriteBatch;
 
         KeyboardState keyboardState;
-        double gametimer ;
+        double gametimer;
+        double tps = 30;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -194,7 +206,7 @@ namespace first_game
             // TODO: Add your initialization logic here
             Enemy.Setup(Content.Load<Texture2D>("tiles"));
             Player.Setup(Content.Load<Texture2D>("tiles"));
-            Tiles.Setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"));
+            Tiles.Setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200));
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 100));
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 50));
@@ -218,7 +230,7 @@ namespace first_game
         {
             
             gametimer += gameTime.ElapsedGameTime.Milliseconds;
-            if (gametimer > 20)
+            while (gametimer > 1000 / tps)
             {
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                     Exit();
@@ -247,7 +259,7 @@ namespace first_game
                 }
 
 
-                gametimer = 0;
+                gametimer -= 1000 / tps;
             }
             // TODO: Add your update logic here
 
@@ -263,14 +275,14 @@ namespace first_game
 
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], new Vector2(Tiles.collideRectangle[index].X, Tiles.collideRectangle[index].Y), Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), Tiles.tileXY/128f, SpriteEffects.None, 0f);
+                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
             }
             for (int index = 0; index < Enemy.collideRectangle.Count; index++)
             {
-                _spriteBatch.Draw(Enemy.textures, new Vector2(Enemy.collideRectangle[index].X, Enemy.collideRectangle[index].Y), Enemy.textureRectangle[index], Color.White, 0, new Vector2(Enemy.collideRectangle[index].Width/2, Enemy.collideRectangle[index].Height/2), 1f, SpriteEffects.None, 0f);
+                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(Enemy.collideRectangle[index].Width/2, Enemy.collideRectangle[index].Height/2), SpriteEffects.None, 0f);
             }
 
-            _spriteBatch.Draw(Player.textures, new Vector2(Player.collideRectangle.X, Player.collideRectangle.Y), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(Player.textures, Player.collideRectangle, Player.textureRectangle, Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
 
             _spriteBatch.End();
             base.Draw(gameTime);
