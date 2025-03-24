@@ -1,30 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using static first_game.Player;
 
 namespace first_game
 {
 
     public class Enemy
     {
-        public static void TakeDamage(Color Red, int _damage, int _index, int _iFrames)
+        public static void push(float _knockback, Vector2 _Angle, int _index)
         {
-            iFrames[_index] = _iFrames;
+            if (_Angle != new Vector2(0, 0))
+            {
+                _Angle.Normalize();
+                position[_index] += _Angle * _knockback;
+            }
+        }
+        public static void TakeDamage(Color _color, int _damage, int _iFrames, int _index)
+        {
+            swingIFrames[_index] = _iFrames;
             health[_index] -= _damage;
-            if (health[_index] < 0)
+            if (health[_index] <= 0)
             {
                 textureRectangle.RemoveAt(_index);
                 collideRectangle.RemoveAt(_index);
                 position.RemoveAt(_index);
                 target.RemoveAt(_index);
                 health.RemoveAt(_index);
-                iFrames.RemoveAt(_index);
+                swingIFrames.RemoveAt(_index);
             }
         }
 
@@ -39,7 +49,7 @@ namespace first_game
         public static List<Vector2> position = new List<Vector2>();
         public static List<Vector2> target = new List<Vector2>();
         public static List<int> health = new List<int>();
-        public static List<int> iFrames = new List<int>();
+        public static List<int> swingIFrames = new List<int>();
 
 
 
@@ -70,7 +80,7 @@ namespace first_game
             {
                 _difference.Normalize();
                 position[_index] += _difference*movementSpeed;
-                collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
+                collideRectangle[_index] = new Rectangle((int)position[_index].X - width/2, (int)position[_index].Y - height/2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
         }
@@ -82,7 +92,7 @@ namespace first_game
             position.Add(new Vector2((int)spawn.X, (int)spawn.Y));
             target.Add(Player.position);
             health.Add(50);
-            iFrames.Add(1);
+            swingIFrames.Add(0);
         }
         public static void Setup(Texture2D _enemy)
         {
@@ -93,13 +103,14 @@ namespace first_game
     {
         public enum State
         {
+            Dead,
             Idle,
-            Attacking,
+            Attacking_1,
+            Attacking_2,
+            Attacking_3,
             Stunned,
             Dashing
         }
-        public static State state = State.Idle;
-        public static int recoveryTime = 0;
 
         public static Texture2D textures;
         public const int width = 30;
@@ -114,24 +125,85 @@ namespace first_game
         public static Vector2 position = new Vector2((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2);
         public static Vector2 speed = new Vector2(0f, 0f);
         public static float movementSpeed = 3f;
-
-        public class attacks
+        
+        public static State state = State.Idle;
+        public static int recoveryTime = 0;
+        public static int health = 1000;
+        public static int iFrames;
+        public static void push(float _knockback, Vector2 _Angle)
         {
-            public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime)
+            if (_Angle != new Vector2(0, 0))
             {
-                state = State.Attacking;
-                recoveryTime = _recoveryTime;
-                for (float _angle = angle + (float)Math.PI * _swingWidth; _angle > angle - _swingWidth; _angle -= 0.1f)
-                for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+                _Angle.Normalize();
+                speed += _Angle * _knockback;
+                movementSpeed = _knockback;
+            }
+        }
+        public static void TakeDamage(Color _color, int _damage, int _iFrames, int _stunnTime, float _knockback, Vector2 _enemyPlayerAngle)
+        {
+            if (state == State.Idle || state == State.Stunned)
+            {
+                push(_knockback, _enemyPlayerAngle);
+                state = State.Stunned; 
+                iFrames = _iFrames;
+                health -= _damage;
+                recoveryTime = _stunnTime;
+                if (health <= 0)
                 {
-                    Vector2 _checkpoint = position + new Vector2((float)Math.Cos(_angle), (float)Math.Sin(_angle)) * _swingRange;
-                    //Game1._spriteBatch.Begin(SpriteSortMode.FrontToBack);
-                    //Game1._spriteBatch.Draw(Player.textures, new Rectangle((int)_checkpoint.X, (int)_checkpoint.Y, 5, 5), null, Color.Blue, _angle, new Vector2(1, 1), SpriteEffects.None, 0.5f);
-                    //Game1._spriteBatch.End();
-                    if (Enemy.collideRectangle[index].Contains(_checkpoint) && Enemy.iFrames[index] < 0)
-                        Enemy.TakeDamage(Color.Red, _damage, index, 10);
+                    state = State.Dead;
                 }
             }
+        }
+        public class Attacks
+        {
+            new public class Swing
+            {
+                public static Vector2 checkpoint = new Vector2();
+                private static float swingWidth;
+                private static float swingRange;
+                private static int swingDamage;
+                private static float attackAngle;
+                private static float endAngle;
+                private static float swingSpeed;
+                public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed)
+                {
+                    push(20, new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)));
+                    recoveryTime = _recoveryTime;
+                    swingWidth = (float)Math.PI * _swingWidth;
+                    swingRange = _swingRange;
+                    swingDamage = _damage;
+                    attackAngle = angle + swingWidth;
+                    endAngle = angle - swingWidth;
+                    swingSpeed = _swingSpeed;
+                    for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
+                            Enemy.swingIFrames[_index] = 0;
+                }
+                public static void swingUpdate()
+                {
+                    for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
+                        if (Enemy.swingIFrames[_index] > 0)
+                        {
+                            Enemy.swingIFrames[_index] -= 1;
+                        }
+
+                    for (int i = 0; i <= swingSpeed; i++)
+                    if (attackAngle >= endAngle)
+                    {
+                        checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
+
+                        for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+                            if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0)
+                                {
+                                    Enemy.push(15, Enemy.position[index] - position, index);
+                                    Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                                }
+                        attackAngle -= 0.1f;
+                        }
+                }
+            }
+
+
+            
         }
         public static void Step()
         {
@@ -142,18 +214,18 @@ namespace first_game
             for (int index = 0; index < Tiles.numTiles; index++)
             if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
             {
-                if (position.X > Tiles.collideRectangle[index].X)
+                if (speed.X < 0)
                     position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
                 else
                     position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
             }
 
-            position.Y += (int)(speed.Y*movementSpeed);
+            position.Y += (int)(speed.Y * movementSpeed);
             for (int index = 0; index < Tiles.numTiles; index++)
             if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
             {
 
-                if (position.Y > Tiles.collideRectangle[index].Y)
+                if (speed.Y < 0)
                 position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
                 else
                 position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
@@ -229,18 +301,19 @@ namespace first_game
         KeyboardState previousKeyboardState;
         KeyboardState keyboardState;
         MouseState mouseState;
+        SpriteFont titleFont;
 
 
-        
+
         Texture2D blankTexture;
 
         int gametimer;
         int tps = 30;
         readonly int maxDashCharge = 3;
         readonly int dashCooldown = 1500; //how long a dash cooldown is in ms
-        readonly int dashLength = 70; //how long a dash is in ms
-        int dashing = 0;
-        int dashTimer = 0;
+        readonly int dashLength = 100; //how long a dash is in ms
+        int dashLengthTimer = 0;
+        int dashCooldownTimer = 0;
         int timeElapsed;
         public Game1()
         {
@@ -268,6 +341,9 @@ namespace first_game
             _graphics.PreferredBackBufferHeight = Tiles.columns * Tiles.tileXY; // Sets the height of the window
             _graphics.ApplyChanges(); // Applies the new dimensions
 
+            titleFont = Content.Load<SpriteFont>("titleFont");
+            Window.Title = "Adding Things";
+
             base.Initialize();
         }
 
@@ -280,67 +356,99 @@ namespace first_game
 
         protected override void Update(GameTime gameTime)
         {
+
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
             gametimer += timeElapsed;
-            if (Player.recoveryTime > 0)
-                Player.recoveryTime -= timeElapsed;
-            else
-                Player.state = Player.State.Idle;
+
 
             while (gametimer > 1000 / tps)
             {
+
+                Player.Attacks.Swing.swingUpdate();
+
+
+
                 mouseState = Mouse.GetState();
                 keyboardState = Keyboard.GetState();
 
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+
                 Player.angle = (float)Math.Atan2(mouseState.Y - Player.position.Y, mouseState.X - Player.position.X);
-                Player.angleVector = new Vector2(mouseState.Y - Player.position.Y, mouseState.X - Player.position.X);
-                Player.angleVector.Normalize();
 
-                for (int _index = 0; _index < Enemy.iFrames.Count; _index++)
-                    Enemy.iFrames[_index] -= 1;
+                if (Player.iFrames > 0)
+                {
+                    Player.iFrames -= 1;
+                }
 
-                if (keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space) && Player.state == Player.State.Idle)
-                Player.attacks.swing(0.5f, 50f, 50, 500);
 
-                if (dashing < 0)
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                    Exit();
+
+                Player.speed = new Vector2(0, 0);
+
+                if (movementKeyboardState.IsKeyDown(Keys.W))
+                    Player.speed.Y -= Player.movementSpeed;
+
+                if (movementKeyboardState.IsKeyDown(Keys.S))
+                    Player.speed.Y += Player.movementSpeed;
+
+                if (movementKeyboardState.IsKeyDown(Keys.A))
+                    Player.speed.X -= Player.movementSpeed;
+
+                if (movementKeyboardState.IsKeyDown(Keys.D))
+                    Player.speed.X += Player.movementSpeed;
+
+                if (dashLengthTimer < 0)
                 {
                     Player.movementSpeed = 3;
                     movementKeyboardState = Keyboard.GetState();
-                    if (dashTimer < (maxDashCharge * dashCooldown))
-                        dashTimer += timeElapsed;
 
-                    if (dashTimer > dashCooldown && keyboardState.IsKeyDown(Keys.LeftShift) && !previousKeyboardState.IsKeyDown(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
+                    if (keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space))
                     {
-                        dashTimer -= dashCooldown;
-                        dashing = dashLength;
+                        if (Player.state == Player.State.Idle)
+                        {
+                            Player.Attacks.Swing.swing(0.4f, 30f, 10, 300, 2);
+                            Player.state = Player.State.Attacking_1;
+                        }
+                        else if (Player.state == Player.State.Attacking_1)
+                        {
+                            Player.Attacks.Swing.swing(0.2f, 35f, 12, 750, 2);
+                            Player.state = Player.State.Attacking_2;
+                        }
+                        else if (Player.state == Player.State.Attacking_2)
+                        {
+                            Player.Attacks.Swing.swing(0.05f, 40f, 18, 1000, 2);
+                            Player.state = Player.State.Attacking_3;
+                        }
+                    }
+
+                    if (Player.recoveryTime > 0)
+                        Player.recoveryTime -= timeElapsed;
+                    else
+                        Player.state = Player.State.Idle;
+
+                    if (dashCooldownTimer < (maxDashCharge * dashCooldown))
+                        dashCooldownTimer += timeElapsed;
+
+                    if (dashCooldownTimer > dashCooldown && keyboardState.IsKeyDown(Keys.LeftShift) && !previousKeyboardState.IsKeyDown(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
+                    {
+                        dashCooldownTimer -= dashCooldown;
+                        dashLengthTimer = dashLength;
                     }
                 }
                 else
                 {
+                    Player.state = Player.State.Dashing;
                     Player.movementSpeed = 15;
-                    dashing -= timeElapsed;
+                    dashLengthTimer -= timeElapsed;
                 }
-                Player.speed = new Vector2(0, 0);
 
-                if (movementKeyboardState.IsKeyDown(Keys.W))
-                Player.speed.Y -= Player.movementSpeed;
-
-                if (movementKeyboardState.IsKeyDown(Keys.S))
-                Player.speed.Y += Player.movementSpeed;
-
-                if (movementKeyboardState.IsKeyDown(Keys.A))
-                Player.speed.X -= Player.movementSpeed;
-
-                if (movementKeyboardState.IsKeyDown(Keys.D))
-                Player.speed.X += Player.movementSpeed;
-
+                for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
+                    if (Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
+                        Player.TakeDamage(Color.BlueViolet, 150, 10, 500, 30, Player.position - Enemy.position[_index]);
 
                 Player.Step();
-                for (int i = 0; i < Enemy.collideRectangle.Count; i++) 
+                for (int i = 0; i < Enemy.collideRectangle.Count; i++)
                 Enemy.Step(i);
-
 
                 previousKeyboardState = Keyboard.GetState();
                 gametimer -= 1000 / tps;
@@ -354,20 +462,20 @@ namespace first_game
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             // TODO: Add your drawing code here
-            _spriteBatch.Begin(SpriteSortMode.FrontToBack);
+            _spriteBatch.Begin();
 
-            for (int index = 0; index < Tiles.numTiles; index++)
-                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0);
-           
-            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-            _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(Enemy.collideRectangle[index].Width/2, Enemy.collideRectangle[index].Height/2), 0f, 0.1f);
+            for (int index = 0; index < Tiles.numTiles; index++) { _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0); }
+            for (int index = 0; index < Enemy.collideRectangle.Count; index++) 
+            {
+                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
+                _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
+            }
+            _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
+            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
+            for (int i = 0; i < maxDashCharge + 1; i++){ _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
+            _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X-5 , (int)Player.Attacks.Swing.checkpoint.Y-5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
             
-            _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + 1.57f, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
-            
-            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
-            for (int i = 1; i <= maxDashCharge; i++)
-            _spriteBatch.Draw(blankTexture, new Rectangle(32 + i*(150 / maxDashCharge), 32, 5, 16), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f);
-
+            _spriteBatch.DrawString(titleFont, (Player.health/10).ToString(), new Vector2(10, 10), Color.White);
 
             _spriteBatch.End();
             base.Draw(gameTime);
