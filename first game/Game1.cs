@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
+using System.Threading;
 using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,6 +13,46 @@ using static first_game.Player;
 
 namespace first_game
 {
+    public class General
+    {
+        public static void collisionY(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle)
+        {
+            for (int index = 0; index < Tiles.numTiles; index++)
+                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                {
+                    if (speed.Y < 0)
+                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
+                    else
+                        position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
+                }
+        }
+        public static void collisionX(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle)
+        {
+            for (int index = 0; index < Tiles.numTiles; index++)
+            if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+            {
+                if (speed.X < 0)
+                    position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
+                else
+                    position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
+            }
+        }
+
+
+        public static void movement(ref Vector2 position, int collisionSize, Vector2 speed, int movementSpeed, Rectangle colliderRectangle)
+        {
+            if (speed != new Vector2(0, 0))
+                speed.Normalize();
+
+            position.X += (int)(speed.X * movementSpeed);
+            collisionX(ref position, collisionSize, speed, colliderRectangle);
+
+            position.Y += (int)(speed.Y * movementSpeed);
+            collisionY(ref position, collisionSize, speed, colliderRectangle);
+
+
+        }
+    }
 
     public class Enemy
     {
@@ -29,6 +70,8 @@ namespace first_game
             health[_index] -= _damage;
             if (health[_index] <= 0)
             {
+                damage.RemoveAt(_index);
+                movementSpeed.RemoveAt(_index);
                 textureRectangle.RemoveAt(_index);
                 collideRectangle.RemoveAt(_index);
                 position.RemoveAt(_index);
@@ -40,10 +83,10 @@ namespace first_game
 
         public static Texture2D textures;
 
-        public const int width = 30;
-        public const int height = 50;
-        public const float movementSpeed = 2f;
-
+        public static int width;
+        public static int height;
+        public static List<int> damage = new List<int>();
+        public static List<int> movementSpeed = new List<int>();
         public static List<Rectangle> textureRectangle = new List<Rectangle>();
         public static List<Rectangle> collideRectangle = new List<Rectangle>();
         public static List<Vector2> position = new List<Vector2>();
@@ -51,8 +94,7 @@ namespace first_game
         public static List<int> health = new List<int>();
         public static List<int> swingIFrames = new List<int>();
 
-
-
+       
         public static bool SightLine(Vector2 _point, float _detail)
         {
             double _growth = 1;
@@ -79,19 +121,50 @@ namespace first_game
             if (_distance > 10)
             {
                 _difference.Normalize();
-                position[_index] += _difference*movementSpeed;
-                collideRectangle[_index] = new Rectangle((int)position[_index].X - width/2, (int)position[_index].Y - height/2, collideRectangle[_index].Width, collideRectangle[_index].Height);
+                position[_index] += _difference * movementSpeed[_index]/10;
+                collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
         }
-
-        public static void create(Vector2 spawn)
+        public enum EnemyType
         {
+            SMALL,
+            MEDIUM,
+            LARGE,
+            ARCHER,
+        }
+        public static void create(Vector2 _spawnLocation, EnemyType _EnemyType)
+        {
+            if (_EnemyType == EnemyType.SMALL)
+            {
+                movementSpeed.Add(25);
+                damage.Add(50);
+                health.Add(50);
+                height = 25;
+                width = 25;
+            }
+            if (_EnemyType == EnemyType.MEDIUM)
+            {
+                movementSpeed.Add(15);
+                damage.Add(100);
+                health.Add(200);
+                height = 40;
+                width = 40;
+            }
+            if (_EnemyType == EnemyType.LARGE)
+            {
+                movementSpeed.Add(7);
+                damage.Add(200);
+                health.Add(500);
+                height = 80;
+                width = 80;
+            }
+
+            Vector2 spawnLocation = new Vector2((int)_spawnLocation.X - width / 2, (int)_spawnLocation.Y - height / 2);
             textureRectangle.Add(new Rectangle(0, 0, width, height));
-            collideRectangle.Add(new Rectangle((int)spawn.X, (int)spawn.Y, width, height));
-            position.Add(new Vector2((int)spawn.X, (int)spawn.Y));
-            target.Add(Player.position);
-            health.Add(50);
+            position.Add(new Vector2((int)spawnLocation.X, (int)spawnLocation.Y));
+            collideRectangle.Add(new Rectangle((int)spawnLocation.X, (int)spawnLocation.Y, width, height));
+            target.Add(spawnLocation - new Vector2(0, 1));
             swingIFrames.Add(0);
         }
         public static void Setup(Texture2D _enemy)
@@ -165,7 +238,8 @@ namespace first_game
                 public static float attackAngle;
                 public static float endAngle;
                 private static float swingSpeed;
-                public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed)
+                private static int pierce;
+                public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
                 {
                     push(20, new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)));
                     recoveryTime = _recoveryTime;
@@ -175,6 +249,7 @@ namespace first_game
                     attackAngle = angle + swingWidth;
                     endAngle = angle - swingWidth;
                     swingSpeed = _swingSpeed;
+                    pierce = _pierce;
                     for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
                             Enemy.swingIFrames[_index] = 0;
                     iFrames = 10;
@@ -191,12 +266,13 @@ namespace first_game
                     if (attackAngle >= endAngle)
                     {
                         checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
-
                         for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-                            if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0)
-                                {
-                                    Enemy.push(15, Enemy.position[index] - position, index);
-                                    Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                        if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0 && pierce > 0)
+                            {
+                                Enemy.push(15, Enemy.position[index] - position, index);
+                                Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                                    pierce -= 1;
+
                                 }
                             attackAngle -= 0.1f;
                         for (int index = 0; index < Tiles.numTiles; index++)
@@ -378,10 +454,10 @@ namespace first_game
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.Red }); // Fills the texture with white
 
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200));
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 100));
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 50));
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 25));
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200), Enemy.EnemyType.SMALL);
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2-50, 300), Enemy.EnemyType.MEDIUM);
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2+50, 300), Enemy.EnemyType.MEDIUM);
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 400), Enemy.EnemyType.LARGE);
 
             _graphics.PreferredBackBufferWidth = Tiles.rows * Tiles.tileXY; // Sets the width of the window
             _graphics.PreferredBackBufferHeight = Tiles.columns * Tiles.tileXY; // Sets the height of the window
@@ -449,17 +525,17 @@ namespace first_game
                     {
                         if (Player.state == Player.State.Idle)
                         {
-                            Player.Attacks.Swing.swing(0.4f, 30f, 10, 300, 2);
+                            Player.Attacks.Swing.swing(0.4f, 30f, 10, 300, 2, 2);
                             Player.state = Player.State.Attacking_1;
                         }
                         else if (Player.state == Player.State.Attacking_1)
                         {
-                            Player.Attacks.Swing.swing(0.2f, 35f, 12, 750, 2);
+                            Player.Attacks.Swing.swing(0.2f, 35f, 12, 750, 2, 2);
                             Player.state = Player.State.Attacking_2;
                         }
                         else if (Player.state == Player.State.Attacking_2)
                         {
-                            Player.Attacks.Swing.swing(0.05f, 40f, 18, 1000, 2);
+                            Player.Attacks.Swing.swing(0.05f, 40f, 18, 1000, 2, 10);
                             Player.state = Player.State.Attacking_3;
                         } 
                     }
@@ -487,7 +563,7 @@ namespace first_game
 
                 for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)
                     if (Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
-                        Player.TakeDamage(Color.BlueViolet, 150, 10, 500, 30, Player.position - Enemy.position[_index]);
+                        Player.TakeDamage(Color.BlueViolet, Enemy.damage[_index], 10, 500, 30, Player.position - Enemy.position[_index]);
 
 
 
@@ -521,8 +597,7 @@ namespace first_game
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
             _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
             for (int i = 0; i < maxDashCharge + 1; i++){ _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
-            if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle)
-                _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X-5 , (int)Player.Attacks.Swing.checkpoint.Y-5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
+            if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle) { _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X - 5, (int)Player.Attacks.Swing.checkpoint.Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f); }
             
             _spriteBatch.DrawString(titleFont, (Player.health/10).ToString(), new Vector2(10, 10), Color.White);
 
