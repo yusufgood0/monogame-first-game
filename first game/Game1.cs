@@ -129,7 +129,7 @@ namespace first_game
         public static State state = State.Idle;
         public static int recoveryTime = 0;
         public static int health = 1000;
-        public static int iFrames;
+        public static int iFrames = 0;
         public static void push(float _knockback, Vector2 _Angle)
         {
             if (_Angle != new Vector2(0, 0))
@@ -141,7 +141,7 @@ namespace first_game
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _stunnTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
-            if (state == State.Idle || state == State.Stunned)
+            if (iFrames <= 0 && state != State.Dashing)
             {
                 push(_knockback, _enemyPlayerAngle);
                 state = State.Stunned; 
@@ -162,8 +162,8 @@ namespace first_game
                 private static float swingWidth;
                 private static float swingRange;
                 private static int swingDamage;
-                private static float attackAngle;
-                private static float endAngle;
+                public static float attackAngle;
+                public static float endAngle;
                 private static float swingSpeed;
                 public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed)
                 {
@@ -177,15 +177,16 @@ namespace first_game
                     swingSpeed = _swingSpeed;
                     for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
                             Enemy.swingIFrames[_index] = 0;
+                    iFrames = 10;
+
                 }
                 public static void swingUpdate()
                 {
                     for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
-                        if (Enemy.swingIFrames[_index] > 0)
-                        {
-                            Enemy.swingIFrames[_index] -= 1;
-                        }
-
+                        if (Enemy.swingIFrames[_index] > 0) { Enemy.swingIFrames[_index] -= 1; }
+                    for (int _index = 0; _index < Tiles.numTiles; _index++)
+                        if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
+                            
                     for (int i = 0; i <= swingSpeed; i++)
                     if (attackAngle >= endAngle)
                     {
@@ -197,7 +198,15 @@ namespace first_game
                                     Enemy.push(15, Enemy.position[index] - position, index);
                                     Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
                                 }
-                        attackAngle -= 0.1f;
+                            attackAngle -= 0.1f;
+                        for (int index = 0; index < Tiles.numTiles; index++)
+                            {
+                                if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == Tiles.BRICK)
+                                {
+                                    Tiles.TakeDamage(Color.AliceBlue, swingDamage, 15, index);
+                                }
+                            }
+
                         }
                 }
             }
@@ -238,6 +247,20 @@ namespace first_game
     }
     public class Tiles
     {
+        public static void TakeDamage(Color _color, int _damage, int _iFrames, int index)
+        {
+            if (iFrames <= 0 && state != State.Dashing)
+            {
+                state = State.Stunned;
+                Tiles.swingIFrames[index] = _iFrames;
+                Tiles.health[index] -= _damage;
+                if (Tiles.health[index] <= 0)
+                {
+                    tileType[index] = NONE;
+                    load(index, index);
+                }
+            }
+        }
         static Random Generator = new Random();
         public static double scale = 1f;
 
@@ -247,6 +270,8 @@ namespace first_game
         public const int numTiles = columns * rows;
 
 
+        public static int[] health = new int[numTiles];
+        public static int[] swingIFrames = new int[numTiles];
         public static Texture2D[] textures = new Texture2D[3];
         public static Vector2[] textureArray = new Vector2[3];
         public static Rectangle[] textureRectangle = new Rectangle[numTiles];
@@ -267,10 +292,43 @@ namespace first_game
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-
         };
 
-        public static void Setup(Texture2D _tiles, Texture2D _dirt, Texture2D _bricks)
+        public static readonly int NONE = 0;
+        public static readonly int SOLID = 1;
+        public static readonly int BRICK = 2;
+        public static void regenerateTilemap()
+        {
+            for (int index = 0;  index < numTiles; index++) 
+            {
+                if (tileType[index] == BRICK)
+                {
+                    tileType[index] = NONE;
+                }
+                if (Generator.Next(3) == 1 && tileType[index] == NONE)
+                {
+                    tileType[index] = BRICK;
+                }
+            }
+            load(0, numTiles);
+        }
+        public static void load(int index_start, int index_end)
+        {
+            for (int _columns = 0; _columns < columns; _columns++)
+                for (int _rows = 0; _rows < rows; _rows++)
+                {
+                    int _index = _columns * rows + _rows;
+                    if (_index <= index_end && _index >= index_start)
+                    {
+                        int _tileXY = textures[tileType[_index]].Height / (int)textureArray[tileType[_index]].Y;
+                        health[_index] = 1;
+                        collideRectangle[_index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
+                        textureRectangle[_index] = new Rectangle(Generator.Next((int)textureArray[tileType[_index]].X) * _tileXY, Generator.Next((int)textureArray[tileType[_index]].Y) * _tileXY, _tileXY, _tileXY);
+
+                    }
+                }
+        }
+        public static void setup(Texture2D _tiles, Texture2D _dirt, Texture2D _bricks)
         {
             textures[0] = _dirt;
             textureArray[0] = new Vector2(4, 4);
@@ -278,17 +336,9 @@ namespace first_game
             textureArray[1] = new Vector2(4, 4);
             textures[2] = _bricks;
             textureArray[2] = new Vector2(1, 1);
-
-            for (int _columns = 0; _columns < columns; _columns++)
-            for (int _rows = 0; _rows < rows; _rows++)
-            {
-                int _index = _columns * rows + _rows;
-                int _tileXY = textures[tileType[_index]].Height/ (int)textureArray[tileType[_index]].Y;
-                collideRectangle[_index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
-                textureRectangle[_index] = new Rectangle(Generator.Next((int)textureArray[tileType[_index]].X) * _tileXY, Generator.Next((int)textureArray[tileType[_index]].Y) * _tileXY, _tileXY, _tileXY);
-            }
-
+            load(0, numTiles);
         }
+
     }
 
     public class Game1 : Game
@@ -327,7 +377,7 @@ namespace first_game
             // TODO: Add your initialization logic here
             Enemy.Setup(Content.Load<Texture2D>("tiles"));
             Player.Setup(Content.Load<Texture2D>("tiles"));
-            Tiles.Setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
+            Tiles.setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
 
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.Red }); // Fills the texture with white
@@ -363,11 +413,6 @@ namespace first_game
 
             while (gametimer > 1000 / tps)
             {
-
-                Player.Attacks.Swing.swingUpdate();
-
-
-
                 mouseState = Mouse.GetState();
                 keyboardState = Keyboard.GetState();
 
@@ -379,6 +424,8 @@ namespace first_game
                     Player.iFrames -= 1;
                 }
 
+                if (keyboardState.IsKeyDown(Keys.Tab) && !previousKeyboardState.IsKeyDown(Keys.Tab))
+                    Tiles.regenerateTilemap();
 
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                     Exit();
@@ -418,7 +465,7 @@ namespace first_game
                         {
                             Player.Attacks.Swing.swing(0.05f, 40f, 18, 1000, 2);
                             Player.state = Player.State.Attacking_3;
-                        }
+                        } 
                     }
 
                     if (Player.recoveryTime > 0)
@@ -442,9 +489,14 @@ namespace first_game
                     dashLengthTimer -= timeElapsed;
                 }
 
-                for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
+                for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)
                     if (Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
                         Player.TakeDamage(Color.BlueViolet, 150, 10, 500, 30, Player.position - Enemy.position[_index]);
+
+
+
+
+                Player.Attacks.Swing.swingUpdate();
 
                 Player.Step();
                 for (int i = 0; i < Enemy.collideRectangle.Count; i++)
@@ -473,7 +525,8 @@ namespace first_game
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
             _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
             for (int i = 0; i < maxDashCharge + 1; i++){ _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
-            _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X-5 , (int)Player.Attacks.Swing.checkpoint.Y-5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
+            if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle)
+                _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X-5 , (int)Player.Attacks.Swing.checkpoint.Y-5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
             
             _spriteBatch.DrawString(titleFont, (Player.health/10).ToString(), new Vector2(10, 10), Color.White);
 
