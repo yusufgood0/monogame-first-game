@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
@@ -15,40 +16,52 @@ namespace first_game
 {
     public class General
     {
-        public static void collisionY(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle)
+        public static void collisionY(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle, float movementSpeed)
         {
             for (int index = 0; index < Tiles.numTiles; index++)
                 if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
                     if (speed.Y < 0)
-                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
+                        {
+                            position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
+                        }
                     else
-                        position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
+                        {
+                            position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
+                        }
+                        //position.X += speed.Y * movementSpeed;
                 }
         }
-        public static void collisionX(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle)
+        public static void collisionX(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle, float movementSpeed)
         {
             for (int index = 0; index < Tiles.numTiles; index++)
             if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
             {
                 if (speed.X < 0)
-                    position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
+                    {
+                        position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
+                    }
                 else
-                    position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
+                    {
+                        position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
+                    }
+
+                    //position.Y += speed.X * movementSpeed;
             }
         }
+        
 
 
-        public static void movement(ref Vector2 position, int collisionSize, Vector2 speed, int movementSpeed, Rectangle colliderRectangle)
+        public static void movement(ref Vector2 position, int collisionSize, Vector2 speed, float movementSpeed, Rectangle colliderRectangle)
         {
             if (speed != new Vector2(0, 0))
                 speed.Normalize();
 
-            position.X += (int)(speed.X * movementSpeed);
-            collisionX(ref position, collisionSize, speed, colliderRectangle);
+            position.X += speed.X * movementSpeed;
+            collisionX(ref position, collisionSize, speed, colliderRectangle, movementSpeed);
 
-            position.Y += (int)(speed.Y * movementSpeed);
-            collisionY(ref position, collisionSize, speed, colliderRectangle);
+            position.Y += speed.Y * movementSpeed;
+            collisionY(ref position, collisionSize, speed, colliderRectangle, movementSpeed);
 
 
         }
@@ -117,11 +130,20 @@ namespace first_game
             Vector2 _difference = target[_index] - position[_index] ; //X and Y difference 
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
             if (SightLine(position[_index], _distance))
-            target[_index] = Player.position;
+            {
+                target[_index] = Player.position;
+            }
             if (_distance > 10)
             {
-                _difference.Normalize();
-                position[_index] += _difference * movementSpeed[_index]/10;
+                Vector2 _position = position[_index];
+
+                General.movement(ref _position, collideRectangle[_index].Width, _difference, Enemy.movementSpeed[_index]/10f, Enemy.collideRectangle[_index]);
+                
+                position[_index] = _position;
+                //Enemy.collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
+
+                //_difference.Normalize();
+                //position[_index] += _difference * movementSpeed[_index]/10;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
@@ -570,7 +592,7 @@ namespace first_game
 
                 Player.Attacks.Swing.swingUpdate();
 
-                Player.Step();
+                General.movement(ref Player.position, Player.collisionSize, Player.speed, Player.movementSpeed, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height));
                 for (int i = 0; i < Enemy.collideRectangle.Count; i++)
                 Enemy.Step(i);
 
