@@ -22,37 +22,37 @@ namespace first_game
                 if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
                 {
                     if (speed.Y < 0)
-                        {
-                            position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
-                        }
+                    {
+                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
+                    }
                     else
-                        {
-                            position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
-                        }
-                        //position.X += speed.Y * movementSpeed;
+                    {
+                        position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
+                    }
+                    //position.X += speed.Y * movementSpeed;
                 }
         }
         public static void collisionX(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle, float movementSpeed)
         {
             for (int index = 0; index < Tiles.numTiles; index++)
-            if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
-            {
-                if (speed.X < 0)
+                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                {
+                    if (speed.X < 0)
                     {
                         position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
                     }
-                else
+                    else
                     {
                         position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
                     }
 
                     //position.Y += speed.X * movementSpeed;
-            }
+                }
         }
-        
 
 
-        public static void movement(ref Vector2 position, int collisionSize, Vector2 speed, float movementSpeed, Rectangle colliderRectangle)
+
+        public static void movement(ref Vector2 position, int collisionSize, ref Vector2 speed, float movementSpeed, Rectangle colliderRectangle)
         {
             if (speed != new Vector2(0, 0))
                 speed.Normalize();
@@ -62,8 +62,6 @@ namespace first_game
 
             position.Y += speed.Y * movementSpeed;
             collisionY(ref position, collisionSize, speed, colliderRectangle, movementSpeed);
-
-
         }
     }
 
@@ -107,27 +105,27 @@ namespace first_game
         public static List<int> health = new List<int>();
         public static List<int> swingIFrames = new List<int>();
 
-       
+
         public static bool SightLine(Vector2 _point, float _detail)
         {
             double _growth = 1;
 
-            while(true)
+            while (true)
             {
-                _point = new Vector2(_point.X - (_point.X-Player.position.X) / _detail, _point.Y - (_point.Y - Player.position.Y) / _detail);
+                _point = new Vector2(_point.X - (_point.X - Player.position.X) / _detail, _point.Y - (_point.Y - Player.position.Y) / _detail);
                 _growth += 1;
                 for (int index = 0; index < Tiles.numTiles; index++)
-                if (new Rectangle((int)(Tiles.collideRectangle[index].X - _growth / 2), (int)(Tiles.collideRectangle[index].Y - _growth / 2), (int)(Tiles.tileXY + _growth), (int)(Tiles.tileXY + _growth)).Contains(_point) && Tiles.tileType[index] != 0)
-                return false;
-            
-                if (new Rectangle((int)(Player.position.X - _growth/2), (int)(Player.position.Y - _growth / 2), (int)(Player.width + _growth), (int)(Player.height + _growth)).Contains(_point))
-                return true; // No obstacles in the way
+                    if (new Rectangle((int)(Tiles.collideRectangle[index].X - _growth / 2), (int)(Tiles.collideRectangle[index].Y - _growth / 2), (int)(Tiles.tileXY + _growth), (int)(Tiles.tileXY + _growth)).Contains(_point) && Tiles.tileType[index] != 0)
+                        return false;
+
+                if (new Rectangle((int)(Player.position.X - _growth / 2), (int)(Player.position.Y - _growth / 2), (int)(Player.width + _growth), (int)(Player.height + _growth)).Contains(_point))
+                    return true; // No obstacles in the way
             }
         }
         public static void Step(int _index)
         {
 
-            Vector2 _difference = target[_index] - position[_index] ; //X and Y difference 
+            Vector2 _difference = target[_index] - position[_index]; //X and Y difference 
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
             if (SightLine(position[_index], _distance))
             {
@@ -137,8 +135,8 @@ namespace first_game
             {
                 Vector2 _position = position[_index];
 
-                General.movement(ref _position, collideRectangle[_index].Width, _difference, Enemy.movementSpeed[_index]/10f, Enemy.collideRectangle[_index]);
-                
+                General.movement(ref _position, collideRectangle[_index].Width, ref _difference, Enemy.movementSpeed[_index] / 10f, Enemy.collideRectangle[_index]);
+
                 position[_index] = _position;
                 //Enemy.collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
 
@@ -211,7 +209,7 @@ namespace first_game
         public const int width = 30;
         public const int height = 40;
         public const int collisionSize = 30;
-        
+
         public static Rectangle textureRectangle = new Rectangle(0, 0, width, height);
 
         public static float angle;
@@ -220,7 +218,7 @@ namespace first_game
         public static Vector2 position = new Vector2((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2);
         public static Vector2 speed = new Vector2(0f, 0f);
         public static float movementSpeed = 3f;
-        
+
         public static State state = State.Idle;
         public static int recoveryTime = 0;
         public static int health = 1000;
@@ -239,7 +237,7 @@ namespace first_game
             if (iFrames <= 0 && state != State.Dashing)
             {
                 push(_knockback, _enemyPlayerAngle);
-                state = State.Stunned; 
+                state = State.Stunned;
                 iFrames = _iFrames;
                 health -= _damage;
                 recoveryTime = _stunnTime;
@@ -273,7 +271,7 @@ namespace first_game
                     swingSpeed = _swingSpeed;
                     pierce = _pierce;
                     for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
-                            Enemy.swingIFrames[_index] = 0;
+                        Enemy.swingIFrames[_index] = 0;
                     iFrames = 10;
 
                 }
@@ -283,21 +281,21 @@ namespace first_game
                         if (Enemy.swingIFrames[_index] > 0) { Enemy.swingIFrames[_index] -= 1; }
                     for (int _index = 0; _index < Tiles.numTiles; _index++)
                         if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
-                            
+
                     for (int i = 0; i <= swingSpeed; i++)
-                    if (attackAngle >= endAngle)
-                    {
-                        checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
-                        for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-                        if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0 && pierce > 0)
-                            {
-                                Enemy.push(15, Enemy.position[index] - position, index);
-                                Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                        if (attackAngle >= endAngle)
+                        {
+                            checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
+                            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+                                if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0 && pierce > 0)
+                                {
+                                    Enemy.push(15, Enemy.position[index] - position, index);
+                                    Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
                                     pierce -= 1;
 
                                 }
                             attackAngle -= 0.1f;
-                        for (int index = 0; index < Tiles.numTiles; index++)
+                            for (int index = 0; index < Tiles.numTiles; index++)
                             {
                                 if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == Tiles.BRICK)
                                 {
@@ -310,33 +308,33 @@ namespace first_game
             }
 
 
-            
+
         }
         public static void Step()
         {
             if (speed != new Vector2(0, 0))
-            speed.Normalize();
+                speed.Normalize();
 
             position.X += (int)(speed.X * movementSpeed);
             for (int index = 0; index < Tiles.numTiles; index++)
-            if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
-            {
-                if (speed.X < 0)
-                    position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
-                else
-                    position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
-            }
+                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                {
+                    if (speed.X < 0)
+                        position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
+                    else
+                        position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
+                }
 
             position.Y += (int)(speed.Y * movementSpeed);
             for (int index = 0; index < Tiles.numTiles; index++)
-            if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
-            {
+                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
+                {
 
-                if (speed.Y < 0)
-                position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
-                else
-                position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
-            }
+                    if (speed.Y < 0)
+                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
+                    else
+                        position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
+                }
         }
         public static void Setup(Texture2D _player)
         {
@@ -379,10 +377,10 @@ namespace first_game
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1,
                 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
@@ -393,7 +391,7 @@ namespace first_game
         public static readonly int BRICK = 2;
         public static void regenerateTilemap()
         {
-            for (int index = 0;  index < numTiles; index++) 
+            for (int index = 0; index < numTiles; index++)
             {
                 if (tileType[index] == BRICK)
                 {
@@ -448,7 +446,6 @@ namespace first_game
         SpriteFont titleFont;
 
 
-
         Texture2D blankTexture;
 
         int gametimer;
@@ -477,8 +474,8 @@ namespace first_game
             blankTexture.SetData(new[] { Color.Red }); // Fills the texture with white
 
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200), Enemy.EnemyType.SMALL);
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2-50, 300), Enemy.EnemyType.MEDIUM);
-            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2+50, 300), Enemy.EnemyType.MEDIUM);
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2 - 50, 300), Enemy.EnemyType.MEDIUM);
+            Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2 + 50, 300), Enemy.EnemyType.MEDIUM);
             Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 400), Enemy.EnemyType.LARGE);
 
             _graphics.PreferredBackBufferWidth = Tiles.rows * Tiles.tileXY; // Sets the width of the window
@@ -525,6 +522,16 @@ namespace first_game
                     Exit();
 
                 Player.speed = new Vector2(0, 0);
+                //Player.movementSpeed *= 0.1f;
+                //if (speed.X > 0.01 || speed.X < -0.01)
+                //{
+                //    speed.X = 0;
+                //}
+                //if (speed.Y > 0.01 || speed.Y < -0.01)
+                //{
+                //    speed.Y = 0;
+                //}
+
 
                 if (movementKeyboardState.IsKeyDown(Keys.W))
                     Player.speed.Y -= Player.movementSpeed;
@@ -559,7 +566,7 @@ namespace first_game
                         {
                             Player.Attacks.Swing.swing(0.05f, 40f, 18, 1000, 2, 10);
                             Player.state = Player.State.Attacking_3;
-                        } 
+                        }
                     }
 
                     if (Player.recoveryTime > 0)
@@ -592,9 +599,9 @@ namespace first_game
 
                 Player.Attacks.Swing.swingUpdate();
 
-                General.movement(ref Player.position, Player.collisionSize, Player.speed, Player.movementSpeed, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height));
+                General.movement(ref Player.position, Player.collisionSize, ref Player.speed, Player.movementSpeed, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height));
                 for (int i = 0; i < Enemy.collideRectangle.Count; i++)
-                Enemy.Step(i);
+                    Enemy.Step(i);
 
                 previousKeyboardState = Keyboard.GetState();
                 gametimer -= 1000 / tps;
@@ -611,17 +618,17 @@ namespace first_game
             _spriteBatch.Begin();
 
             for (int index = 0; index < Tiles.numTiles; index++) { _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0); }
-            for (int index = 0; index < Enemy.collideRectangle.Count; index++) 
+            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
             {
                 _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
             }
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
-            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer/(float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
-            for (int i = 0; i < maxDashCharge + 1; i++){ _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
+            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
+            for (int i = 0; i < maxDashCharge + 1; i++) { _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
             if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle) { _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X - 5, (int)Player.Attacks.Swing.checkpoint.Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f); }
-            
-            _spriteBatch.DrawString(titleFont, (Player.health/10).ToString(), new Vector2(10, 10), Color.White);
+
+            _spriteBatch.DrawString(titleFont, (Player.health / 10).ToString(), new Vector2(10, 10), Color.White);
 
             _spriteBatch.End();
             base.Draw(gameTime);
