@@ -11,9 +11,61 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using static first_game.Player;
+using static first_game.Projectile;
 
 namespace first_game
 {
+    public class Projectile
+    {
+        public static List<Vector2> speed = new List<Vector2>();
+        public static List<Vector2> position = new List<Vector2>();
+        public static List<projectileType> Type = new List<projectileType>();
+        public static List<int> life =  new List<int>();
+        public static List<int> collisionSize = new List<int>();
+
+        public enum projectileType
+        {
+            PLAYER_ARROW = 1,
+            ENEMY = 2,
+        }
+
+        public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize)
+        {
+            if (angleVector != new Vector2(0, 0))
+            {
+                angleVector.Normalize();
+            }
+            collisionSize.Add(_collisionSize);
+            speed.Add(angleVector * projectileSpeed);
+            position.Add(spawnLocation);
+            Type.Add(type);
+            life.Add(projectileLife);
+
+        }
+        public static void update(int _index)
+        {
+            position[_index] += speed[_index];
+            for (int i = 0; i < Enemy.collideRectangle.Count; i++) {
+                if (new Rectangle((int)(position[_index].X - collisionSize[_index]), (int)(position[_index].Y - collisionSize[_index]), collisionSize[_index]*2, collisionSize[_index]*2).Intersects(Enemy.collideRectangle[i])){
+                    
+                }
+            }
+
+
+            life[_index] -= 1;
+            if (life[_index] <= 0) kill(_index);
+        }
+
+        public static void kill(int _index)
+        {
+            speed.RemoveAt(_index);
+            position.RemoveAt(_index);
+            Type.RemoveAt(_index);
+            life.RemoveAt(_index);
+            collisionSize.RemoveAt(_index);
+        }
+
+    }
     public class General
     {
         public static void collisionY(ref Vector2 position, int collisionSize, Vector2 speed, Rectangle colliderRectangle, float movementSpeed)
@@ -507,8 +559,8 @@ namespace first_game
                 mouseState = Mouse.GetState();
                 keyboardState = Keyboard.GetState();
 
-
-                Player.angle = (float)Math.Atan2(mouseState.Y - Player.position.Y, mouseState.X - Player.position.X);
+                Player.angleVector = new Vector2(mouseState.X - Player.position.X, mouseState.Y - Player.position.Y);
+                Player.angle = (float)Math.Atan2(angleVector.Y, angleVector.X);
 
                 if (Player.iFrames > 0)
                 {
@@ -522,28 +574,20 @@ namespace first_game
                     Exit();
 
                 Player.speed = new Vector2(0, 0);
-                //Player.movementSpeed *= 0.1f;
-                //if (speed.X > 0.01 || speed.X < -0.01)
-                //{
-                //    speed.X = 0;
-                //}
-                //if (speed.Y > 0.01 || speed.Y < -0.01)
-                //{
-                //    speed.Y = 0;
-                //}
-
 
                 if (movementKeyboardState.IsKeyDown(Keys.W))
                     Player.speed.Y -= Player.movementSpeed;
-
                 if (movementKeyboardState.IsKeyDown(Keys.S))
                     Player.speed.Y += Player.movementSpeed;
-
                 if (movementKeyboardState.IsKeyDown(Keys.A))
                     Player.speed.X -= Player.movementSpeed;
-
                 if (movementKeyboardState.IsKeyDown(Keys.D))
                     Player.speed.X += Player.movementSpeed;
+
+                if (keyboardState.IsKeyDown(Keys.LeftControl) && !(previousKeyboardState.IsKeyDown(Keys.LeftControl)))
+                {
+                    Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 30, 5);
+                }
 
                 if (dashLengthTimer < 0)
                 {
@@ -595,13 +639,12 @@ namespace first_game
                         Player.TakeDamage(Color.BlueViolet, Enemy.damage[_index], 10, 500, 30, Player.position - Enemy.position[_index]);
 
 
-
-
                 Player.Attacks.Swing.swingUpdate();
 
                 General.movement(ref Player.position, Player.collisionSize, ref Player.speed, Player.movementSpeed, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height));
-                for (int i = 0; i < Enemy.collideRectangle.Count; i++)
-                    Enemy.Step(i);
+                for (int i = 0; i < Enemy.collideRectangle.Count; i++) Enemy.Step(i);
+                for (int i = 0; i < Projectile.position.Count; i++) Projectile.update(i);
+
 
                 previousKeyboardState = Keyboard.GetState();
                 gametimer -= 1000 / tps;
@@ -623,6 +666,12 @@ namespace first_game
                 _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
             }
+            for (int index = 0; index < Projectile.position.Count; index++)
+            {
+                _spriteBatch.Draw(blankTexture, new Rectangle((int)Projectile.position[index].X - 5, (int)Projectile.position[index].Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
+                //_spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
+            }
+
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
             _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
             for (int i = 0; i < maxDashCharge + 1; i++) { _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
