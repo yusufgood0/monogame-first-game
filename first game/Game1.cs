@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using static first_game.Player;
 using static first_game.Projectile;
+using static first_game.Tiles;
 
 namespace first_game
 {
@@ -20,14 +21,29 @@ namespace first_game
         public static List<Vector2> speed = new List<Vector2>();
         public static List<Vector2> position = new List<Vector2>();
         public static List<projectileType> Type = new List<projectileType>();
-        public static List<int> life =  new List<int>();
-        public static List<int> collisionSize = new List<int>();
+        public static List<int> Iframes =  new List<int>();
+        public static List<int> pierce = new List<int>();
 
         public enum projectileType
         {
-            PLAYER_ARROW = 1,
-            ENEMY = 2,
+            PLAYER_ARROW = 0,
+            ENEMY = 1,
         }
+        public static int[] damagesData =
+            {
+                10,
+                125,
+            };
+        public static int[] collisionSizeData =
+            {
+                5,
+                10,
+            };
+        public static int[] pierceData =
+            {
+                2,
+                1,
+            };
 
         public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize)
         {
@@ -35,34 +51,63 @@ namespace first_game
             {
                 angleVector.Normalize();
             }
-            collisionSize.Add(_collisionSize);
             speed.Add(angleVector * projectileSpeed);
             position.Add(spawnLocation);
             Type.Add(type);
-            life.Add(projectileLife);
+            Iframes.Add(projectileLife);
+            pierce.Add(pierceData[(int)type]);
 
         }
         public static void update(int _index)
         {
             position[_index] += speed[_index];
+
+
             for (int i = 0; i < Enemy.collideRectangle.Count; i++) {
-                if (new Rectangle((int)(position[_index].X - collisionSize[_index]), (int)(position[_index].Y - collisionSize[_index]), collisionSize[_index]*2, collisionSize[_index]*2).Intersects(Enemy.collideRectangle[i])){
-                    
+                if (Iframes[_index] > 0)
+                {
+                    Iframes[_index] -= 1;
+                    break;
+                }
+
+                if (new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] *2, collisionSizeData[(int)Type[_index]] *2).Intersects(Enemy.collideRectangle[i]))
+                {
+                    Enemy.TakeDamage(Color.Red, damagesData[(int)Type[_index]], 0, i);
+                    Iframes[_index] = 5;
+                    pierce[_index] -= 1;
                 }
             }
 
+            for (int index = 0; index < Tiles.numTiles; index++)
+            {
+                if (Tiles.collideRectangle[index].Contains(position[_index]) && Tiles.swingIFrames[index] <= 0)
+                {
+                    switch (Tiles.tileType[index])
+                    {
+                        case (int)tileTypes.BRICK:
+                        Tiles.TakeDamage(Color.AliceBlue, damagesData[(int)Type[_index]], 15, index);
+                        pierce[_index] -= 1;
+                        break;
 
-            life[_index] -= 1;
-            if (life[_index] <= 0) kill(_index);
+                        case (int)tileTypes.SOLID:
+                        kill(_index);
+                        return;
+
+                    }
+
+                }
+            }
+
+            if (pierce[_index] <= 0) kill(_index);
         }
 
         public static void kill(int _index)
         {
+            pierce.RemoveAt(_index);
             speed.RemoveAt(_index);
             position.RemoveAt(_index);
             Type.RemoveAt(_index);
-            life.RemoveAt(_index);
-            collisionSize.RemoveAt(_index);
+            Iframes.RemoveAt(_index);
         }
 
     }
@@ -237,7 +282,7 @@ namespace first_game
             position.Add(new Vector2((int)spawnLocation.X, (int)spawnLocation.Y));
             collideRectangle.Add(new Rectangle((int)spawnLocation.X, (int)spawnLocation.Y, width, height));
             target.Add(spawnLocation - new Vector2(0, 1));
-            swingIFrames.Add(0);
+            swingIFrames.Add(1);
         }
         public static void Setup(Texture2D _enemy)
         {
@@ -349,7 +394,7 @@ namespace first_game
                             attackAngle -= 0.1f;
                             for (int index = 0; index < Tiles.numTiles; index++)
                             {
-                                if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == Tiles.BRICK)
+                                if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
                                 {
                                     Tiles.TakeDamage(Color.AliceBlue, swingDamage, 15, index);
                                 }
@@ -401,7 +446,7 @@ namespace first_game
             Tiles.health[index] -= _damage;
             if (Tiles.health[index] <= 0)
             {
-                tileType[index] = NONE;
+                tileType[index] = (int)tileTypes.NONE;
                 load(index, index);
             }
         }
@@ -438,20 +483,26 @@ namespace first_game
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         };
 
-        public static readonly int NONE = 0;
-        public static readonly int SOLID = 1;
-        public static readonly int BRICK = 2;
+        //public static readonly int NONE = 0;
+        //public static readonly int SOLID = 1;
+        //public static readonly int BRICK = 2;
+        public enum tileTypes
+        {
+            NONE = 0,
+            SOLID = 1,
+            BRICK = 2,
+        }
         public static void regenerateTilemap()
         {
             for (int index = 0; index < numTiles; index++)
             {
-                if (tileType[index] == BRICK)
+                if (tileType[index] == (int)tileTypes.BRICK)
                 {
-                    tileType[index] = NONE;
+                    tileType[index] = (int)tileTypes.NONE;
                 }
-                if (Generator.Next(3) == 1 && tileType[index] == NONE)
+                if (Generator.Next(3) == 1 && tileType[index] == (int)tileTypes.NONE)
                 {
-                    tileType[index] = BRICK;
+                    tileType[index] = (int)tileTypes.BRICK;
                 }
             }
             load(0, numTiles);
@@ -586,7 +637,7 @@ namespace first_game
 
                 if (keyboardState.IsKeyDown(Keys.LeftControl) && !(previousKeyboardState.IsKeyDown(Keys.LeftControl)))
                 {
-                    Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 30, 5);
+                    Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5);
                 }
 
                 if (dashLengthTimer < 0)
