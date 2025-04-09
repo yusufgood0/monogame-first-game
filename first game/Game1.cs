@@ -21,31 +21,23 @@ namespace first_game
         public static List<Vector2> speed = new List<Vector2>();
         public static List<Vector2> position = new List<Vector2>();
         public static List<projectileType> Type = new List<projectileType>();
-        public static List<int> Iframes =  new List<int>();
+        public static List<List<int>> Iframes = new List<List<int>>();
+        public static List<List<int>> IframesEnemyIndex = new List<List<int>>();
         public static List<int> pierce = new List<int>();
+        public static List<int> damage = new List<int>();
 
         public enum projectileType
         {
             PLAYER_ARROW = 0,
             ENEMY = 1,
         }
-        public static int[] damagesData =
-            {
-                10,
-                125,
-            };
         public static int[] collisionSizeData =
             {
                 5,
                 10,
             };
-        public static int[] pierceData =
-            {
-                2,
-                1,
-            };
 
-        public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize)
+        public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize, int _pierce, int _damage)
         {
             if (angleVector != new Vector2(0, 0))
             {
@@ -54,44 +46,57 @@ namespace first_game
             speed.Add(angleVector * projectileSpeed);
             position.Add(spawnLocation);
             Type.Add(type);
-            Iframes.Add(projectileLife);
-            pierce.Add(pierceData[(int)type]);
-
+            Iframes.Add(new List<int>());
+            IframesEnemyIndex.Add(new List<int>());
+            pierce.Add(_pierce);
+            damage.Add(_damage);
         }
         public static void update(int _index)
         {
             position[_index] += speed[_index];
 
-
-            for (int i = 0; i < Enemy.collideRectangle.Count; i++) {
-                if (Iframes[_index] > 0)
+            for (int iFramesIndex = 0; iFramesIndex < Iframes[_index].Count; iFramesIndex++)
+            {
+                if (Iframes[_index][iFramesIndex] > 0)
                 {
-                    Iframes[_index] -= 1;
-                    break;
+                    Iframes[_index][iFramesIndex] -= 1;
                 }
-
-                if (new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] *2, collisionSizeData[(int)Type[_index]] *2).Intersects(Enemy.collideRectangle[i]))
+                else
                 {
-                    Enemy.TakeDamage(Color.Red, damagesData[(int)Type[_index]], 0, i);
-                    Iframes[_index] = 5;
+                    Iframes[_index].RemoveAt(iFramesIndex);
+                    IframesEnemyIndex[_index].RemoveAt(iFramesIndex);
+                }
+            }
+            for (int EnemyIndex = 0; EnemyIndex < Enemy.collideRectangle.Count; EnemyIndex++)
+            {
+                if (pierce[_index] > 0 && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
+                {
+                    Enemy.push(damage[_index], speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
+                    if (!Enemy.TakeDamage(Color.Red, damage[_index], 0, EnemyIndex) || pierce[_index] >= 0)
+                    {
+                        Iframes[_index].Add(15);
+                        IframesEnemyIndex[_index].Add(EnemyIndex);
+                    }
+                    
                 }
             }
 
+
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                if (Tiles.collideRectangle[index].Contains(position[_index]) && Tiles.swingIFrames[index] <= 0)
+                if (Tiles.collideRectangle[index].Contains(position[_index]))
                 {
                     switch (Tiles.tileType[index])
                     {
                         case (int)tileTypes.BRICK:
-                        Tiles.TakeDamage(Color.AliceBlue, damagesData[(int)Type[_index]], 15, index);
-                        pierce[_index] -= 1;
-                        break;
+                            Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, index);
+                            pierce[_index] -= 1;
+                            break;
 
                         case (int)tileTypes.SOLID:
-                        kill(_index);
-                        return;
+                            kill(_index);
+                            return;
 
                     }
 
@@ -100,7 +105,6 @@ namespace first_game
 
             if (pierce[_index] <= 0) kill(_index);
         }
-
         public static void kill(int _index)
         {
             pierce.RemoveAt(_index);
@@ -108,6 +112,8 @@ namespace first_game
             position.RemoveAt(_index);
             Type.RemoveAt(_index);
             Iframes.RemoveAt(_index);
+            IframesEnemyIndex.RemoveAt(_index);
+            damage.RemoveAt(_index);
         }
 
     }
@@ -172,7 +178,7 @@ namespace first_game
                 position[_index] += _Angle * _knockback;
             }
         }
-        public static void TakeDamage(Color _color, int _damage, int _iFrames, int _index)
+        public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
             swingIFrames[_index] = _iFrames;
             health[_index] -= _damage;
@@ -186,7 +192,9 @@ namespace first_game
                 target.RemoveAt(_index);
                 health.RemoveAt(_index);
                 swingIFrames.RemoveAt(_index);
+                return true;
             }
+            else return false;
         }
 
         public static Texture2D textures;
@@ -235,10 +243,6 @@ namespace first_game
                 General.movement(ref _position, collideRectangle[_index].Width, ref _difference, Enemy.movementSpeed[_index] / 10f, Enemy.collideRectangle[_index]);
 
                 position[_index] = _position;
-                //Enemy.collideRectangle[_index] = new Rectangle((int)position[_index].X, (int)position[_index].Y, collideRectangle[_index].Width, collideRectangle[_index].Height);
-
-                //_difference.Normalize();
-                //position[_index] += _difference * movementSpeed[_index]/10;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
@@ -254,15 +258,15 @@ namespace first_game
         {
             if (_EnemyType == EnemyType.SMALL)
             {
-                movementSpeed.Add(25);
-                damage.Add(50);
+                movementSpeed.Add(30);
+                damage.Add(40);
                 health.Add(50);
                 height = 25;
                 width = 25;
             }
             if (_EnemyType == EnemyType.MEDIUM)
             {
-                movementSpeed.Add(15);
+                movementSpeed.Add(22);
                 damage.Add(100);
                 health.Add(200);
                 height = 40;
@@ -270,7 +274,7 @@ namespace first_game
             }
             if (_EnemyType == EnemyType.LARGE)
             {
-                movementSpeed.Add(7);
+                movementSpeed.Add(15);
                 damage.Add(200);
                 health.Add(500);
                 height = 80;
@@ -516,7 +520,7 @@ namespace first_game
                     if (_index <= index_end && _index >= index_start)
                     {
                         int _tileXY = textures[tileType[_index]].Height / (int)textureArray[tileType[_index]].Y;
-                        health[_index] = 1;
+                        health[_index] = 50;
                         collideRectangle[_index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
                         textureRectangle[_index] = new Rectangle(Generator.Next((int)textureArray[tileType[_index]].X) * _tileXY, Generator.Next((int)textureArray[tileType[_index]].Y) * _tileXY, _tileXY, _tileXY);
 
@@ -559,6 +563,9 @@ namespace first_game
         int dashLengthTimer = 0;
         int dashCooldownTimer = 0;
         int timeElapsed;
+
+        int bowCharge = 0;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -635,10 +642,17 @@ namespace first_game
                 if (movementKeyboardState.IsKeyDown(Keys.D))
                     Player.speed.X += Player.movementSpeed;
 
-                if (keyboardState.IsKeyDown(Keys.LeftControl) && !(previousKeyboardState.IsKeyDown(Keys.LeftControl)))
+
+                
+
+                if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
-                    Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5);
+                    if (bowCharge < 100) bowCharge += 1;
+                    if (!keyboardState.IsKeyDown(Keys.LeftControl) && bowCharge >= 10) Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5, 2, bowCharge / 2);
                 }
+                else bowCharge = 0;
+
+
 
                 if (dashLengthTimer < 0)
                 {
@@ -712,18 +726,24 @@ namespace first_game
             _spriteBatch.Begin();
 
             for (int index = 0; index < Tiles.numTiles; index++) { _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0); }
-            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-            {
-                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
-                _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
-            }
+            
             for (int index = 0; index < Projectile.position.Count; index++)
             {
                 _spriteBatch.Draw(blankTexture, new Rectangle((int)Projectile.position[index].X - 5, (int)Projectile.position[index].Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
                 //_spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
             }
 
+            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+            {
+                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
+                _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
+            }
+            
+
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
+            
+
+            
             _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
             for (int i = 0; i < maxDashCharge + 1; i++) { _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
             if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle) { _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.Attacks.Swing.checkpoint.X - 5, (int)Player.Attacks.Swing.checkpoint.Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f); }
