@@ -184,6 +184,12 @@ namespace first_game
             health[_index] -= _damage;
             if (health[_index] <= 0)
             {
+                for (int ProjectileIndex = 0;  ProjectileIndex < Iframes.Count; ProjectileIndex++)
+                {
+                    Iframes[ProjectileIndex].Remove(_index);
+                    IframesEnemyIndex[ProjectileIndex].Remove(_index);
+                }
+
                 damage.RemoveAt(_index);
                 movementSpeed.RemoveAt(_index);
                 textureRectangle.RemoveAt(_index);
@@ -239,10 +245,9 @@ namespace first_game
             if (_distance > 10)
             {
                 Vector2 _position = position[_index];
-
                 General.movement(ref _position, collideRectangle[_index].Width, ref _difference, Enemy.movementSpeed[_index] / 10f, Enemy.collideRectangle[_index]);
-
                 position[_index] = _position;
+
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
 
@@ -565,6 +570,9 @@ namespace first_game
         int timeElapsed;
 
         int bowCharge = 0;
+        readonly int BowRechargeRate = 1;
+        readonly int MinBowCharge = 10;
+        readonly int MaxBowCharge = 100;
 
         public Game1()
         {
@@ -647,8 +655,8 @@ namespace first_game
 
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
-                    if (bowCharge < 100) bowCharge += 1;
-                    if (!keyboardState.IsKeyDown(Keys.LeftControl) && bowCharge >= 10) Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5, 2, bowCharge / 2);
+                    if (bowCharge < MaxBowCharge) bowCharge += BowRechargeRate;
+                    if (!keyboardState.IsKeyDown(Keys.LeftControl) && bowCharge >= MinBowCharge) Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5, 2, bowCharge / 2);
                 }
                 else bowCharge = 0;
 
@@ -738,7 +746,8 @@ namespace first_game
                 _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
             }
-            
+
+            _spriteBatch.Draw(blankTexture, new Rectangle(32, 64, (int)((float)(bowCharge / (float)(MaxBowCharge * bowCharge)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
 
             _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
             
