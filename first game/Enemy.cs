@@ -76,7 +76,7 @@ namespace first_game
             if (_Angle != new Vector2(0, 0))
             {
                 _Angle.Normalize();
-                position[_index] += _Angle * _knockback;
+                speed[_index] += _Angle * _knockback * 20;
             }
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
@@ -106,6 +106,7 @@ namespace first_game
             target.RemoveAt(_index);
             health.RemoveAt(_index);
             swingIFrames.RemoveAt(_index);
+            speed.RemoveAt(_index);
             type.RemoveAt(_index);
 
         }
@@ -115,9 +116,10 @@ namespace first_game
         public static int width;
         public static int height;
         public static List<int> damage = new List<int>();
-        public static List<int> movementSpeed = new List<int>();
+        public static List<float> movementSpeed = new List<float>();
         public static List<Rectangle> textureRectangle = new List<Rectangle>();
         public static List<Rectangle> collideRectangle = new List<Rectangle>();
+        public static List<Vector2> speed = new List<Vector2>();
         public static List<Vector2> position = new List<Vector2>();
         public static List<Vector2> target = new List<Vector2>();
         public static List<int> health = new List<int>();
@@ -154,7 +156,7 @@ namespace first_game
             else if (rnd.Next(100) == 1)
             {
                 
-                while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
+                _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
                 _newTargetAngle.Normalize();
 
                 target[_index] = position[_index] + _newTargetAngle * rnd.Next(1, 3) * movementSpeed[_index];
@@ -168,8 +170,12 @@ namespace first_game
             if (_distance > 10)
             {
                 Vector2 _position = position[_index];
-                General.movement(ref _position, collideRectangle[_index].Width, ref _difference, Enemy.movementSpeed[_index] / 10f, Enemy.collideRectangle[_index]);
+                _difference.Normalize();
+                Vector2 _speed = speed[_index] * 5f + _difference * movementSpeed[_index];
+                General.movement(ref _position, collideRectangle[_index].Width, ref _speed, Enemy.movementSpeed[_index], Enemy.collideRectangle[_index]);
                 position[_index] = _position;
+                speed[_index] = _speed;
+
 
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
@@ -186,7 +192,7 @@ namespace first_game
         {
             if (_EnemyType == EnemyType.SMALL)
             {
-                movementSpeed.Add(35);
+                movementSpeed.Add(3.5f);
                 damage.Add(40);
                 health.Add(50);
                 height = 24;
@@ -194,7 +200,7 @@ namespace first_game
             }
             if (_EnemyType == EnemyType.MEDIUM)
             {
-                movementSpeed.Add(27);
+                movementSpeed.Add(2.7f);
                 damage.Add(100);
                 health.Add(150);
                 height = 40;
@@ -202,7 +208,7 @@ namespace first_game
             }
             if (_EnemyType == EnemyType.LARGE)
             {
-                movementSpeed.Add(20);
+                movementSpeed.Add(2.0f);
                 damage.Add(200);
                 health.Add(300);
                 height = 80;
@@ -212,9 +218,10 @@ namespace first_game
             Vector2 spawnLocation = new Vector2((int)_spawnLocation.X - width / 2, (int)_spawnLocation.Y - height / 2);
             textureRectangle.Add(new Rectangle(0, 0, width, height));
             position.Add(new Vector2((int)spawnLocation.X, (int)spawnLocation.Y));
-            collideRectangle.Add(new Rectangle((int)spawnLocation.X, (int)spawnLocation.Y, width, height));
-            target.Add(spawnLocation - new Vector2(0, 1));
+            collideRectangle.Add(new Rectangle((int)spawnLocation.X - width/2, (int)spawnLocation.Y - height/2, width, height));
+            target.Add(spawnLocation - new Vector2(0, 10));
             swingIFrames.Add(1);
+            speed.Add(new Vector2(0, 0));
             type.Add(_EnemyType);
         }
         public static void Setup(Texture2D _enemy)

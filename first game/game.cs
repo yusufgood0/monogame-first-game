@@ -85,17 +85,17 @@ namespace first_game
 
         int gametimer;
         int tps = 30;
-        readonly int maxDashCharge = 3;
-        readonly int dashCooldown = 1500; //how long a dash cooldown is in ms
+        readonly static int maxDashCharge = 3;
+        readonly static int dashCooldown = 1000; //how long a dash cooldown is in ms
         readonly int dashLength = 100; //how long a dash is in ms
         int dashLengthTimer = 0;
-        int dashCooldownTimer = 0;
+        int dashCooldownTimer = dashCooldown * maxDashCharge;
         int timeElapsed; 
 
         readonly float BowRechargeRate = 1f;
         readonly int MinBowCharge = 25;
-        readonly static int MaxBowCharge = 100;
-        float bowCharge = MaxBowCharge;
+        readonly int MaxBowCharge = 100;
+        float bowCharge = 0;
 
         int bowBarSize = 50;
         Color bowChargeBar;
@@ -190,7 +190,7 @@ namespace first_game
                     if (bowCharge >= MinBowCharge)
                     {
                         bowChargeBar = Color.White;
-                        if (!keyboardState.IsKeyDown(Keys.LeftControl)) Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 10, 2, 5, 1 + (int)(bowCharge / MaxBowCharge), (int)bowCharge / 2);
+                        if (!keyboardState.IsKeyDown(Keys.LeftControl)) Projectile.create(projectileType.PLAYER_ARROW, Player.position, Player.angleVector, 5 + (int)bowCharge / 10, 2, 5, 1 + (int)(bowCharge / MaxBowCharge), (int)bowCharge / 2);
                     }
                 }
                 else
@@ -288,12 +288,12 @@ namespace first_game
 
             for (int index = 0; index < Enemy.collideRectangle.Count; index++)
             {
-                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0.1f);
+                _spriteBatch.Draw(Enemy.textures, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Color.IndianRed, 0, new Vector2(0, 0), 0f, 0.1f);
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
             }
 
 
-            _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.White, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
+            _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X, (int)Player.position.Y, Player.width, Player.height), Player.textureRectangle, Color.Blue, Player.angle + (float)Math.PI / 2, new Vector2(Player.width / 2, Player.height / 2), 0f, 0.2f);
 
 
             _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.position.X - bowBarSize / 2, (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBar, 0, new Vector2(0, 0), 0f, 0.3f);

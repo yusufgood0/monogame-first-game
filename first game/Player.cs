@@ -81,7 +81,7 @@ namespace first_game
                 public static float endAngle;
                 private static float swingSpeed;
                 private static int pierce;
-                private static int swingHitboxSize = 5;
+                private static int swingHitboxSize = 10;
                 public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
                 {
                     push(20, new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)));
