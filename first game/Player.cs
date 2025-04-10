@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Security.Cryptography;
+using System.Threading;
+using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace first_game
 {
@@ -14,6 +19,7 @@ namespace first_game
         {
             Dead,
             Idle,
+            Drawing_Bow,
             Attacking_1,
             Attacking_2,
             Attacking_3,
@@ -75,6 +81,7 @@ namespace first_game
                 public static float endAngle;
                 private static float swingSpeed;
                 private static int pierce;
+                private static int swingHitboxSize = 5;
                 public static void swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
                 {
                     push(20, new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)));
@@ -88,7 +95,9 @@ namespace first_game
                     pierce = _pierce;
                     for (int _index = 0; _index < Enemy.swingIFrames.Count; _index++)
                         Enemy.swingIFrames[_index] = 0;
-                    iFrames = 10;
+                    for (int _index = 0; _index < Tiles.swingIFrames.Length; _index++)
+                        Tiles.swingIFrames[_index] = 0;
+                    Player.iFrames = 10;
 
                 }
                 public static void swingUpdate()
@@ -103,19 +112,18 @@ namespace first_game
                         {
                             checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
                             for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-                                if (Enemy.collideRectangle[index].Contains(checkpoint) && Enemy.swingIFrames[index] <= 0 && pierce > 0)
+                                if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X-swingHitboxSize/2), (int)(checkpoint.Y + swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.swingIFrames[index] <= 0 && pierce > 0)
                                 {
-                                    Enemy.push(15, Enemy.position[index] - position, index);
+                                    Enemy.push(25, Enemy.position[index] - position, index);
                                     Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
                                     pierce -= 1;
-
                                 }
                             attackAngle -= 0.1f;
                             for (int index = 0; index < Tiles.numTiles; index++)
                             {
                                 if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
                                 {
-                                    Tiles.TakeDamage(Color.AliceBlue, swingDamage, 15, index);
+                                    Tiles.TakeDamage(Color.AliceBlue, swingDamage, 10, index);
                                 }
                             }
 
