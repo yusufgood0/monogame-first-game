@@ -76,12 +76,13 @@ namespace first_game
             if (_Angle != new Vector2(0, 0))
             {
                 _Angle.Normalize();
-                speed[_index] += _Angle * _knockback * 20;
+                speed[_index] += _Angle * _knockback;
             }
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
-            swingIFrames[_index] = _iFrames;
+            colorFilter[_index] = _color;
+            iFrames[_index] = _iFrames;
             health[_index] -= _damage;
             if (health[_index] <= 0)
             {
@@ -105,9 +106,10 @@ namespace first_game
             position.RemoveAt(_index);
             target.RemoveAt(_index);
             health.RemoveAt(_index);
-            swingIFrames.RemoveAt(_index);
+            iFrames.RemoveAt(_index);
             speed.RemoveAt(_index);
             type.RemoveAt(_index);
+            colorFilter.RemoveAt(_index);
 
         }
 
@@ -123,13 +125,14 @@ namespace first_game
         public static List<Vector2> position = new List<Vector2>();
         public static List<Vector2> target = new List<Vector2>();
         public static List<int> health = new List<int>();
-        public static List<int> swingIFrames = new List<int>();
+        public static List<int> iFrames = new List<int>();
         public static List<EnemyType> type = new List<EnemyType>();
+        public static List<Color> colorFilter = new List<Color>();
 
 
         public static bool SightLine(Vector2 _point, float _detail)
         {
-            double _growth = 1;
+            double _growth = 0;
 
             while (true)
             {
@@ -145,40 +148,42 @@ namespace first_game
         }
         public static void Step(int _index)
         {
-
             Vector2 _difference = target[_index] - position[_index]; //X and Y difference 
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
             Vector2 _newTargetAngle = new Vector2(0, 0);
+            
             if (SightLine(position[_index], _distance))
             {
                 target[_index] = Player.position;
             }
             else if (rnd.Next(100) == 1)
             {
-                
+
                 _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
                 _newTargetAngle.Normalize();
 
-                target[_index] = position[_index] + _newTargetAngle * rnd.Next(1, 3) * movementSpeed[_index];
+                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * movementSpeed[_index];
             }
-            //else if (rnd.Next(50) == 1)
-            //{
-            //    break;
-            //}
-            
 
             if (_distance > 10)
             {
                 Vector2 _position = position[_index];
                 _difference.Normalize();
-                Vector2 _speed = speed[_index] * 5f + _difference * movementSpeed[_index];
-                General.movement(ref _position, collideRectangle[_index].Width, ref _speed, Enemy.movementSpeed[_index], Enemy.collideRectangle[_index]);
+                Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width)/7);
+                if (iFrames[_index] == 0)
+                {
+                    _speed += _difference * movementSpeed[_index];
+                    colorFilter[_index] = Color.DarkSalmon;
+                }
+                General.movement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Enemy.movementSpeed[_index], Enemy.collideRectangle[_index]);
                 position[_index] = _position;
-                speed[_index] = _speed;
+                speed[_index] = speed[_index] * 0.6f;
 
 
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
+                
             }
+            
 
         }
         public enum EnemyType
@@ -220,9 +225,10 @@ namespace first_game
             position.Add(new Vector2((int)spawnLocation.X, (int)spawnLocation.Y));
             collideRectangle.Add(new Rectangle((int)spawnLocation.X - width/2, (int)spawnLocation.Y - height/2, width, height));
             target.Add(spawnLocation - new Vector2(0, 10));
-            swingIFrames.Add(1);
+            iFrames.Add(1);
             speed.Add(new Vector2(0, 0));
             type.Add(_EnemyType);
+            colorFilter.Add(Color.DarkSalmon);
         }
         public static void Setup(Texture2D _enemy)
         {

@@ -69,9 +69,9 @@ namespace first_game
             {
                 if (pierce[_index] > 0 && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
                 {
-                    Enemy.push(damage[_index], speed[_index], EnemyIndex);
+                    Enemy.push(damage[_index] * 2, speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
-                    if (!Enemy.TakeDamage(Color.Red, damage[_index], 0, EnemyIndex) || pierce[_index] >= 0)
+                    if (!Enemy.TakeDamage(Color.Red, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
                     {
                         Iframes[_index].Add(15);
                         IframesEnemyIndex[_index].Add(EnemyIndex);
