@@ -126,9 +126,10 @@ namespace first_game
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
 
-            for (int i = 0; i < 5; i++) Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 200), Enemy.EnemyType.SMALL);
-            for (int i = 0; i < 3; i++) Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2 + 50, 300), Enemy.EnemyType.MEDIUM);
-            for (int i = 0; i < 2; i++) Enemy.create(new Vector2((Tiles.rows * Tiles.tileXY - Enemy.width) / 2, 400), Enemy.EnemyType.LARGE);
+            for (int i = 0; i < 2; i++) Enemy.create(new Vector2(0, 0), Enemy.EnemyType.SMALL);
+            for (int i = 0; i < 2; i++) Enemy.create(new Vector2(0, 0), Enemy.EnemyType.MEDIUM);
+            for (int i = 0; i < 2; i++) Enemy.create(new Vector2(0, 0), Enemy.EnemyType.LARGE);
+            for (int i = 0; i < 2; i++) Enemy.create(new Vector2(0, 0), Enemy.EnemyType.ARCHER);
             Tiles.regenerateTilemap();
             Enemy.respawn_enemies();
             screenSize = new Vector2(GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height);
@@ -311,7 +312,7 @@ namespace first_game
             GraphicsDevice.Clear(Color.CornflowerBlue);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            Vector2 offset = -Player.position + screenSize/2;
+            Vector2 offset = - Player.position + screenSize / 2;
             for (int index = 0; index < Tiles.numTiles; index++) 
             { 
                 _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y, Tiles.tileXY, Tiles.tileXY), Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0); 
@@ -329,7 +330,7 @@ namespace first_game
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index] + offset, Color.Red);
             }
 
-            _spriteBatch.Draw(Player.textures, new Rectangle((int)screenSize.X / 2 - Player.width/2, (int)screenSize.Y / 2 - Player.height / 2, Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), Player.effect, 0.2f);
+            _spriteBatch.Draw(Player.textures, new Rectangle((int)(Player.position.X - Player.width / 2 + offset.X), (int)(Player.position.Y - Player.height / 2 + offset.Y), Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), Player.effect, 0.2f);
 
 
             _spriteBatch.Draw(blankTexture, new Rectangle((int)offset.X +(int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBar, 0, new Vector2(0, 0), 0f, 0.3f);

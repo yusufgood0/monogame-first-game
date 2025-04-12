@@ -57,10 +57,6 @@ namespace first_game
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         };
-
-        //public static readonly int NONE = 0;
-        //public static readonly int SOLID = 1;
-        //public static readonly int BRICK = 2;
         public enum tileTypes
         {
             NONE = 0,
@@ -107,6 +103,8 @@ namespace first_game
             textures[2] = _bricks;
             textureArray[2] = new Vector2(1, 1);
             load(0, numTiles);
+            
+
         }
 
     }
