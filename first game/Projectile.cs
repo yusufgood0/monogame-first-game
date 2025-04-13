@@ -20,14 +20,14 @@ namespace first_game
         public static List<Vector2> position = new List<Vector2>();
         public static List<projectileType> Type = new List<projectileType>();
         public static List<List<int>> Iframes = new List<List<int>>();
-        public static List<List<int>> IframesEnemyIndex = new List<List<int>>();
+        public static List<List<string>> IframesEnemyIndex = new List<List<string>>();
         public static List<int> pierce = new List<int>();
         public static List<int> damage = new List<int>();
 
         public enum projectileType
         {
-            PLAYER_ARROW = 0,
-            ENEMY = 1,
+            PLAYER_PROJECTILE = 0,
+            ENEMY_PROJECTILE = 1,
         }
         public static int[] collisionSizeData =
             {
@@ -45,7 +45,7 @@ namespace first_game
             position.Add(spawnLocation);
             Type.Add(type);
             Iframes.Add(new List<int>());
-            IframesEnemyIndex.Add(new List<int>());
+            IframesEnemyIndex.Add(new List<string>());
             pierce.Add(_pierce);
             damage.Add(_damage);
         }
@@ -67,28 +67,27 @@ namespace first_game
             }
             for (int EnemyIndex = 0; EnemyIndex < Enemy.collideRectangle.Count; EnemyIndex++)
             {
-                if (pierce[_index] > 0 && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
+                if (projectileType.PLAYER_PROJECTILE == Projectile.Type[_index] && !IframesEnemyIndex[_index].Contains(EnemyIndex.ToString()) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
                 {
-                    Enemy.push(damage[_index] * 2, speed[_index], EnemyIndex);
+                    Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
                     if (!Enemy.TakeDamage(Color.Red, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
                     {
                         Iframes[_index].Add(15);
-                        IframesEnemyIndex[_index].Add(EnemyIndex);
+                        IframesEnemyIndex[_index].Add(EnemyIndex.ToString());
                     }
 
                 }
             }
 
-
-            for (int index = 0; index < Tiles.numTiles; index++)
+            for (int TileIndex = 0; TileIndex < Tiles.numTiles; TileIndex++)
             {
-                if (Tiles.collideRectangle[index].Contains(position[_index]))
+                if (Tiles.collideRectangle[TileIndex].Contains(position[_index]))
                 {
-                    switch (Tiles.tileType[index])
+                    switch (Tiles.tileType[TileIndex])
                     {
                         case (int)tileTypes.BRICK:
-                            Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, index);
+                            Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, TileIndex);
                             pierce[_index] -= 1;
                             break;
 
@@ -100,6 +99,17 @@ namespace first_game
 
                 }
             }
+
+            if (projectileType.ENEMY_PROJECTILE == Projectile.Type[_index] && !IframesEnemyIndex[_index].Contains("player") && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(new Rectangle((int)(Player.position.X - Player.width / 2), (int)(Player.position.Y - Player.height / 2), Player.width, Player.height)))
+            {
+                Player.Push(30, speed[_index]);
+                pierce[_index] -= 1;
+                Player.TakeDamage(Color.Red, damage[_index] * 10, 10, 10, damage[_index], Projectile.speed[_index]);
+                Iframes[_index].Add(15);
+                IframesEnemyIndex[_index].Add("player");
+
+            }
+            
 
             if (pierce[_index] <= 0) kill(_index);
         }
