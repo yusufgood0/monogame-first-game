@@ -163,6 +163,7 @@ namespace first_game
 
                 Player.angleVector = new Vector2(mouseState.X - screenSize.X/2, mouseState.Y - screenSize.Y / 2);
                 Player.angle = (float)Math.Atan2(angleVector.Y, angleVector.X);
+                Player.angleVector.Normalize();
 
                 if (Player.iFrames > 0)
                 {
@@ -186,13 +187,14 @@ namespace first_game
                     Player.speed.Y -= Player.movementSpeed;
                     Player.frame = 1;
                     UpdateTexture();
+                    Player.Attacks.swingSpeed = 0;
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.S))
                 {
                     Player.speed.Y += Player.movementSpeed;
                     Player.frame = 0;
                     UpdateTexture();
-
+                    Player.Attacks.swingSpeed = 0;
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.A))
                 {
@@ -200,6 +202,7 @@ namespace first_game
                     Player.frame = 2;
                     Player.effect = SpriteEffects.None;
                     UpdateTexture();
+                    Player.Attacks.swingSpeed = 0;
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.D))
                 {
@@ -207,6 +210,7 @@ namespace first_game
                     Player.frame = 2;
                     Player.effect = SpriteEffects.FlipHorizontally;
                     UpdateTexture();
+                    Player.Attacks.swingSpeed = 0;
                 }
 
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
@@ -236,21 +240,21 @@ namespace first_game
                     {
                         if (Player.state == Player.State.Idle && dashCooldownTimer >= 200)
                         {
-                            Player.Attacks.Swing(0.4f, 40f, 10, 300, 3, 20);
+                            Player.Attacks.Swing(1, 0.4f, 40f, 10, 300, 3, 20);
                             Player.state = Player.State.Attacking_1;
-                            dashCooldownTimer -= 200;
+                            dashCooldownTimer = 200;
                         }
                         else if (Player.state == Player.State.Attacking_1 && dashCooldownTimer >= 300)
                         {
-                            Player.Attacks.Swing(0.2f, 40f, 15, 750, 3, 20);
+                            Player.Attacks.Swing(-1, 0.2f, 40f, 15, 750, 3, 20);
                             Player.state = Player.State.Attacking_2;
-                            dashCooldownTimer -= 300;
+                            dashCooldownTimer = 300;
                         }
                         else if (Player.state == Player.State.Attacking_2 && dashCooldownTimer >= 400)
                         {
-                            Player.Attacks.Swing(0.1f, 40f, 20, 1000, 3, 10);
+                            Player.Attacks.Swing(1, 0.05f, 40f, 20, 1000, 3, 10);
                             Player.state = Player.State.Attacking_3;
-                            dashCooldownTimer -= 400;
+                            dashCooldownTimer = 400;
                         }
                     }
 
@@ -278,7 +282,7 @@ namespace first_game
                 }
 
                 for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)
-                    if (Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
+                    if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
                     {
                         Player.TakeDamage(Color.BlueViolet, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
@@ -343,7 +347,7 @@ namespace first_game
             { 
                 _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); 
             }
-            if (Player.Attacks.attackAngle >= Player.Attacks.endAngle)
+            if (Player.Attacks.swingSpeed != 0)
             {
                 _spriteBatch.Draw(swordTexture, offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.attackAngle), (float)Math.Sin(Player.Attacks.attackAngle)), null, Color.White, (float)(Player.Attacks .attackAngle - Math.PI * .5f), new Vector2(swordTexture.Width / 2, 0), 0.05f, SpriteEffects.FlipVertically, 1);
             }

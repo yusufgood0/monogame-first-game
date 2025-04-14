@@ -60,40 +60,42 @@ namespace first_game
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _stunnTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
-            if (iFrames <= 0 && state != State.Dashing)
+            colorFilter = _color;
+            Push(_knockback, _enemyPlayerAngle);
+            state = State.Stunned;
+            iFrames = _iFrames;
+            health -= _damage;
+            recoveryTime = _stunnTime;
+            if (health <= 0)
             {
-                colorFilter = _color;
-                Push(_knockback, _enemyPlayerAngle);
-                state = State.Stunned;
-                iFrames = _iFrames;
-                health -= _damage;
-                recoveryTime = _stunnTime;
-                if (health <= 0)
-                {
-                    state = State.Dead;
-                }
+                state = State.Dead;
             }
         }
         public class Attacks
         {
-            public static Vector2 checkpoint = new();
+            private static Vector2 checkpoint = new();
             private static float swingWidth;
             private static float swingRange;
             private static int swingDamage;
             public static float attackAngle;
-            public static float endAngle;
-            private static float swingSpeed;
+            private static Vector2 attackAngleVector;
+            private static float startAngle;
+            private static float endAngle;
+            public static float swingSpeed;
             private static int pierce; 
-            public static readonly int swingHitboxSize = 10;
-            public static readonly int projectileHitboxSize = 30;
-            public static void Swing(float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
+            private static readonly int swingHitboxSize = 10;
+            private static readonly int projectileHitboxSize = 30;
+            private static int flipped;
+            public static void Swing(int _flipped , float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
-                Push(5, new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)));
+                Push(5, angleVector);
+                flipped = _flipped;
                 recoveryTime = _recoveryTime;
                 swingWidth = (float)Math.PI * _swingWidth;
                 swingRange = _swingRange;
                 swingDamage = _damage;
-                attackAngle = angle + swingWidth;
+                attackAngle = angle + swingWidth * flipped; //flipped shouldo only be 1 or -1
+                startAngle = angle + swingWidth;
                 endAngle = angle - swingWidth;
                 swingSpeed = _swingSpeed;
                 pierce = _pierce;
@@ -111,9 +113,12 @@ namespace first_game
                     if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
 
                 for (int i = 0; i <= swingSpeed; i++)
-                    if (attackAngle >= endAngle)
+                    if (attackAngle >= endAngle && attackAngle <= startAngle)
                     {
-                        checkpoint = position + new Vector2((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle)) * swingRange;
+                        attackAngleVector = new((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle));
+                        checkpoint = position + attackAngleVector * swingRange;
+                        attackAngle -= 0.1f * flipped;
+
                         for (int index = 0; index < Enemy.collideRectangle.Count; index++)
                             if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X-swingHitboxSize/2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
                             {
@@ -121,7 +126,6 @@ namespace first_game
                                 Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
                                 pierce -= 1;
                             }
-                        attackAngle -= 0.1f;
                         for (int index = 0; index < Tiles.numTiles; index++)
                         {
                             if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
@@ -134,7 +138,7 @@ namespace first_game
                             if (!Projectile.IframesEnemyIndex[index].Contains("swing") && new Rectangle((int)(checkpoint.X - projectileHitboxSize / 2), (int)(checkpoint.Y - projectileHitboxSize / 2), projectileHitboxSize, projectileHitboxSize).Contains(Projectile.position[index]))
                             { 
                                 Projectile.pierce[index] += 1;
-                                Projectile.speed[index] *= -2;
+                                Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;
                                 Projectile.damage[index] = (int)(Projectile.damage[index] * 2.5f);
                                 Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
                                 Projectile.Iframes[index].Add(10);
@@ -144,31 +148,6 @@ namespace first_game
                     }
             }
             
-        }
-        public static void Step()
-        {
-            if (speed != new Vector2(0, 0))
-                speed.Normalize();
-
-            position.X += (int)(speed.X * movementSpeed);
-            for (int index = 0; index < Tiles.numTiles; index++)
-                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
-                {
-                    if (speed.X < 0)
-                        position.X = Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width + collisionSize / 2;
-                    else
-                        position.X = Tiles.collideRectangle[index].X - collisionSize / 2;
-                }
-
-            position.Y += (int)(speed.Y * movementSpeed);
-            for (int index = 0; index < Tiles.numTiles; index++)
-                if (new Rectangle((int)position.X - collisionSize / 2, (int)position.Y - collisionSize / 2, collisionSize, collisionSize).Intersects(Tiles.collideRectangle[index]) && Tiles.tileType[index] != 0)
-                {
-                    if (speed.Y < 0)
-                        position.Y = Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height + collisionSize / 2;
-                    else
-                        position.Y = Tiles.collideRectangle[index].Y - collisionSize / 2;
-                }
         }
         public static void Setup(Texture2D _player)
         {

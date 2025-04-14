@@ -84,10 +84,6 @@ namespace first_game
             colorFilter[_index] = _color;
             iFrames[_index] = _iFrames;
             health[_index] -= _damage;
-            if (type[_index] == EnemyType.ARCHER)
-            {
-                abilityTimer[_index] = Constants.Archer.attackDelay;
-            }
             if (health[_index] <= 0)
             {
                 Kill(_index);
