@@ -10,6 +10,7 @@ using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using static first_game.General;
 using static first_game.Player;
 using static first_game.Projectile;
 using static first_game.Tiles;
@@ -18,6 +19,52 @@ namespace first_game
 {
     public class General
     {
+        public enum MovementDirection
+        {
+            UP, DOWN, LEFT, RIGHT
+        }
+        public static void moveKeyPressed(MovementDirection _movementDirection)
+        {
+            switch (_movementDirection)
+            {
+                case MovementDirection.UP:
+                Player.speed.Y -= Player.movementSpeed;
+                Player.frame = 1;
+                break;
+                case MovementDirection.DOWN:
+                Player.speed.Y += Player.movementSpeed;
+                Player.frame = 0;
+                break;
+                case MovementDirection.LEFT:
+                Player.speed.X -= Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.None;
+                break;
+                case MovementDirection.RIGHT:
+                Player.speed.X += Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.FlipHorizontally;
+                break;
+            }
+            if (Player.Attacks.swingSpeed == -1)
+            switch (_movementDirection)
+            {
+                case MovementDirection.UP:
+                Player.Attacks.attackAngle = 2;
+                break;
+                case MovementDirection.DOWN:
+                Player.Attacks.attackAngle = 2 + (float)Math.PI;
+                break;
+                case MovementDirection.LEFT:
+                Player.Attacks.attackAngle = 2 - (float)Math.PI * 0.5f;
+                break;
+                case MovementDirection.RIGHT:
+                Player.Attacks.attackAngle = 2 + (float)Math.PI * 0.5f;
+                break;
+            }
+
+            UpdateTexture();
+        }
         public static void CollisionY(ref Vector2 position, Vector2 collisionSize, Vector2 speed)
         {
             for (int index = 0; index < Tiles.numTiles; index++)
@@ -121,6 +168,7 @@ namespace first_game
             Tiles.setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
             Constants.EnemyStats.Setup();
 
+
             swordTexture = Content.Load<Texture2D>("swordNoBg");
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
@@ -184,33 +232,22 @@ namespace first_game
 
                 if (movementKeyboardState.IsKeyDown(Keys.W))
                 {
-                    Player.speed.Y -= Player.movementSpeed;
-                    Player.frame = 1;
-                    UpdateTexture();
-                    Player.Attacks.swingSpeed = 0;
+                    moveKeyPressed(MovementDirection.UP);
+                    
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.S))
                 {
-                    Player.speed.Y += Player.movementSpeed;
-                    Player.frame = 0;
-                    UpdateTexture();
-                    Player.Attacks.swingSpeed = 0;
+                    moveKeyPressed(MovementDirection.DOWN);
+                    
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.A))
                 {
-                    Player.speed.X -= Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.None;
-                    UpdateTexture();
-                    Player.Attacks.swingSpeed = 0;
+                    moveKeyPressed(MovementDirection.LEFT);
+                    
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.D))
                 {
-                    Player.speed.X += Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.FlipHorizontally;
-                    UpdateTexture();
-                    Player.Attacks.swingSpeed = 0;
+                    moveKeyPressed(MovementDirection.RIGHT);
                 }
 
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
@@ -278,7 +315,6 @@ namespace first_game
                     Player.movementSpeed = dashSpeed;
                     dashLengthTimer -= timeElapsed;
                     Player.frame += 3;
-                    Player.UpdateTexture();
                 }
 
                 for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)
@@ -347,10 +383,10 @@ namespace first_game
             { 
                 _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); 
             }
-            if (Player.Attacks.swingSpeed != 0)
-            {
-                _spriteBatch.Draw(swordTexture, offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.attackAngle), (float)Math.Sin(Player.Attacks.attackAngle)), null, Color.White, (float)(Player.Attacks .attackAngle - Math.PI * .5f), new Vector2(swordTexture.Width / 2, 0), 0.05f, SpriteEffects.FlipVertically, 1);
-            }
+            //if (Player.Attacks.swingSpeed != -2)
+            //{
+                _spriteBatch.Draw(swordTexture, offset + Player.position + Player.Attacks.attackAngleVector, null, Color.White, (float)(Player.Attacks.attackAngle - Math.PI * .5f), new Vector2(swordTexture.Width / 2, 0), 0.05f, SpriteEffects.FlipVertically, 1);
+            //}
 
             _spriteBatch.DrawString(titleFont, (Player.health / 10).ToString(), new Vector2(10, 10), Color.White);
 

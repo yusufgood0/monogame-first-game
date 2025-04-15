@@ -144,16 +144,16 @@ namespace first_game
 
         public static bool SightLine(Vector2 _point, float _detail)
         {
-            while (true)
+            Vector2 _difference = _point - Player.position;
+            _difference.Normalize();
+            for (int i = 0; i < _detail; i++)
             {
-                _point = new Vector2(_point.X - (_point.X - Player.position.X) / _detail, _point.Y - (_point.Y - Player.position.Y) / _detail);
+                _point -= _difference;
                 for (int index = 0; index < Tiles.numTiles; index++)
                     if (new Rectangle((int)(Tiles.collideRectangle[index].X), (int)(Tiles.collideRectangle[index].Y), (int)(Tiles.tileXY), (int)(Tiles.tileXY)).Contains(_point) && Tiles.tileType[index] != 0)
                         return false;
-
-                if (new Rectangle((int)(Player.position.X - Player.width/2), (int)(Player.position.Y - Player.height/2), (int)(Player.width), (int)(Player.height)).Contains(_point))
-                    return true; // No obstacles in the way
             }
+            return true; // No obstacles in the way
         }
         public static void Update(int _index)
         {
@@ -165,32 +165,19 @@ namespace first_game
             float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
             Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width)/7);
             Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
-            //while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
-
-            
             _newTargetAngle.Normalize();
 
-            if (SightLine(position[_index], _distance))
-            {
-                target[_index] = Player.position;
-            }
-            else if (rnd.Next(100) == 1 && (type[_index] == EnemyType.SMALL || type[_index] == EnemyType.MEDIUM || type[_index] == EnemyType.LARGE))
-            {
-                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-            }
-            else if (rnd.Next(50) == 1 && (type[_index] == EnemyType.ARCHER))
+            bool _sightline = SightLine(position[_index], _distance);
+            _difference.Normalize();
+
+            if (rnd.Next(50) == 1 && (type[_index] == EnemyType.ARCHER))
             {
                 target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
             }
-
-            if (_distance > 10)
+            if (_sightline)
             {
-                Vector2 _position = position[_index];
-                _difference.Normalize();
-                if (iFrames[_index] == 0)
-                {
-                    _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                    if (type[_index] == EnemyType.ARCHER && SightLine(position[_index], _distance))
+                target[_index] = Player.position;
+                if (type[_index] == EnemyType.ARCHER && _sightline)
                     {
                         if (abilityTimer[_index] < 0)
                         {
@@ -211,6 +198,20 @@ namespace first_game
                         }
                         
                     }
+            }
+            else if (rnd.Next(100) == 1 && (type[_index] == EnemyType.SMALL || type[_index] == EnemyType.MEDIUM || type[_index] == EnemyType.LARGE))
+            {
+                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+            }
+            
+
+            if (_distance > 10)
+            {
+                Vector2 _position = position[_index];
+                if (iFrames[_index] == 0)
+                {
+                    _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+                    
                     colorFilter[_index] = Color.DarkSalmon;
                 }
                 General.Movement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
