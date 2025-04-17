@@ -160,6 +160,7 @@ namespace first_game
         public static void Setup(Texture2D _player)
         {
             textures = _player;
+            UpdateTexture();
         }
         public static void UpdateTexture()
         {

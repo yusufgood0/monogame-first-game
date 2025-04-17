@@ -191,6 +191,7 @@ namespace first_game
             Tiles.setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
             Constants.EnemyStats.Setup();
 
+
             swordTexture = Content.Load<Texture2D>("swordNoBg");
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
@@ -338,7 +339,6 @@ namespace first_game
                     Player.movementSpeed = dashSpeed;
                     dashLengthTimer -= timeElapsed;
                     Player.frame += 3;
-                    Player.UpdateTexture();
                 }
 
                 for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)

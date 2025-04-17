@@ -148,6 +148,9 @@ namespace first_game
             return true; // No obstacles in the way
 
         }
+            }
+            return true; // No obstacles in the way
+        }
         public static void Update(int _index)
         {
             Vector2 _difference = General.difference(target[_index], position[_index]); //X and Y difference 
@@ -226,7 +229,7 @@ namespace first_game
 
 
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
-
+                
             }
         }
         public enum EnemyType
