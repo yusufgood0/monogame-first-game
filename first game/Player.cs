@@ -30,7 +30,7 @@ namespace first_game
         public static Texture2D textures;
         public static Color colorFilter;
         public const int width = 35;
-        public const int height = (int)(width*1.25f);
+        public const int height = (int)(width * 1.25f);
         public const int collisionSize = 30;
 
         public static Rectangle textureRectangle = new(0, 0, width, height);
@@ -77,16 +77,16 @@ namespace first_game
             private static float swingWidth;
             private static float swingRange;
             private static int swingDamage;
-            public static float attackAngle;
+            public static float swingAngle;
             private static Vector2 attackAngleVector;
             private static float startAngle;
             private static float endAngle;
             public static float swingSpeed;
-            private static int pierce; 
+            private static int pierce;
             private static readonly int swingHitboxSize = 10;
             private static readonly int projectileHitboxSize = 30;
             private static int flipped;
-            public static void Swing(int _flipped , float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
+            public static void Swing(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
                 Push(5, angleVector);
                 flipped = _flipped;
@@ -94,7 +94,7 @@ namespace first_game
                 swingWidth = (float)Math.PI * _swingWidth;
                 swingRange = _swingRange;
                 swingDamage = _damage;
-                attackAngle = angle + swingWidth * flipped; //flipped shouldo only be 1 or -1
+                swingAngle = angle + swingWidth * flipped; //flipped shouldo only be 1 or -1
                 startAngle = angle + swingWidth;
                 endAngle = angle - swingWidth;
                 swingSpeed = _swingSpeed;
@@ -113,41 +113,49 @@ namespace first_game
                     if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
 
                 for (int i = 0; i <= swingSpeed; i++)
-                    if (attackAngle >= endAngle && attackAngle <= startAngle)
+                {
+                    if (!(swingAngle >= endAngle && swingAngle <= startAngle))
                     {
-                        attackAngleVector = new((float)Math.Cos(attackAngle), (float)Math.Sin(attackAngle));
-                        checkpoint = position + attackAngleVector * swingRange;
-                        attackAngle -= 0.1f * flipped;
+                        swingSpeed = -1;
+                        return;
+                    }
+                    attackAngleVector = new((float)Math.Cos(swingAngle), (float)Math.Sin(swingAngle));
+                    checkpoint = position + attackAngleVector * swingRange;
+                    swingAngle -= 0.1f * flipped;
 
-                        for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-                            if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X-swingHitboxSize/2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
-                            {
-                                Enemy.Push(25, Enemy.position[index] - position, index);
-                                Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
-                                pierce -= 1;
-                            }
-                        for (int index = 0; index < Tiles.numTiles; index++)
+                    for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+                    {
+                        if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
                         {
-                            if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
-                            {
-                                Tiles.TakeDamage(Color.AliceBlue, swingDamage, 10, index);
-                            }
-                        }
-                        for (int index = 0; index < Projectile.position.Count; index++)
-                        {
-                            if (!Projectile.IframesEnemyIndex[index].Contains("swing") && new Rectangle((int)(checkpoint.X - projectileHitboxSize / 2), (int)(checkpoint.Y - projectileHitboxSize / 2), projectileHitboxSize, projectileHitboxSize).Contains(Projectile.position[index]))
-                            { 
-                                Projectile.pierce[index] += 1;
-                                Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;
-                                Projectile.damage[index] = (int)(Projectile.damage[index] * 2.5f);
-                                Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
-                                Projectile.Iframes[index].Add(10);
-                                Projectile.IframesEnemyIndex[index].Add("swing");
-                            }
+                            Enemy.Push(25, Enemy.position[index] - position, index);
+                            Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                            pierce -= 1;
                         }
                     }
+
+                    for (int index = 0; index < Tiles.numTiles; index++)
+                    {
+                        if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
+                        {
+                            Tiles.TakeDamage(Color.AliceBlue, swingDamage, 10, index);
+                        }
+                    }
+
+                    for (int index = 0; index < Projectile.position.Count; index++)
+                    {
+                        if (!Projectile.IframesEnemyIndex[index].Contains(-2) && new Rectangle((int)(checkpoint.X - projectileHitboxSize / 2), (int)(checkpoint.Y - projectileHitboxSize / 2), projectileHitboxSize, projectileHitboxSize).Contains(Projectile.position[index]))
+                        {
+                            Projectile.pierce[index] += 1;
+                            Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;
+                            Projectile.damage[index] = (int)(Projectile.damage[index] * 2.5f);
+                            Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
+                            Projectile.Iframes[index].Add(10);
+                            Projectile.IframesEnemyIndex[index].Add(-2);
+                        }
+                    }
+                }
             }
-            
+
         }
         public static void Setup(Texture2D _player)
         {

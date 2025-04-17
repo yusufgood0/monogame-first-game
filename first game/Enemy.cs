@@ -22,24 +22,17 @@ namespace first_game
         static readonly Random rnd = new();
         public static void RespawnEnemies()
         {
-            int _tileIndex;
-
+            Player.position = RandomTilePosition();
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
-
-                _tileIndex = RandomTileIndex();
-                Enemy.Create(new Vector2(Tiles.collideRectangle[_tileIndex].X + Tiles.tileXY / 2, Tiles.collideRectangle[_tileIndex].Y + Tiles.tileXY / 2), Enemy.type[_enemyIndex]);
-                while (CheckEnemyTileCollision(Enemy.collideRectangle.Count - 1))
+                Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
+                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position)/5))
                 {
-                    _tileIndex = RandomTileIndex();
                     Kill(Enemy.collideRectangle.Count - 1);
-                    Enemy.Create(new Vector2(Tiles.collideRectangle[_tileIndex].X + Tiles.tileXY / 2, Tiles.collideRectangle[_tileIndex].Y + Tiles.tileXY / 2), Enemy.type[_enemyIndex]);
+                    Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
                 }
                 Kill(_enemyIndex);
-
-            }   
-            _tileIndex = RandomTileIndex();
-            Player.position = new Vector2(Tiles.collideRectangle[_tileIndex].X + Tiles.tileXY / 2, Tiles.collideRectangle[_tileIndex].Y + Tiles.tileXY / 2);
+            }
 
         }
         public static bool CheckEnemyTileCollision(int _index)
@@ -58,18 +51,18 @@ namespace first_game
                             return true;
 
                     }
-                    
+
                 }
             return false;
         }
-        public static int RandomTileIndex()
+        public static Vector2 RandomTilePosition()
         {
             int _tileIndex = rnd.Next(Tiles.numTiles - 1);
             while (Tiles.tileType[_tileIndex] != (int)Tiles.tileTypes.NONE)
             {
                 _tileIndex = rnd.Next(Tiles.numTiles - 1);
             }
-            return _tileIndex;
+            return new Vector2(Tiles.collideRectangle[_tileIndex].X + Tiles.tileXY / 2, Tiles.collideRectangle[_tileIndex].Y + Tiles.tileXY / 2);
         }
         public static void Push(float _knockback, Vector2 _Angle, int _index)
         {
@@ -109,7 +102,7 @@ namespace first_game
             for (int ProjectileIndex = 0; ProjectileIndex < Projectile.Iframes.Count; ProjectileIndex++)
             {
                 Projectile.Iframes[ProjectileIndex].Remove(_index);
-                Projectile.IframesEnemyIndex[ProjectileIndex].Remove(_index.ToString());
+                Projectile.IframesEnemyIndex[ProjectileIndex].Remove(_index);
             }
             abilityTimer.RemoveAt(_index);
             health.RemoveAt(_index);
@@ -144,53 +137,60 @@ namespace first_game
 
         public static bool SightLine(Vector2 _point, float _detail)
         {
-            while (true)
+            Vector2 _difference = (_point - Player.position) / _detail;
+            for (int i = 0; i < _detail; i++)
             {
-                _point = new Vector2(_point.X - (_point.X - Player.position.X) / _detail, _point.Y - (_point.Y - Player.position.Y) / _detail);
+                _point -= _difference;
                 for (int index = 0; index < Tiles.numTiles; index++)
-                    if (new Rectangle((int)(Tiles.collideRectangle[index].X), (int)(Tiles.collideRectangle[index].Y), (int)(Tiles.tileXY), (int)(Tiles.tileXY)).Contains(_point) && Tiles.tileType[index] != 0)
+                    if (Tiles.collideRectangle[index].Contains(_point) && Tiles.tileType[index] != 0)
                         return false;
-
-                if (new Rectangle((int)(Player.position.X - Player.width/2), (int)(Player.position.Y - Player.height/2), (int)(Player.width), (int)(Player.height)).Contains(_point))
-                    return true; // No obstacles in the way
             }
+            return true; // No obstacles in the way
+
         }
         public static void Update(int _index)
         {
-            Vector2 _difference = target[_index] - position[_index]; //X and Y difference 
+            Vector2 _difference = General.difference(target[_index], position[_index]); //X and Y difference 
             if (_difference == new Vector2(0, 0))
             {
                 return;
             }
-            float _distance = (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //hypotinuse/distance to target
-            Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width)/7);
-            Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
-            //while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
+            float _distance = General.DistanceFromDifference(_difference); //hypotinuse/distance to target
+            _difference.Normalize();
 
-            
+            Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
+            bool _sightline = SightLine(position[_index], _distance/5);
+
+            Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
+            while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
+
             _newTargetAngle.Normalize();
 
-            if (SightLine(position[_index], _distance))
+            if (Game1.EnemyTargetTimer <= 0)
             {
-                target[_index] = Player.position;
-            }
-            else if (rnd.Next(100) == 1 && (type[_index] == EnemyType.SMALL || type[_index] == EnemyType.MEDIUM || type[_index] == EnemyType.LARGE))
-            {
-                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-            }
-            else if (rnd.Next(50) == 1 && (type[_index] == EnemyType.ARCHER))
-            {
-                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
+                
+                if (rnd.Next(20) == 1 && (type[_index] == EnemyType.SMALL || type[_index] == EnemyType.MEDIUM || type[_index] == EnemyType.LARGE))
+                {
+                    target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+                }
+                else if (rnd.Next(4) == 1 && (type[_index] == EnemyType.ARCHER))
+                {
+                    target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
+                }
+                if (_sightline)
+                {
+                    colorFilter[_index] = Color.Coral;
+                    target[_index] = Player.position;
+
+                }
             }
 
             if (_distance > 10)
             {
-                Vector2 _position = position[_index];
-                _difference.Normalize();
                 if (iFrames[_index] == 0)
                 {
                     _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                    if (type[_index] == EnemyType.ARCHER && SightLine(position[_index], _distance))
+                    if (type[_index] == EnemyType.ARCHER && _sightline)
                     {
                         if (abilityTimer[_index] < 0)
                         {
@@ -209,17 +209,24 @@ namespace first_game
                                 _speed -= _difference * Constants.Archer.archerBackupSpeed;
                             }
                         }
-                        
                     }
-                    colorFilter[_index] = Color.DarkSalmon;
+                    if (_sightline)
+                    {
+                        colorFilter[_index] = Color.Coral;
+                    }
+                    else
+                    {
+                        colorFilter[_index] = Color.DarkSalmon;
+                    }
                 }
+                Vector2 _position = position[_index];
                 General.Movement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
                 position[_index] = _position;
                 speed[_index] = speed[_index] * 0.6f;
 
 
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
-                
+
             }
         }
         public enum EnemyType

@@ -8,7 +8,8 @@ namespace first_game
 {
     internal class Constants
     {
-        public static readonly int tps = 25;
+        public static readonly int tps = 30; 
+        public static readonly int tpsPerSec = 1000 / 30;
 
         public static float cameraLag = 0.25f; // how much the camera sould lag behind the player
         public class EnemyStats
@@ -21,7 +22,7 @@ namespace first_game
             public static void Setup()
             {
                 //stats for Small enemies
-                movementSpeed.Add(3.7f);
+                movementSpeed.Add(3.5f);
                 damage.Add(40);
                 health.Add(50);
                 height.Add(24);
