@@ -148,9 +148,6 @@ namespace first_game
             return true; // No obstacles in the way
 
         }
-            }
-            return true; // No obstacles in the way
-        }
         public static void Update(int _index)
         {
             Vector2 _difference = General.difference(target[_index], position[_index]); //X and Y difference 
