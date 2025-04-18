@@ -175,7 +175,7 @@ namespace first_game
         float bowCharge = 0;
 
         readonly int bowBarSize = 50;
-        Color bowChargeBar;
+        Color bowChargeBarColor;
 
         public Game1()
         {
@@ -280,13 +280,22 @@ namespace first_game
                     if (bowCharge < MaxBowCharge) bowCharge += BowRechargeRate;
                     if (bowCharge >= MinBowCharge)
                     {
-                        bowChargeBar = Color.Red;
-                        if (!keyboardState.IsKeyDown(Keys.LeftControl)) Projectile.create(projectileType.PLAYER_PROJECTILE, Player.position, Player.angleVector, 5 + (int)bowCharge / 10, 2, 5, 1 + (int)(bowCharge / MaxBowCharge), (int)bowCharge / 2);
+                        bowChargeBarColor = Color.Red;
+                        if (!keyboardState.IsKeyDown(Keys.LeftControl)) 
+                            Projectile.create(
+                                projectileType.PLAYER_PROJECTILE, 
+                                Player.position, 
+                                Player.angleVector, 
+                                5 + (int)bowCharge / 10,
+                                2, 
+                                5, 
+                                1 + (int)(bowCharge / MaxBowCharge),
+                                (int)bowCharge / 2);
                     }
                 }
                 else
                 {
-                    bowChargeBar = Color.Blue;
+                    bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
 
@@ -313,7 +322,7 @@ namespace first_game
                         }
                         else if (Player.state == Player.State.Attacking_2 && dashCooldownTimer >= 400)
                         {
-                            Player.Attacks.Swing(1, 0.05f, 40f, 20, 1000, 3, 10);
+                            Player.Attacks.Swing(1, 2f, 40f, 20, 1000, 3, 10);
                             Player.state = Player.State.Attacking_3;
                             dashCooldownTimer = 400;
                         }
@@ -379,6 +388,7 @@ namespace first_game
 
         protected override void Draw(GameTime gameTime)
         {
+            
             GraphicsDevice.Clear(Color.CornflowerBlue);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
@@ -390,7 +400,7 @@ namespace first_game
 
             for (int index = 0; index < Enemy.collideRectangle.Count; index++)
             {
-                _spriteBatch.Draw(blankTexture, new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height), Enemy.textureRectangle[index], Enemy.colorFilter[index], 0, new Vector2(0, 0), 0f, 0.1f);
+                _spriteBatch.Draw(blankTexture, new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height), Enemy.textureRectangle[index], Enemy.colorFilter[index] * DistanceFromPoints(Enemy.position[index]), 0, new Vector2(0, 0), 0f, 0.1f);
                 _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index] + offset, Color.Red);
             }
 
@@ -403,7 +413,7 @@ namespace first_game
             _spriteBatch.Draw(Player.textures, new Rectangle((int)(Player.position.X - Player.width / 2 + offset.X), (int)(Player.position.Y - Player.height / 2 + offset.Y), Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), Player.effect, 0.2f);
 
 
-            _spriteBatch.Draw(blankTexture, new Rectangle((int)offset.X + (int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBar, 0, new Vector2(0, 0), 0f, 0.3f);
+            _spriteBatch.Draw(blankTexture, new Rectangle((int)offset.X + (int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBarColor, 0, new Vector2(0, 0), 0f, 0.3f);
 
 
             _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);

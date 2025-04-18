@@ -26,7 +26,7 @@ namespace first_game
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
                 Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
-                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position)/5))
+                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position) / 5))
                 {
                     Kill(Enemy.collideRectangle.Count - 1);
                     Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
@@ -43,12 +43,12 @@ namespace first_game
                     switch (Tiles.tileType[tileIndex])
                     {
                         case (int)Tiles.tileTypes.SOLID:
-                            return true;
+                        return true;
 
                         case (int)Tiles.tileTypes.BRICK:
-                            Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
-                            Tiles.load(tileIndex, tileIndex);
-                            return true;
+                        Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
+                        Tiles.load(tileIndex, tileIndex);
+                        return true;
 
                     }
 
@@ -159,7 +159,7 @@ namespace first_game
             _difference.Normalize();
 
             Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
-            bool _sightline = SightLine(position[_index], _distance/5);
+            bool _sightline = SightLine(position[_index], _distance / 5);
 
             Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
             while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
@@ -168,20 +168,25 @@ namespace first_game
 
             if (Game1.EnemyTargetTimer <= 0)
             {
-                
-                if (rnd.Next(20) == 1 && (type[_index] == EnemyType.SMALL || type[_index] == EnemyType.MEDIUM || type[_index] == EnemyType.LARGE))
-                {
-                    target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                }
-                else if (rnd.Next(4) == 1 && (type[_index] == EnemyType.ARCHER))
-                {
-                    target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
-                }
+
+
                 if (_sightline)
                 {
                     colorFilter[_index] = Color.Coral;
                     target[_index] = Player.position;
-
+                }
+                switch (type[_index])
+                {
+                    case EnemyType.ARCHER:
+                    if (rnd.Next(4) == 1)
+                    {
+                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
+                    }
+                    break;
+                    default:
+                    if (rnd.Next(20) == 1)
+                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+                    break;
                 }
             }
 
@@ -223,10 +228,7 @@ namespace first_game
                 General.Movement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
                 position[_index] = _position;
                 speed[_index] = speed[_index] * 0.6f;
-
-
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
-                
             }
         }
         public enum EnemyType
