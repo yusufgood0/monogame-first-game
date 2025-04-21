@@ -41,14 +41,20 @@ namespace first_game
         public static float angle;
         public static Vector2 angleVector;
 
-        public static Vector2 position = new((Tiles.rows * Tiles.tileXY - width) / 2, (Tiles.columns * Tiles.tileXY - height) / 2);
+        public static Vector2 position = new();
         public static Vector2 speed = new(0f, 0f);
         public static float movementSpeed = 2.5f;
 
         public static State state = State.Idle;
         public static int recoveryTime = 0;
         public static int health = 1000;
-        public static int iFrames = 0;
+        public static int iFrames = 10;
+
+        public static void reloadPlayerPosition()
+        {
+            Player.position = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
+
+        }
         public static void Push(float _knockback, Vector2 _Angle)
         {
             if (_Angle != new Vector2(0, 0))
@@ -58,14 +64,16 @@ namespace first_game
                 movementSpeed = _knockback;
             }
         }
-        public static void TakeDamage(Color _color, int _damage, int _iFrames, int _stunnTime, float _knockback, Vector2 _enemyPlayerAngle)
+        public static void TakeDamage(Color _color, int _damage, int _iFrames, int _recoveryTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
+            if (iFrames <= _iFrames)
+            iFrames = _iFrames;
+
             colorFilter = _color;
             Push(_knockback, _enemyPlayerAngle);
-            state = State.Stunned;
-            iFrames = _iFrames;
             health -= _damage;
-            recoveryTime = _stunnTime;
+            state = State.Stunned;
+            recoveryTime = _recoveryTime;
             if (health <= 0)
             {
                 state = State.Dead;
@@ -127,7 +135,7 @@ namespace first_game
                     {
                         if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
                         {
-                            Enemy.Push(25, Enemy.position[index] - position, index);
+                            Enemy.Push(50, Enemy.position[index] - position, index);
                             Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
                             pierce -= 1;
                         }

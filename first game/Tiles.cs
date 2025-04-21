@@ -10,11 +10,44 @@ using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using static first_game.Levels;
 
 namespace first_game
 {
     public class Tiles
     {
+        static readonly Random rnd = new();
+       
+
+        
+        public static int[] tileType = Levels.levelMaps[Levels.Level];
+
+
+        static Random Generator = new Random();
+        public static double scale = 1f;
+
+        public const int columns = 20;
+        public const int rows = 20;
+        public const int tileXY = 60;
+        public const int numTiles = columns * rows;
+
+
+        public static int[] health = new int[numTiles];
+        public static int[] swingIFrames = new int[numTiles];
+        public static Texture2D[] textures = new Texture2D[4];
+        public static Vector2[] textureArray = new Vector2[4];
+        public static Rectangle[] textureRectangle = new Rectangle[numTiles];
+        public static Rectangle[] collideRectangle = new Rectangle[numTiles];
+
+
+        public enum tileTypes
+        {
+            NONE = 0,
+            SOLID = 1,
+            BRICK = 2,
+            GATE = 3,
+        }
+
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int index)
         {
             Tiles.swingIFrames[index] = _iFrames;
@@ -22,46 +55,18 @@ namespace first_game
             if (Tiles.health[index] <= 0)
             {
                 tileType[index] = (int)tileTypes.NONE;
-                load(index, index);
+                loadTiles(index, index);
             }
         }
-        static Random Generator = new Random();
-        public static double scale = 1f;
 
-        public const int columns = 15;
-        public const int rows = 15;
-        public const int tileXY = 60;
-        public const int numTiles = columns * rows;
-
-
-        public static int[] health = new int[numTiles];
-        public static int[] swingIFrames = new int[numTiles];
-        public static Texture2D[] textures = new Texture2D[3];
-        public static Vector2[] textureArray = new Vector2[3];
-        public static Rectangle[] textureRectangle = new Rectangle[numTiles];
-        public static Rectangle[] collideRectangle = new Rectangle[numTiles];
-        public static int[] tileType = {
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1,
-                1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1,
-                1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1,
-                1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
-                1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-        };
-        public enum tileTypes
+        public static int RandomOpen()
         {
-            NONE = 0,
-            SOLID = 1,
-            BRICK = 2,
+            int _tileIndex = rnd.Next(Tiles.numTiles - 1);
+            while (Tiles.tileType[_tileIndex] != (int)Tiles.tileTypes.NONE)
+            {
+                _tileIndex = rnd.Next(Tiles.numTiles - 1);
+            }
+            return _tileIndex;
         }
         public static void regenerateTilemap()
         {
@@ -76,9 +81,9 @@ namespace first_game
                     tileType[index] = (int)tileTypes.BRICK;
                 }
             }
-            load(0, numTiles);
+            loadTiles(0, numTiles);
         }
-        public static void load(int index_start, int index_end)
+        public static void loadTiles(int index_start, int index_end)
         {
             for (int _columns = 0; _columns < columns; _columns++)
                 for (int _rows = 0; _rows < rows; _rows++)
@@ -94,16 +99,15 @@ namespace first_game
                     }
                 }
         }
-        public static void setup(Texture2D _tiles, Texture2D _dirt, Texture2D _bricks)
+        public static void setup(object[] _textures)
         {
-            textures[0] = _dirt;
-            textureArray[0] = new Vector2(4, 4);
-            textures[1] = _tiles;
-            textureArray[1] = new Vector2(4, 4);
-            textures[2] = _bricks;
-            textureArray[2] = new Vector2(1, 1);
-            load(0, numTiles);
-            
+            for (int i = 0; i * 2 < _textures.Length; i++)
+            {
+                textures[i] = (Texture2D)_textures[i * 2];
+                textureArray[i] = (Vector2)_textures[i * 2 + 1];
+            }
+            loadTiles(0, numTiles);
+
 
         }
 

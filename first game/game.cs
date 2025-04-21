@@ -19,9 +19,81 @@ namespace first_game
 {
     public class General
     {
+        public static Color Darkness(Color _color, Vector2 _position)
+        {
+            //if (!Enemy.SightLine(_position, DistanceFromPoints(_position, Player.position)))
+            //{
+            //    return Color.Black;
+            //}
+
+            List<Vector2> _points = new();
+            List<float> _luminanceLevels = new();
+            float _finalLuminance = 0;
+            float _finalLightLevel;
+
+            _points.Add(Player.position);
+            _luminanceLevels.Add(Game1.playerLightEmit);
+
+            foreach (Vector2 _projectilePosition in Projectile.position)
+            {
+                _points.Add(_projectilePosition);
+                _luminanceLevels.Add(Constants.Luminance.Projectile);
+            }
+
+            //for (int i = 0; i < Enemy.position.Count; i++)
+            //{
+            //    _points.Add(Enemy.position[i]);
+            //    _luminanceLevels.Add(Constants.Luminance.Enemy * Enemy.health[i]/200);
+            //}
+
+            for (int i = 0; i < numTiles; i++)
+            {
+                if (Tiles.tileType[i] == (int)Tiles.tileTypes.GATE)
+                {
+                    _points.Add(RectangleToVector2(Tiles.collideRectangle[i]));
+                    _luminanceLevels.Add(Constants.Luminance.LevelEnd);
+                }
+            }
+
+            for (int i = 0; i < _points.Count; i++)
+            {
+                float _distanceCheck = DistanceFromPoints(_position, _points[i]);
+                if (_distanceCheck == 0)
+                {
+                    _distanceCheck = 1;
+                }
+                if (_finalLuminance < _luminanceLevels[i] / _distanceCheck)
+                {
+                    _finalLuminance = _luminanceLevels[i] / _distanceCheck;
+                }
+            }
+
+            _finalLightLevel = _finalLuminance - Constants.LightStrength;
+            return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
+        }
+        public static Rectangle Vector2toRectangle(Vector2 Position, int _width, int _height, Vector2 offset)
+        {
+            return new((int)(Position.X - _width / 2 + offset.X), (int)(Position.Y - _height / 2 + offset.Y), _width, _height);
+        }
+        public static Vector2 RectangleToVector2(Rectangle _rectangle)
+        {
+            return new Vector2(_rectangle.X + _rectangle.Width/2, _rectangle.Y + _rectangle.Height / 2);
+        }
+        public static int TileFromVector2(Vector2 _position)
+        {
+            for (int _tileIndex = 0; _tileIndex < Tiles.numTiles; _tileIndex++)
+            {
+                if (collideRectangle[_tileIndex].Contains(_position))
+                    return _tileIndex;
+            }
+            return 0;
+
+        }
         public static float DistanceFromPoints(Vector2 _pointA, Vector2 _pointB)
         {
             Vector2 _difference = difference(_pointA, _pointB);
+            if (_difference == new Vector2(0, 0))
+                return 0;
             return (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //X and Y difference 
         }
         public static float DistanceFromDifference(Vector2 _difference)
@@ -151,7 +223,7 @@ namespace first_game
         KeyboardState previousKeyboardState;
         KeyboardState keyboardState;
         MouseState mouseState;
-        SpriteFont titleFont;
+        static SpriteFont titleFont;
 
         Vector2 offset = new(0, 0);
 
@@ -159,6 +231,8 @@ namespace first_game
         Texture2D blankTexture;
 
         public static int EnemyTargetTimer = 0;
+
+        public static float playerLightEmit = Constants.maxPlayerLightEmit;
 
         int gametimer;
         readonly static int maxDashCharge = 2;
@@ -186,22 +260,6 @@ namespace first_game
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            Enemy.Setup(Content.Load<Texture2D>("tiles"));
-            Player.Setup(Content.Load<Texture2D>("Player"));
-            Tiles.setup(Content.Load<Texture2D>("tiles"), Content.Load<Texture2D>("dirt"), Content.Load<Texture2D>("Brickwall6_Texture"));
-            Constants.EnemyStats.Setup();
-
-
-            swordTexture = Content.Load<Texture2D>("swordNoBg");
-            blankTexture = new Texture2D(GraphicsDevice, 1, 1);
-            blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
-
-            for (int i = 0; i < 2; i++) Enemy.Create(new Vector2(0, 0), Enemy.EnemyType.SMALL);
-            for (int i = 0; i < 2; i++) Enemy.Create(new Vector2(0, 0), Enemy.EnemyType.MEDIUM);
-            for (int i = 0; i < 2; i++) Enemy.Create(new Vector2(0, 0), Enemy.EnemyType.LARGE);
-            for (int i = 0; i < 2; i++) Enemy.Create(new Vector2(0, 0), Enemy.EnemyType.ARCHER);
-            Tiles.regenerateTilemap();
-            Enemy.RespawnEnemies();
             screenSize = new Vector2(GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height);
             _graphics.PreferredBackBufferWidth = (int)screenSize.X; // Sets the width of the window
             _graphics.PreferredBackBufferHeight = (int)screenSize.Y; // Sets the height of the window
@@ -209,6 +267,32 @@ namespace first_game
 
             titleFont = Content.Load<SpriteFont>("titleFont");
             Window.Title = "Adding Things";
+
+            Enemy.Setup(Content.Load<Texture2D>("tiles"));
+            Player.Setup(Content.Load<Texture2D>("Player"));
+            Tiles.setup(new object[] {
+                Content.Load<Texture2D>("dirt"),
+                new Vector2(4, 4),
+                Content.Load<Texture2D>("tiles"),
+                new Vector2(4, 4),
+                Content.Load<Texture2D>("Brickwall6_Texture"),
+                new Vector2(1, 1),
+                Content.Load<Texture2D>("PurpleTile"),
+                new Vector2(4, 4),
+            });
+            Portal.Setup(Content.Load<Texture2D>("Portal"));
+
+
+            Constants.EnemyStats.Setup();
+
+            swordTexture = Content.Load<Texture2D>("swordNoBg");
+            blankTexture = new Texture2D(GraphicsDevice, 1, 1);
+            blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
+
+            Levels.SetLevel(Levels.Level);
+            Enemy.RandomizePositions();
+
+
 
             base.Initialize();
         }
@@ -244,10 +328,9 @@ namespace first_game
 
                 if (keyboardState.IsKeyDown(Keys.Tab) && !previousKeyboardState.IsKeyDown(Keys.Tab))
                 {
-                    Tiles.regenerateTilemap();
-                    Enemy.RespawnEnemies();
+                    Levels.SetLevel(Levels.Level+1);
+                    Enemy.RandomizePositions();
                 }
-
 
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                     Exit();
@@ -257,17 +340,17 @@ namespace first_game
                 if (movementKeyboardState.IsKeyDown(Keys.W))
                 {
                     MoveKeyPressed(MoveKeys.UP);
-                    
+
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.S))
                 {
                     MoveKeyPressed(MoveKeys.DOWN);
-                    
+
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.A))
                 {
                     MoveKeyPressed(MoveKeys.LEFT);
-                    
+
                 }
                 if (movementKeyboardState.IsKeyDown(Keys.D))
                 {
@@ -281,14 +364,14 @@ namespace first_game
                     if (bowCharge >= MinBowCharge)
                     {
                         bowChargeBarColor = Color.Red;
-                        if (!keyboardState.IsKeyDown(Keys.LeftControl)) 
+                        if (!keyboardState.IsKeyDown(Keys.LeftControl))
                             Projectile.create(
-                                projectileType.PLAYER_PROJECTILE, 
-                                Player.position, 
-                                Player.angleVector, 
+                                projectileType.PLAYER_PROJECTILE,
+                                Player.position,
+                                Player.angleVector,
                                 5 + (int)bowCharge / 10,
-                                2, 
-                                5, 
+                                2,
+                                5,
                                 1 + (int)(bowCharge / MaxBowCharge),
                                 (int)bowCharge / 2);
                     }
@@ -308,21 +391,22 @@ namespace first_game
 
                     if (keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space))
                     {
+
                         if (Player.state == Player.State.Idle && dashCooldownTimer >= 200)
                         {
-                            Player.Attacks.Swing(1, 0.4f, 40f, 15, 300, 3, 20);
+                            Player.Attacks.Swing(1, 0.3f, 40f, 15, 300, 1, 20);
                             Player.state = Player.State.Attacking_1;
                             dashCooldownTimer = 200;
                         }
                         else if (Player.state == Player.State.Attacking_1 && dashCooldownTimer >= 300)
                         {
-                            Player.Attacks.Swing(-1, 0.2f, 40f, 15, 750, 3, 20);
+                            Player.Attacks.Swing(-1, 0.5f, 40f, 15, 750, 2, 20);
                             Player.state = Player.State.Attacking_2;
                             dashCooldownTimer = 300;
                         }
                         else if (Player.state == Player.State.Attacking_2 && dashCooldownTimer >= 400)
                         {
-                            Player.Attacks.Swing(1, 2f, 40f, 20, 1000, 3, 10);
+                            Player.Attacks.Swing(1, 0.7f, 40f, 20, 1000, 3, 20);
                             Player.state = Player.State.Attacking_3;
                             dashCooldownTimer = 400;
                         }
@@ -356,8 +440,22 @@ namespace first_game
                         Player.TakeDamage(Color.BlueViolet, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
 
+                if (playerLightEmit > 0)
+                {
+                    playerLightEmit -= Constants.maxPlayerLightEmit / 2000;
+                }
 
-
+                if (Color.Black == Darkness(Color.White, RectangleToVector2(Tiles.collideRectangle[TileFromVector2(Player.position)])))
+                {
+                    Player.TakeDamage(
+                        Color.White,
+                        2,
+                        0,
+                        0,
+                        0,
+                        new()
+                        );
+                }
 
                 Player.Attacks.SwingUpdate();
 
@@ -380,6 +478,7 @@ namespace first_game
                 {
                     gametimer = 0;
                 }
+
             }
             // TODO: Add your update logic here
 
@@ -388,42 +487,110 @@ namespace first_game
 
         protected override void Draw(GameTime gameTime)
         {
-            
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            GraphicsDevice.Clear(Color.Black);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
             offset += (-Player.position + screenSize / 2 - offset) / (Constants.tps * Constants.cameraLag);
             for (int index = 0; index < Tiles.numTiles; index++)
             {
-                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y, Tiles.tileXY, Tiles.tileXY), Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0);
+                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
+                    new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
+                    Tiles.tileXY,
+                    Tiles.tileXY),
+                    Tiles.textureRectangle[index],
+                    Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
+                    0,
+                    new Vector2(0, 0),
+                    0f,
+                    0);
             }
 
             for (int index = 0; index < Enemy.collideRectangle.Count; index++)
             {
-                _spriteBatch.Draw(blankTexture, new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height), Enemy.textureRectangle[index], Enemy.colorFilter[index] * DistanceFromPoints(Enemy.position[index]), 0, new Vector2(0, 0), 0f, 0.1f);
-                _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index] + offset, Color.Red);
+                _spriteBatch.Draw(blankTexture,
+                    new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
+                    Enemy.textureRectangle[index],
+                    Darkness(Enemy.colorFilter[index], Enemy.position[index]),
+                    0,
+                    new Vector2(0, 0),
+                    0f,
+                    0.1f);
+                //_spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index] + offset, Color.Red);
             }
 
             for (int index = 0; index < Projectile.position.Count; index++)
             {
-                _spriteBatch.Draw(blankTexture, new Rectangle((int)offset.X + (int)Projectile.position[index].X - 5, (int)offset.Y + (int)Projectile.position[index].Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
+                _spriteBatch.Draw(
+                    blankTexture,
+                    Vector2toRectangle(Projectile.position[index], 10, 10, offset),
+                    null, 
+                    Color.White, 
+                    0, 
+                    new Vector2(0, 0), 
+                    0f, 
+                    0.5f);
 
             }
 
-            _spriteBatch.Draw(Player.textures, new Rectangle((int)(Player.position.X - Player.width / 2 + offset.X), (int)(Player.position.Y - Player.height / 2 + offset.Y), Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), Player.effect, 0.2f);
+            _spriteBatch.Draw(
+                Player.textures,
+                Vector2toRectangle(Player.position, Player.width, Player.height, offset),
+                Player.textureRectangle, 
+                Color.White, 
+                0, 
+                new Vector2(0, 0), 
+                Player.effect, 
+                0.2f
+                );
 
 
-            _spriteBatch.Draw(blankTexture, new Rectangle((int)offset.X + (int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBarColor, 0, new Vector2(0, 0), 0f, 0.3f);
+            _spriteBatch.Draw(
+                blankTexture,
+                new Rectangle((int)offset.X + (int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), 
+                null, 
+                bowChargeBarColor, 
+                0, 
+                new Vector2(0, 0), 0f, 0.3f
+                );
 
 
-            _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
+            _spriteBatch.Draw(
+                blankTexture, 
+                new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), 
+                null, 
+                Color.White, 
+                0, 
+                new Vector2(0, 0), 
+                0f, 
+                0.3f
+                );
             for (int i = 0; i < maxDashCharge + 1; i++)
             {
-                _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f);
+                _spriteBatch.Draw(
+                    blankTexture, 
+                    new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), 
+                    null, 
+                    Color.Blue, 
+                    0, 
+                    new Vector2(0, 0), 
+                    0f, 
+                    0.4f
+                    );
             }
             if (Player.Attacks.swingSpeed != 0)
             {
-                _spriteBatch.Draw(swordTexture, offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle), (float)Math.Sin(Player.Attacks.swingAngle)), null, Color.White, (float)(Player.Attacks.swingAngle - Math.PI * .5f), new Vector2(swordTexture.Width / 2, 0), 0.05f, SpriteEffects.FlipVertically, 1);
+                _spriteBatch.Draw(
+                    swordTexture, 
+                    offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle), 
+                    (float)Math.Sin(Player.Attacks.swingAngle)), 
+                    null, 
+                    Color.White, 
+                    (float)(Player.Attacks.swingAngle - Math.PI * .5f), 
+                    new Vector2(swordTexture.Width / 2, 0), 
+                    0.05f, 
+                    SpriteEffects.FlipVertically, 
+                    1);
             }
 
             _spriteBatch.DrawString(titleFont, (Player.health / 10).ToString(), new Vector2(10, 10), Color.White);
@@ -431,44 +598,5 @@ namespace first_game
             _spriteBatch.End();
             base.Draw(gameTime);
         }
-        //protected override void Draw(GameTime gameTime)
-        //{
-        //    GraphicsDevice.Clear(Color.CornflowerBlue);
-        //    // TODO: Add your drawing code here
-        //    _spriteBatch.Begin();
-        //    Vector2 offset = Player.position;
-        //    for (int index = 0; index < Tiles.numTiles; index++) { _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]], Tiles.collideRectangle[index], Tiles.textureRectangle[index], Color.White, 0, new Vector2(0, 0), 0f, 0); }
-
-        //    for (int index = 0; index < Projectile.position.Count; index++)
-        //    {
-        //        _spriteBatch.Draw(blankTexture, new Rectangle((int)Projectile.position[index].X - 5, (int)Projectile.position[index].Y - 5, 10, 10), null, Color.White, 0, new Vector2(0, 0), 0f, 0.5f);
-
-        //    }
-
-        //    for (int index = 0; index < Enemy.collideRectangle.Count; index++)
-        //    {
-        //        _spriteBatch.Draw(blankTexture, Enemy.collideRectangle[index], Enemy.textureRectangle[index], Enemy.colorFilter[index], 0, new Vector2(0, 0), 0f, 0.1f);
-        //        _spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index], Color.Red);
-        //    }
-
-        //    _spriteBatch.Draw(Player.textures, new Rectangle((int)Player.position.X - Player.width/2, (int)Player.position.Y - Player.height / 2, Player.width, Player.height), Player.textureRectangle, Color.White, 0, new Vector2(0, 0), Player.effect, 0.2f);
-
-
-        //    _spriteBatch.Draw(blankTexture, new Rectangle((int)Player.position.X - bowBarSize / 2, (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8), null, bowChargeBar, 0, new Vector2(0, 0), 0f, 0.3f);
-
-
-        //    _spriteBatch.Draw(blankTexture, new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32), null, Color.White, 0, new Vector2(0, 0), 0f, 0.3f);
-        //    for (int i = 0; i < maxDashCharge + 1; i++) { _spriteBatch.Draw(blankTexture, new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20), null, Color.Blue, 0, new Vector2(0, 0), 0f, 0.4f); }
-        //    if (Player.Attacks.Swing.attackAngle >= Player.Attacks.Swing.endAngle) 
-        //    {
-        //        _spriteBatch.Draw(swordTexture, Player.position + new Vector2((float)Math.Cos(Player.Attacks.Swing.attackAngle), (float)Math.Sin(Player.Attacks.Swing.attackAngle)), null, Color.White, (float)(Player.Attacks.Swing.attackAngle - Math.PI * .5f), new Vector2(swordTexture.Width/2, 0), 0.05f, SpriteEffects.FlipVertically, 1);
-        //        //_spriteBatch.Draw(swordTexture, new Vector2((int)Player.Attacks.Swing.checkpoint.X, (int)Player.Attacks.Swing.checkpoint.YxSize), null, Color.White, Player.Attacks.Swing.attackAngle, new Vector2(0, 0), 0f, 0.5f); 
-        //    }
-
-        //    _spriteBatch.DrawString(titleFont, (Player.health / 10).ToString(), new Vector2(10, 10), Color.White);
-
-        //    _spriteBatch.End();
-        //    base.Draw(gameTime);
-        //}
     }
 }

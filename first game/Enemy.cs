@@ -20,21 +20,19 @@ namespace first_game
     public class Enemy
     {
         static readonly Random rnd = new();
-        public static void RespawnEnemies()
+        public static void RandomizePositions()
         {
-            Player.position = RandomTilePosition();
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
-                Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
-                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position) / 5))
+                Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
+                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position)))
                 {
-                    Kill(Enemy.collideRectangle.Count - 1);
-                    Enemy.Create(RandomTilePosition(), Enemy.type[_enemyIndex]);
+                    Enemy.position[Enemy.collideRectangle.Count - 1] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
                 }
-                Kill(_enemyIndex);
             }
 
         }
+
         public static bool CheckEnemyTileCollision(int _index)
         {
             for (int tileIndex = Tiles.numTiles - 1; tileIndex >= 0; tileIndex--)
@@ -43,27 +41,19 @@ namespace first_game
                     switch (Tiles.tileType[tileIndex])
                     {
                         case (int)Tiles.tileTypes.SOLID:
-                        return true;
+                            return true;
 
                         case (int)Tiles.tileTypes.BRICK:
-                        Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
-                        Tiles.load(tileIndex, tileIndex);
-                        return true;
+                            Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
+                            Tiles.loadTiles(tileIndex, tileIndex);
+                            return true;
 
                     }
 
                 }
             return false;
         }
-        public static Vector2 RandomTilePosition()
-        {
-            int _tileIndex = rnd.Next(Tiles.numTiles - 1);
-            while (Tiles.tileType[_tileIndex] != (int)Tiles.tileTypes.NONE)
-            {
-                _tileIndex = rnd.Next(Tiles.numTiles - 1);
-            }
-            return new Vector2(Tiles.collideRectangle[_tileIndex].X + Tiles.tileXY / 2, Tiles.collideRectangle[_tileIndex].Y + Tiles.tileXY / 2);
-        }
+
         public static void Push(float _knockback, Vector2 _Angle, int _index)
         {
             if (_Angle != new Vector2(0, 0))
@@ -84,6 +74,15 @@ namespace first_game
             }
             else return false;
         }
+        public static void CreateEnemies(int[] _enemyTypes)
+        {
+            for (int i = 0; i < _enemyTypes.Length; i++)
+            {
+                for (int i2 = 0; i2 < _enemyTypes[i]; i2++)
+                    Create(new(), (EnemyType)i);
+
+            }
+        }
         public static void Create(Vector2 _spawnLocation, EnemyType _EnemyType)
         {
             abilityTimer.Add(0);
@@ -93,12 +92,23 @@ namespace first_game
             position.Add(new Vector2((int)_spawnLocation.X, (int)_spawnLocation.Y));
             target.Add(_spawnLocation - new Vector2(0, 10));
             iFrames.Add(1);
-            speed.Add(new Vector2(0, 0));
+            speed.Add(new());
             type.Add(_EnemyType);
             colorFilter.Add(Color.DarkSalmon);
         }
+        public static void KillAll()
+        {
+            for (int _index = health.Count - 1; _index >= 0; _index--)
+            {
+                Kill(_index);
+            }
+        }
         public static void Kill(int _index)
         {
+            Game1.playerLightEmit += Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.type[_index]];
+            if (Game1.playerLightEmit >= Constants.maxPlayerLightEmit)
+                Game1.playerLightEmit = Constants.maxPlayerLightEmit;
+
             for (int ProjectileIndex = 0; ProjectileIndex < Projectile.Iframes.Count; ProjectileIndex++)
             {
                 Projectile.Iframes[ProjectileIndex].Remove(_index);
@@ -114,7 +124,6 @@ namespace first_game
             speed.RemoveAt(_index);
             type.RemoveAt(_index);
             colorFilter.RemoveAt(_index);
-
         }
 
         public static Texture2D textures;
@@ -169,25 +178,25 @@ namespace first_game
             if (Game1.EnemyTargetTimer <= 0)
             {
 
-
+                switch (type[_index])
+                {
+                    case EnemyType.ARCHER:
+                        if (rnd.Next(4) == 1)
+                        {
+                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
+                        }
+                        break;
+                    default:
+                        if (rnd.Next(20) == 1)
+                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+                        break;
+                }
                 if (_sightline)
                 {
                     colorFilter[_index] = Color.Coral;
                     target[_index] = Player.position;
                 }
-                switch (type[_index])
-                {
-                    case EnemyType.ARCHER:
-                    if (rnd.Next(4) == 1)
-                    {
-                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
-                    }
-                    break;
-                    default:
-                    if (rnd.Next(20) == 1)
-                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                    break;
-                }
+
             }
 
             if (_distance > 10)
@@ -195,33 +204,41 @@ namespace first_game
                 if (iFrames[_index] == 0)
                 {
                     _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                    if (type[_index] == EnemyType.ARCHER && _sightline)
+                    switch (type[_index])
                     {
-                        if (abilityTimer[_index] < 0)
-                        {
-                            abilityTimer[_index] = Constants.Archer.attackDelay;
-                            Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], _difference, 7f, 1000, 10, 1, 10);
-                        }
-                        else
-                        {
-                            abilityTimer[_index] -= 1;
-                        }
-                        if (_distance < Constants.Archer.archerStopRange)
-                        {
-                            _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
-                            if (_distance < Constants.Archer.archerBackupRange)
+                        case EnemyType.ARCHER:
+                            if (_sightline)
                             {
-                                _speed -= _difference * Constants.Archer.archerBackupSpeed;
+                                if (abilityTimer[_index] < 0)
+                                {
+                                    abilityTimer[_index] = Constants.Archer.attackDelay;
+                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, 10);
+                                }
+                                else
+                                {
+                                    abilityTimer[_index] -= 1;
+                                }
+                                if (_distance < Constants.Archer.archerStopRange)
+                                {
+                                    _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
+                                    if (_distance < Constants.Archer.archerBackupRange)
+                                    {
+                                        _speed -= _difference * Constants.Archer.archerBackupSpeed;
+                                    }
+                                }
                             }
-                        }
+                            break;
+                        case EnemyType.LARGE:
+                            break;
                     }
+
                     if (_sightline)
                     {
-                        colorFilter[_index] = Color.Coral;
+                        colorFilter[_index] = Color.Crimson;
                     }
                     else
                     {
-                        colorFilter[_index] = Color.DarkSalmon;
+                        colorFilter[_index] = Color.Wheat;
                     }
                 }
                 Vector2 _position = position[_index];
