@@ -10,6 +10,7 @@ using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using static first_game.Tiles;
 
 namespace first_game
 {
@@ -52,7 +53,7 @@ namespace first_game
 
         public static void reloadPlayerPosition()
         {
-            Player.position = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
+            Player.position = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
 
         }
         public static void Push(float _knockback, Vector2 _Angle)
@@ -93,7 +94,7 @@ namespace first_game
             private static int pierce;
             private static readonly int swingHitboxSize = 10;
             private static readonly int projectileHitboxSize = 30;
-            private static int flipped;
+            private static int flipped = -1;
             public static void Swing(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
                 Push(5, angleVector);

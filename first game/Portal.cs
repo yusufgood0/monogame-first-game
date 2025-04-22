@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static first_game.Tiles;
 
 namespace first_game
 {
@@ -21,7 +22,7 @@ namespace first_game
         
         public static void ReloadPortalPosition()
         {
-            collideRectangle = Tiles.collideRectangle[Tiles.RandomOpen()];
+            collideRectangle = Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)];
         }
     }
 }

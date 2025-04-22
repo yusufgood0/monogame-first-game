@@ -24,10 +24,10 @@ namespace first_game
         {
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
-                Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
+                Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
                 while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position)))
                 {
-                    Enemy.position[Enemy.collideRectangle.Count - 1] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen()]);
+                    Enemy.position[Enemy.collideRectangle.Count - 1] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
                 }
             }
 
@@ -126,7 +126,7 @@ namespace first_game
             colorFilter.RemoveAt(_index);
         }
 
-        public static Texture2D textures;
+        public static Texture2D textureSlimeWalk;
 
         public static int width;
         public static int height;
@@ -168,7 +168,7 @@ namespace first_game
             _difference.Normalize();
 
             Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
-            bool _sightline = SightLine(position[_index], _distance / 5);
+            bool _sightline = SightLine(position[_index], _distance);
 
             Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
             while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
@@ -242,7 +242,7 @@ namespace first_game
                     }
                 }
                 Vector2 _position = position[_index];
-                General.Movement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
                 position[_index] = _position;
                 speed[_index] = speed[_index] * 0.6f;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
@@ -255,9 +255,9 @@ namespace first_game
             LARGE = 2,
             ARCHER = 3,
         }
-        public static void Setup(Texture2D _texture)
+        public static void Setup(Texture2D _textureSlimeWalk)
         {
-            textures = _texture;
+            textureSlimeWalk = _textureSlimeWalk;
         }
     }
 }

@@ -26,7 +26,7 @@ namespace first_game
         {
             public static float Player = 0.25f;
             public static float Projectile = .1f;
-            public static float Enemy = .2f;
+            public static float Enemy = .00f;
             public static float LevelEnd = .1f;
         }
 
