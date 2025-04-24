@@ -19,6 +19,7 @@ namespace first_game
 {
     public class General
     {
+
         public static Color Darkness(Color _color, Vector2 _position)
         {
             //if (!Enemy.SightLine(_position, DistanceFromPoints(_position, Player.position)))
