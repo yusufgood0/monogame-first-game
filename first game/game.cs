@@ -72,9 +72,9 @@ namespace first_game
             _finalLightLevel = _finalLuminance - Constants.LightStrength;
             return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
         }
-        public static Rectangle Vector2toRectangle(Vector2 Position, int _width, int _height, Vector2 offset)
+        public static Rectangle Vector2toRectangle(Vector2 Position, int _width, int _height)
         {
-            return new((int)(Position.X - _width / 2 + offset.X), (int)(Position.Y - _height / 2 + offset.Y), _width, _height);
+            return new((int)(Position.X - _width / 2), (int)(Position.Y - _height / 2), _width, _height);
         }
         public static Vector2 RectangleToVector2(Rectangle _rectangle)
         {
@@ -188,18 +188,19 @@ namespace first_game
                 }
             return;
         }
-        //public static void CircleCollision(ref Vector2 position, float collisionRadius)
-        //{
-        //        Vector2 point = new Vector2(position.X, position.Y);
-        //        float radius = 
-        //        point.X = Math.Max(point.X, Tiles.collideRectangle[index].X);
-        //        point.X = Math.Min(point.X, Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width);
-        //        point.Y = Math.Max(point.Y, Tiles.collideRectangle[index].Y);
-        //        point.Y = Math.Min(point.Y, Tiles.collideRectangle[index].Y + Tiles.collideRectangle[index].Height);
-        //        return ((position.Y - point.Y) ^ 2 + (position.X - point.X) ^ 2) < circle.r ^ 2
-
-        //    return;
-        //}
+        public static bool CircleCollision(ref Vector2 circlePosition, float collisionRadius, Rectangle rect)
+        {
+            if (rect.Intersects(Vector2toRectangle(circlePosition, (int)collisionRadius * 2, (int)collisionRadius * 2)))
+            {
+                return collisionRadius > DistanceFromPoints(
+                    circlePosition, 
+                    new Vector2(
+                        MathHelper.Clamp(circlePosition.X, rect.X, rect.X + rect.Width), 
+                        MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height))
+                    );
+            }
+            return false;
+        }
 
         public static void MoveX(bool normalize, Vector2 speed, ref Vector2 position)
         {
@@ -547,7 +548,7 @@ namespace first_game
             {
                 _spriteBatch.Draw(
                     blankTexture,
-                    Vector2toRectangle(Projectile.position[index], 10, 10, offset),
+                    Vector2toRectangle(Projectile.position[index] + offset, 10, 10),
                     null,
                     Color.White,
                     0,
@@ -559,7 +560,7 @@ namespace first_game
 
             _spriteBatch.Draw(
                 Player.textures,
-                Vector2toRectangle(Player.position, Player.width, Player.height, offset),
+                Vector2toRectangle(Player.position + offset, Player.width, Player.height),
                 Player.textureRectangle,
                 Color.White,
                 0,

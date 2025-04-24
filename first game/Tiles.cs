@@ -29,6 +29,7 @@ namespace first_game
         public const int columns = 20;
         public const int rows = 20;
         public const int tileXY = 60;
+
         public const int numTiles = columns * rows;
 
 
