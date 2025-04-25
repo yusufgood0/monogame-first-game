@@ -108,8 +108,6 @@ namespace first_game
                 textureArray[i] = (Vector2)_textures[i * 2 + 1];
             }
             loadTiles(0, numTiles);
-
-
         }
 
     }

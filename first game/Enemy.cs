@@ -87,7 +87,7 @@ namespace first_game
         {
             abilityTimer.Add(0);
             health.Add(Constants.EnemyStats.health[(int)_EnemyType]);
-            textureRectangle.Add(new Rectangle(0, 0, Constants.EnemyStats.width[(int)_EnemyType], Constants.EnemyStats.height[(int)_EnemyType]));
+            textureRectangle.Add(new Rectangle(0, 0, (int)(Enemy.textures[(int)_EnemyType].Width / Enemy.textureArray[(int)_EnemyType].X), (int)(Enemy.textures[(int)_EnemyType].Height / Enemy.textureArray[(int)_EnemyType].X)));
             collideRectangle.Add(new Rectangle((int)_spawnLocation.X - Constants.EnemyStats.width[(int)_EnemyType] / 2, (int)_spawnLocation.Y - Constants.EnemyStats.height[(int)_EnemyType] / 2, Constants.EnemyStats.width[(int)_EnemyType], Constants.EnemyStats.height[(int)_EnemyType]));
             position.Add(new Vector2((int)_spawnLocation.X, (int)_spawnLocation.Y));
             target.Add(_spawnLocation - new Vector2(0, 10));
@@ -126,7 +126,8 @@ namespace first_game
             colorFilter.RemoveAt(_index);
         }
 
-        public static Texture2D textureSlimeWalk;
+        public static Texture2D[] textures = new Texture2D[4];
+        public static Vector2[] textureArray = new Vector2[4];
 
         public static int width;
         public static int height;
@@ -157,9 +158,13 @@ namespace first_game
             return true; // No obstacles in the way
 
         }
+        public static void TextureRectSetup()
+        {
+
+        }
         public static void Update(int _index)
         {
-            Vector2 _difference = General.difference(target[_index], position[_index]); //X and Y difference 
+            Vector2 _difference = General.Difference(target[_index], position[_index]); //X and Y difference 
             if (_difference == new Vector2(0, 0))
             {
                 return;
@@ -212,7 +217,7 @@ namespace first_game
                                 if (abilityTimer[_index] < 0)
                                 {
                                     abilityTimer[_index] = Constants.Archer.attackDelay;
-                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, 10);
+                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.Difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, 10);
                                 }
                                 else
                                 {
@@ -242,7 +247,14 @@ namespace first_game
                     }
                 }
                 Vector2 _position = position[_index];
-                General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                if (Constants.EnemyStats.circle[(int)type[_index]])
+                {
+                    General.CircleMovement(false, ref _position, Enemy.collideRectangle[_index].Width / 2, ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                }
+                else
+                {
+                    General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                }
                 position[_index] = _position;
                 speed[_index] = speed[_index] * 0.6f;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
@@ -255,9 +267,13 @@ namespace first_game
             LARGE = 2,
             ARCHER = 3,
         }
-        public static void Setup(Texture2D _textureSlimeWalk)
+        public static void Setup(object[] _textures)
         {
-            textureSlimeWalk = _textureSlimeWalk;
+            for (int i = 0; i * 2 < _textures.Length; i++)
+            {
+                Enemy.textures[i] = (Texture2D)_textures[i * 2];
+                Enemy.textureArray[i] = (Vector2)_textures[i * 2 + 1];
+            }
         }
     }
 }

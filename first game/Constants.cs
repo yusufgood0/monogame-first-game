@@ -26,7 +26,7 @@ namespace first_game
         {
             public static float Player = 0.25f;
             public static float Projectile = .1f;
-            public static float Enemy = .00f;
+            public static float Enemy = 1.00f;
             public static float LevelEnd = .1f;
         }
 
@@ -39,6 +39,7 @@ namespace first_game
             public static List<int> health = new();
             public static List<int> height = new();
             public static List<int> width = new();
+            public static List<bool> circle = new();
             public static void Setup()
             {
                 //stats for Small enemies
@@ -47,6 +48,7 @@ namespace first_game
                 health.Add(50);
                 height.Add(24);
                 width.Add(24);
+                circle.Add(true);
 
                 //stats for Medium enemies
                 movementSpeed.Add(2.8f);
@@ -54,6 +56,7 @@ namespace first_game
                 health.Add(150);
                 height.Add(40);
                 width.Add(40);
+                circle.Add(true);
 
                 //stats for Large enemies
                 movementSpeed.Add(2.1f);
@@ -61,6 +64,7 @@ namespace first_game
                 health.Add(300);
                 height.Add(60);
                 width.Add(60);
+                circle.Add(true);
 
                 //stats for Archer enemies
                 movementSpeed.Add(2.3f);
@@ -68,6 +72,7 @@ namespace first_game
                 health.Add(100);
                 height.Add(40);
                 width.Add(25);
+                circle.Add(false);
             }
         }
         public class Archer

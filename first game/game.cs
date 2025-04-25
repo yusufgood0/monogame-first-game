@@ -92,7 +92,7 @@ namespace first_game
         }
         public static float DistanceFromPoints(Vector2 _pointA, Vector2 _pointB)
         {
-            Vector2 _difference = difference(_pointA, _pointB);
+            Vector2 _difference = Difference(_pointA, _pointB);
             if (_difference == new Vector2(0, 0))
                 return 0;
             return (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //X and Y difference 
@@ -101,7 +101,7 @@ namespace first_game
         {
             return (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y);
         }
-        public static Vector2 difference(Vector2 _pointA, Vector2 _pointB)
+        public static Vector2 Difference(Vector2 _pointA, Vector2 _pointB)
         {
             return _pointA - _pointB; //X and Y difference 
         }
@@ -115,23 +115,23 @@ namespace first_game
             switch (_MoveKeys)
             {
                 case MoveKeys.UP:
-                Player.speed.Y -= Player.movementSpeed;
-                Player.frame = 1;
-                break;
+                    Player.speed.Y -= Player.movementSpeed;
+                    Player.frame = 1;
+                    break;
                 case MoveKeys.DOWN:
-                Player.speed.Y += Player.movementSpeed;
-                Player.frame = 0;
-                break;
+                    Player.speed.Y += Player.movementSpeed;
+                    Player.frame = 0;
+                    break;
                 case MoveKeys.LEFT:
-                Player.speed.X -= Player.movementSpeed;
-                Player.frame = 2;
-                Player.effect = SpriteEffects.None;
-                break;
+                    Player.speed.X -= Player.movementSpeed;
+                    Player.frame = 2;
+                    Player.effect = SpriteEffects.None;
+                    break;
                 case MoveKeys.RIGHT:
-                Player.speed.X += Player.movementSpeed;
-                Player.frame = 2;
-                Player.effect = SpriteEffects.FlipHorizontally;
-                break;
+                    Player.speed.X += Player.movementSpeed;
+                    Player.frame = 2;
+                    Player.effect = SpriteEffects.FlipHorizontally;
+                    break;
             }
 
             if (Player.Attacks.swingSpeed == -1)
@@ -139,17 +139,17 @@ namespace first_game
                 switch (_MoveKeys)
                 {
                     case MoveKeys.UP:
-                    Player.Attacks.swingAngle = 20;
-                    break;
+                        Player.Attacks.swingAngle = 20;
+                        break;
                     case MoveKeys.DOWN:
-                    Player.Attacks.swingAngle = 20 + (float)Math.PI;
-                    break;
+                        Player.Attacks.swingAngle = 20 + (float)Math.PI;
+                        break;
                     case MoveKeys.LEFT:
-                    Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
-                    break;
+                        Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
+                        break;
                     case MoveKeys.RIGHT:
-                    Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
-                    break;
+                        Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
+                        break;
                 }
             }
             UpdateTexture();
@@ -188,14 +188,14 @@ namespace first_game
                 }
             return;
         }
-        public static bool CircleCollision(ref Vector2 circlePosition, float collisionRadius, Rectangle rect)
+        public static bool CircleCollision(Vector2 circlePosition, float collisionRadius, Rectangle rect)
         {
             if (rect.Intersects(Vector2toRectangle(circlePosition, (int)collisionRadius * 2, (int)collisionRadius * 2)))
             {
                 return collisionRadius > DistanceFromPoints(
-                    circlePosition, 
+                    circlePosition,
                     new Vector2(
-                        MathHelper.Clamp(circlePosition.X, rect.X, rect.X + rect.Width), 
+                        MathHelper.Clamp(circlePosition.X, rect.X, rect.X + rect.Width),
                         MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height))
                     );
             }
@@ -220,10 +220,19 @@ namespace first_game
             else
                 position.Y += speed.Y;
         }
-        public static void CircleMovement(bool normalize, ref Vector2 position, Vector2 collisionSize, ref Vector2 speed, float movementSpeed)
+        public static void CircleMovement(bool normalize, ref Vector2 position, float radius, ref Vector2 speed, float movementSpeed)
         {
+            MoveX(normalize, speed, ref position);
             MoveY(normalize, speed, ref position);
-            MoveY(normalize, speed, ref position);
+            for (int i = 0; i < Tiles.numTiles; i++)
+            {
+                while (Tiles.tileType[i] != 0 && CircleCollision(position, radius, Tiles.collideRectangle[i]))
+                {
+                    Vector2 difference = Difference(position, General.RectangleToVector2(Tiles.collideRectangle[i]));
+                    difference.Normalize();
+                    position += difference;
+                }
+            }
 
         }
         public static void RectMovement(bool normalize, ref Vector2 position, Vector2 collisionSize, ref Vector2 speed, float movementSpeed)
@@ -293,7 +302,20 @@ namespace first_game
             titleFont = Content.Load<SpriteFont>("titleFont");
             Window.Title = "Adding Things";
 
-            Enemy.Setup(Content.Load<Texture2D>("slime 2/Walk/Slime2_Walk_full"));
+            swordTexture = Content.Load<Texture2D>("swordNoBg");
+            blankTexture = new Texture2D(GraphicsDevice, 1, 1);
+            blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
+
+            Enemy.Setup(new object[] {
+                Content.Load<Texture2D>("circle"),
+                new Vector2(1, 1),
+                Content.Load<Texture2D>("circle"),
+                new Vector2(1, 1),
+                Content.Load<Texture2D>("circle"),
+                new Vector2(1, 1),
+                Content.Load<Texture2D>("square"),
+                new Vector2(1, 1),
+            });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
                 Content.Load<Texture2D>("dirt"),
@@ -310,9 +332,6 @@ namespace first_game
 
             Constants.EnemyStats.Setup();
 
-            swordTexture = Content.Load<Texture2D>("swordNoBg");
-            blankTexture = new Texture2D(GraphicsDevice, 1, 1);
-            blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
 
             Levels.SetLevel(Levels.Level);
             Enemy.RandomizePositions();
@@ -459,8 +478,9 @@ namespace first_game
                     Player.frame += 3;
                 }
 
-                for (int _index = 0; _index < Enemy.collideRectangle.Count; _index++)
-                    if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
+                for (int _index = 0; _index < Enemy.health.Count; _index++)
+                    //if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
+                    if (iFrames <= 0 && state != State.Dashing && General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, General.Vector2toRectangle(Player.position, width, height)))
                     {
                         Player.TakeDamage(Color.BlueViolet, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
@@ -484,7 +504,7 @@ namespace first_game
 
                 Player.Attacks.SwingUpdate();
 
-                for (int i = 0; i < Enemy.collideRectangle.Count; i++)
+                for (int i = 0; i < Enemy.health.Count; i++)
                 {
                     Enemy.Update(i);
                 }
@@ -496,6 +516,7 @@ namespace first_game
                 for (int i = 0; i < Projectile.position.Count; i++) Projectile.update(i);
 
                 General.RectMovement(true, ref Player.position, new Vector2(Player.width, Player.height), ref Player.speed, Player.movementSpeed);
+                //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
                 previousKeyboardState = Keyboard.GetState();
                 gametimer -= Constants.tpsPerSec;
@@ -531,9 +552,9 @@ namespace first_game
                     0);
             }
 
-            for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+            for (int index = 0; index < Enemy.health.Count; index++)
             {
-                _spriteBatch.Draw(blankTexture,
+                _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
                     new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
                     Enemy.textureRectangle[index],
                     Darkness(Enemy.colorFilter[index], Enemy.position[index]),
@@ -541,7 +562,6 @@ namespace first_game
                     new Vector2(0, 0),
                     0f,
                     0.1f);
-                //_spriteBatch.DrawString(titleFont, Enemy.health[index].ToString(), Enemy.position[index] + offset, Color.Red);
             }
 
             for (int index = 0; index < Projectile.position.Count; index++)

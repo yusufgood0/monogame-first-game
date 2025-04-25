@@ -132,7 +132,7 @@ namespace first_game
                     checkpoint = position + attackAngleVector * swingRange;
                     swingAngle -= 0.1f * flipped;
 
-                    for (int index = 0; index < Enemy.collideRectangle.Count; index++)
+                    for (int index = 0; index < Enemy.health.Count; index++)
                     {
                         if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
                         {
