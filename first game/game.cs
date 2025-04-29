@@ -576,119 +576,16 @@ namespace first_game
             GraphicsDevice.Clear(Color.Black);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            offset += (-Player.position + screenSize / 2 - offset) / (Constants.tps * Constants.cameraLag);
-            for (int index = 0; index < Tiles.numTiles; index++)
+            float detail = 1;
+            int screenWidth = 90;
+            Vector2[] drawRays = new Vector2[90*2];
+            for (float i = - screenWidth; i < screenWidth * detail; i++)
             {
-                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
-                    new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
-                    Tiles.tileXY,
-                    Tiles.tileXY),
-                    Tiles.textureRectangle[index],
-                    Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    0);
-            }
+                float angle = Player.angle + i * detail;
+                drawRays[i] = new Vector2()
 
-            _spriteBatch.Draw(
-                    Portal.texture,
-                    RectangleAddVector2(Portal.collideRectangle, offset),
-                    new Rectangle((int)Portal.textureFrame * Portal.texture.Width / Portal.amountOfFrames, 0, Portal.texture.Width/Portal.amountOfFrames, Portal.texture.Height),
-                    Darkness(Portal.Color, RectangleToVector2(Portal.collideRectangle)),
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    0.5f);
-
-            for (int index = 0; index < Enemy.health.Count; index++)
-            {
-                _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
-                    new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
-                    Enemy.textureRectangle[index],
-                    Darkness(Enemy.colorFilter[index], Enemy.position[index]),
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    0.1f);
-            }
-
-            for (int index = 0; index < Projectile.position.Count; index++)
-            {
-                _spriteBatch.Draw(
-                    blankTexture,
-                    Vector2toRectangle(Projectile.position[index] + offset, 10, 10),
-                    null,
-                    Color.White,
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    0.5f);
 
             }
-
-            _spriteBatch.Draw(
-                Player.textures,
-                Vector2toRectangle(Player.position + offset, Player.width, Player.height),
-                Player.textureRectangle,
-                Player.colorFilter,
-                0,
-                new Vector2(0, 0),
-                Player.effect,
-                0.2f
-                );
-
-
-            _spriteBatch.Draw(
-                blankTexture,
-                new Rectangle((int)offset.X + (int)Player.position.X - bowBarSize / 2, (int)offset.Y + (int)Player.position.Y + Player.height / 2, (int)((float)(bowCharge / (float)MaxBowCharge) * bowBarSize), 8),
-                null,
-                bowChargeBarColor,
-                0,
-                new Vector2(0, 0), 0f, 0.3f
-                );
-
-
-            _spriteBatch.Draw(
-                blankTexture,
-                new Rectangle(32, 32, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 150), 32),
-                null,
-                Color.White,
-                0,
-                new Vector2(0, 0),
-                0f,
-                0.3f
-                );
-            for (int i = 0; i < maxDashCharge + 1; i++)
-            {
-                _spriteBatch.Draw(
-                    blankTexture,
-                    new Rectangle(32 + i * (150 / maxDashCharge), 32, 5, 20),
-                    null,
-                    Color.Blue,
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    0.4f
-                    );
-            }
-            if (Player.Attacks.swingSpeed != 0)
-            {
-                _spriteBatch.Draw(
-                    swordTexture,
-                    offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
-                    (float)Math.Sin(Player.Attacks.swingAngle)),
-                    null,
-                    Player.colorFilter,
-                    (float)(Player.Attacks.swingAngle - Math.PI * .5f),
-                    new Vector2(swordTexture.Width / 2, 0),
-                    0.05f,
-                    SpriteEffects.FlipVertically,
-                    1);
-            }
-
-            _spriteBatch.DrawString(titleFont, (Player.health / 10).ToString(), new Vector2(10, 10), Color.White);
-
             _spriteBatch.End();
             base.Draw(gameTime);
         }
