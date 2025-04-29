@@ -72,6 +72,11 @@ namespace first_game
             _finalLightLevel = _finalLuminance - Constants.LightStrength;
             return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
         }
+
+        public static Rectangle RectangleAddVector2(Rectangle Rect, Vector2 vector)
+        {
+            return new Rectangle((int)(Rect.X + vector.X), (int)(Rect.Y + vector.Y), Rect.Width, Rect.Height);
+        }
         public static Rectangle Vector2toRectangle(Vector2 Position, int _width, int _height)
         {
             return new((int)(Position.X - _width / 2), (int)(Position.Y - _height / 2), _width, _height);
@@ -331,7 +336,7 @@ namespace first_game
 
 
             Constants.EnemyStats.Setup();
-
+            Portal.ReloadPortalPosition();
 
             Levels.SetLevel(Levels.Level);
             Enemy.RandomizePositions();
@@ -425,6 +430,38 @@ namespace first_game
                     bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
+                if (Player.health <= 0)
+                {
+                    state = State.Dead;
+                }
+                switch (Player.state)
+                {
+                    case State.Idle:
+                    Player.colorFilter = Color.White; 
+                    break;
+                    case State.Drawing_Bow:
+                    Player.colorFilter = Color.AliceBlue;
+                    break;
+                    case State.Attacking_1:
+                    Player.colorFilter = new Color(200, 200, 200);
+                    break;
+                    case State.Attacking_2:
+                    Player.colorFilter = new Color(150, 150, 150);
+                    break;
+                    case State.Attacking_3:
+                    Player.colorFilter = new Color(100, 100, 100);
+                    break;
+                    case State.Stunned:
+                    Player.colorFilter = Color.DarkSlateGray;
+                    break;
+                    case State.Dashing:
+                    Player.colorFilter = Color.WhiteSmoke * 0.5f;
+                    break;
+                    case State.Dead:
+                    Player.colorFilter = Color.Black;
+                    break;
+
+                }
 
                 if (dashLengthTimer < 0)
                 {
@@ -480,9 +517,9 @@ namespace first_game
 
                 for (int _index = 0; _index < Enemy.health.Count; _index++)
                     //if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
-                    if (iFrames <= 0 && state != State.Dashing && General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, General.Vector2toRectangle(Player.position, width, height)))
+                    if (iFrames <= 0 && state != State.Dashing && Enemy.IsEnemyCollide(General.Vector2toRectangle(Player.position, width, height), _index))
                     {
-                        Player.TakeDamage(Color.BlueViolet, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
+                        Player.TakeDamage(Color.Black, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
 
                 if (playerLightEmit > 0)
@@ -501,6 +538,8 @@ namespace first_game
                         new()
                         );
                 }
+
+                Portal.update();
 
                 Player.Attacks.SwingUpdate();
 
@@ -552,6 +591,16 @@ namespace first_game
                     0);
             }
 
+            _spriteBatch.Draw(
+                    Portal.texture,
+                    RectangleAddVector2(Portal.collideRectangle, offset),
+                    new Rectangle((int)Portal.textureFrame * Portal.texture.Width / Portal.amountOfFrames, 0, Portal.texture.Width/Portal.amountOfFrames, Portal.texture.Height),
+                    Darkness(Portal.Color, RectangleToVector2(Portal.collideRectangle)),
+                    0,
+                    new Vector2(0, 0),
+                    0f,
+                    0.5f);
+
             for (int index = 0; index < Enemy.health.Count; index++)
             {
                 _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
@@ -582,7 +631,7 @@ namespace first_game
                 Player.textures,
                 Vector2toRectangle(Player.position + offset, Player.width, Player.height),
                 Player.textureRectangle,
-                Color.White,
+                Player.colorFilter,
                 0,
                 new Vector2(0, 0),
                 Player.effect,
@@ -630,7 +679,7 @@ namespace first_game
                     offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
                     (float)Math.Sin(Player.Attacks.swingAngle)),
                     null,
-                    Color.White,
+                    Player.colorFilter,
                     (float)(Player.Attacks.swingAngle - Math.PI * .5f),
                     new Vector2(swordTexture.Width / 2, 0),
                     0.05f,

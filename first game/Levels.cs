@@ -17,6 +17,7 @@ namespace first_game
             Level = _Level;
             Enemy.KillAll();
             Enemy.CreateEnemies(EnemySaves[Level]);
+            Enemy.RandomizePositions();
             Levels.UpdateTileMap();
             if (breakableObsticales[Level])
             {
@@ -26,7 +27,7 @@ namespace first_game
             loadTiles(0, numTiles);
         }
 
-        private static int[][] EnemySaves = {
+        public static int[][] EnemySaves = {
             new int[] { 0, 3, 2, 0 },
             new int[] { 4, 2, 0, 3 },
             new int[] { 2, 0, 4, 3 },

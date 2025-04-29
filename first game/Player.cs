@@ -75,10 +75,7 @@ namespace first_game
             health -= _damage;
             state = State.Stunned;
             recoveryTime = _recoveryTime;
-            if (health <= 0)
-            {
-                state = State.Dead;
-            }
+            
         }
         public class Attacks
         {
@@ -134,7 +131,9 @@ namespace first_game
 
                     for (int index = 0; index < Enemy.health.Count; index++)
                     {
-                        if (Enemy.collideRectangle[index].Intersects(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize)) && Enemy.iFrames[index] <= 0 && pierce > 0)
+                        if (Enemy.IsEnemyCollide(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize), index) && 
+                            Enemy.iFrames[index] <= 0 && 
+                            pierce > 0)
                         {
                             Enemy.Push(50, Enemy.position[index] - position, index);
                             Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);

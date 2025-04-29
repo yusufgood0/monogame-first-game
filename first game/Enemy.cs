@@ -19,15 +19,23 @@ namespace first_game
 {
     public class Enemy
     {
+        public static bool IsEnemyCollide(Rectangle _rect, int _index)
+        {
+            if (General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, _rect)){
+                return true;
+            }
+            else { return false; }  
+        }
+
         static readonly Random rnd = new();
         public static void RandomizePositions()
         {
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
                 Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
-                while (SightLine(position[Enemy.collideRectangle.Count - 1], General.DistanceFromPoints(target[Enemy.collideRectangle.Count - 1], Player.position)))
+                while (SightLine(position[_enemyIndex], General.DistanceFromPoints(target[_enemyIndex], Player.position)))
                 {
-                    Enemy.position[Enemy.collideRectangle.Count - 1] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
+                    Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
                 }
             }
 
@@ -217,7 +225,7 @@ namespace first_game
                                 if (abilityTimer[_index] < 0)
                                 {
                                     abilityTimer[_index] = Constants.Archer.attackDelay;
-                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.Difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, 10);
+                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.Difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, Constants.Archer.archerDamage);
                                 }
                                 else
                                 {

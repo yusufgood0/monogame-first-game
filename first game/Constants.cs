@@ -26,7 +26,7 @@ namespace first_game
         {
             public static float Player = 0.25f;
             public static float Projectile = .1f;
-            public static float Enemy = 1.00f;
+            public static float Enemy = .00f;
             public static float LevelEnd = .1f;
         }
 
@@ -44,7 +44,7 @@ namespace first_game
             {
                 //stats for Small enemies
                 movementSpeed.Add(5f);
-                damage.Add(40);
+                damage.Add(80);
                 health.Add(50);
                 height.Add(24);
                 width.Add(24);
@@ -52,7 +52,7 @@ namespace first_game
 
                 //stats for Medium enemies
                 movementSpeed.Add(2.8f);
-                damage.Add(100);
+                damage.Add(150);
                 health.Add(150);
                 height.Add(40);
                 width.Add(40);
@@ -60,7 +60,7 @@ namespace first_game
 
                 //stats for Large enemies
                 movementSpeed.Add(2.1f);
-                damage.Add(200);
+                damage.Add(450);
                 health.Add(300);
                 height.Add(60);
                 width.Add(60);
@@ -68,7 +68,7 @@ namespace first_game
 
                 //stats for Archer enemies
                 movementSpeed.Add(2.3f);
-                damage.Add(200);
+                damage.Add(100);
                 health.Add(100);
                 height.Add(40);
                 width.Add(25);
@@ -77,6 +77,7 @@ namespace first_game
         }
         public class Archer
         {
+            public static readonly int archerDamage = 250;
             public static readonly int attackDelay = tps * 3;
             public static readonly int archerStopRange = Tiles.tileXY * 3; // how close the archer can get before stopping
             public static readonly float archerBackupRange = archerStopRange * 0.6f; // at what range should the archer starts backing up
