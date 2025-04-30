@@ -73,6 +73,16 @@ namespace first_game
             return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
         }
 
+        public static float Vector2ToAngle(Vector2 angle)
+        {
+            return (float)Math.Atan2(angle.Y, angle.X);
+        }
+        public static Vector2 AngleToVector2(double angle)
+        {
+            Vector2 Vector =  new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+            Vector.Normalize();
+            return Vector;
+        }
         public static Rectangle RectangleAddVector2(Rectangle Rect, Vector2 vector)
         {
             return new Rectangle((int)(Rect.X + vector.X), (int)(Rect.Y + vector.Y), Rect.Width, Rect.Height);
@@ -254,7 +264,7 @@ namespace first_game
     public class Game1 : Game
     {
 
-        Vector2 screenSize = new(Tiles.rows * Tiles.tileXY, Tiles.columns * Tiles.tileXY);
+        static Vector2 screenSize = new(Tiles.rows * Tiles.tileXY, Tiles.columns * Tiles.tileXY);
 
         private readonly GraphicsDeviceManager _graphics;
         public static SpriteBatch _spriteBatch;
@@ -266,8 +276,8 @@ namespace first_game
 
         Vector2 offset = new(0, 0);
 
-        Texture2D swordTexture;
-        Texture2D blankTexture;
+        static Texture2D swordTexture;
+        static Texture2D blankTexture;
 
         public static int EnemyTargetTimer = 0;
 
@@ -437,29 +447,29 @@ namespace first_game
                 switch (Player.state)
                 {
                     case State.Idle:
-                    Player.colorFilter = Color.White; 
-                    break;
+                        Player.colorFilter = Color.White;
+                        break;
                     case State.Drawing_Bow:
-                    Player.colorFilter = Color.AliceBlue;
-                    break;
+                        Player.colorFilter = Color.AliceBlue;
+                        break;
                     case State.Attacking_1:
-                    Player.colorFilter = new Color(200, 200, 200);
-                    break;
+                        Player.colorFilter = new Color(200, 200, 200);
+                        break;
                     case State.Attacking_2:
-                    Player.colorFilter = new Color(150, 150, 150);
-                    break;
+                        Player.colorFilter = new Color(150, 150, 150);
+                        break;
                     case State.Attacking_3:
-                    Player.colorFilter = new Color(100, 100, 100);
-                    break;
+                        Player.colorFilter = new Color(100, 100, 100);
+                        break;
                     case State.Stunned:
-                    Player.colorFilter = Color.DarkSlateGray;
-                    break;
+                        Player.colorFilter = Color.DarkSlateGray;
+                        break;
                     case State.Dashing:
-                    Player.colorFilter = Color.WhiteSmoke * 0.5f;
-                    break;
+                        Player.colorFilter = Color.WhiteSmoke * 0.5f;
+                        break;
                     case State.Dead:
-                    Player.colorFilter = Color.Black;
-                    break;
+                        Player.colorFilter = Color.Black;
+                        break;
 
                 }
 
@@ -569,7 +579,25 @@ namespace first_game
 
             base.Update(gameTime);
         }
+        public static object CastRay(int segment, float detail)
+        {
+            Vector2 drawRay = Player.position;
+            Vector2 drawRayMovement = AngleToVector2(Player.angle + segment * detail);
 
+            for (int j = 0; j < 700; j++)
+            {
+                drawRay += drawRayMovement;
+                for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
+                {
+                    if (Tiles.collideRectangle[tileIndex].Contains(drawRay))
+                    {
+                        _spriteBatch.Draw(Game1.blankTexture, new Rectangle((int)(segment * (Game1.screenSize.X * detail)), (int)(screenSize.Y/2) - 1000/j), Game1.screenSize.X * detail, 1000))
+                        return j;
+                    }
+                }
+            }
+            return null;
+        }
         protected override void Draw(GameTime gameTime)
         {
 
@@ -577,14 +605,10 @@ namespace first_game
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
             float detail = 1;
-            int screenWidth = 90;
-            Vector2[] drawRays = new Vector2[90*2];
-            for (float i = - screenWidth; i < screenWidth * detail; i++)
+            int FOV_Size = 90;
+            for (int i = -FOV_Size; i < FOV_Size * detail; i++)
             {
-                float angle = Player.angle + i * detail;
-                drawRays[i] = new Vector2()
-
-
+                CastRay(i, detail);
             }
             _spriteBatch.End();
             base.Draw(gameTime);
