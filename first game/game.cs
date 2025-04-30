@@ -79,7 +79,7 @@ namespace first_game
         }
         public static Vector2 AngleToVector2(double angle)
         {
-            Vector2 Vector =  new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+            Vector2 Vector = new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
             Vector.Normalize();
             return Vector;
         }
@@ -130,23 +130,23 @@ namespace first_game
             switch (_MoveKeys)
             {
                 case MoveKeys.UP:
-                    Player.speed.Y -= Player.movementSpeed;
-                    Player.frame = 1;
-                    break;
+                Player.speed += Player.angleVector * Player.movementSpeed;
+                Player.frame = 1;
+                break;
                 case MoveKeys.DOWN:
-                    Player.speed.Y += Player.movementSpeed;
-                    Player.frame = 0;
-                    break;
+                Player.speed -= Player.angleVector * Player.movementSpeed;
+                Player.frame = 0;
+                break;
                 case MoveKeys.LEFT:
-                    Player.speed.X -= Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.None;
-                    break;
+                Player.speed -= (General.AngleToVector2(Player.angle - (Math.PI / 2))) * Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.None;
+                break;
                 case MoveKeys.RIGHT:
-                    Player.speed.X += Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.FlipHorizontally;
-                    break;
+                Player.speed -= (General.AngleToVector2(Player.angle + (Math.PI / 2))) * Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.FlipHorizontally;
+                break;
             }
 
             if (Player.Attacks.swingSpeed == -1)
@@ -154,17 +154,17 @@ namespace first_game
                 switch (_MoveKeys)
                 {
                     case MoveKeys.UP:
-                        Player.Attacks.swingAngle = 20;
-                        break;
+                    Player.Attacks.swingAngle = 20;
+                    break;
                     case MoveKeys.DOWN:
-                        Player.Attacks.swingAngle = 20 + (float)Math.PI;
-                        break;
+                    Player.Attacks.swingAngle = 20 + (float)Math.PI;
+                    break;
                     case MoveKeys.LEFT:
-                        Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
-                        break;
+                    Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
+                    break;
                     case MoveKeys.RIGHT:
-                        Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
-                        break;
+                    Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
+                    break;
                 }
             }
             UpdateTexture();
@@ -376,8 +376,15 @@ namespace first_game
                 mouseState = Mouse.GetState();
                 keyboardState = Keyboard.GetState();
 
-                Player.angleVector = new Vector2(mouseState.X - screenSize.X / 2, mouseState.Y - screenSize.Y / 2);
-                Player.angle = (float)Math.Atan2(angleVector.Y, angleVector.X);
+                if (keyboardState.IsKeyDown(Keys.Left))
+                {
+                    Player.angle -= 0.1f;
+                }
+                if (keyboardState.IsKeyDown(Keys.Right))
+                {
+                    Player.angle += 0.1f;
+                }
+                Player.angleVector = AngleToVector2(Player.angle);
                 Player.angleVector.Normalize();
 
                 if (Player.iFrames > 0)
@@ -447,29 +454,29 @@ namespace first_game
                 switch (Player.state)
                 {
                     case State.Idle:
-                        Player.colorFilter = Color.White;
-                        break;
+                    Player.colorFilter = Color.White;
+                    break;
                     case State.Drawing_Bow:
-                        Player.colorFilter = Color.AliceBlue;
-                        break;
+                    Player.colorFilter = Color.AliceBlue;
+                    break;
                     case State.Attacking_1:
-                        Player.colorFilter = new Color(200, 200, 200);
-                        break;
+                    Player.colorFilter = new Color(200, 200, 200);
+                    break;
                     case State.Attacking_2:
-                        Player.colorFilter = new Color(150, 150, 150);
-                        break;
+                    Player.colorFilter = new Color(150, 150, 150);
+                    break;
                     case State.Attacking_3:
-                        Player.colorFilter = new Color(100, 100, 100);
-                        break;
+                    Player.colorFilter = new Color(100, 100, 100);
+                    break;
                     case State.Stunned:
-                        Player.colorFilter = Color.DarkSlateGray;
-                        break;
+                    Player.colorFilter = Color.DarkSlateGray;
+                    break;
                     case State.Dashing:
-                        Player.colorFilter = Color.WhiteSmoke * 0.5f;
-                        break;
+                    Player.colorFilter = Color.WhiteSmoke * 0.5f;
+                    break;
                     case State.Dead:
-                        Player.colorFilter = Color.Black;
-                        break;
+                    Player.colorFilter = Color.Black;
+                    break;
 
                 }
 
@@ -579,26 +586,29 @@ namespace first_game
 
             base.Update(gameTime);
         }
-        public static float detail = 0.4f;
-        public static int FOV_Size = 90;
-        public static void CastRay(int segment, float detail)
+        public static float detail = 0.05f;
+        public static float FOV_Size = (float)Math.PI/3;
+        public static Vector2 drawRay = Player.position;
+        public static int segmentWidth = (int)(Game1.screenSize.X / (FOV_Size));
+        public static Vector2 drawRayMovement;
+        public static void CastRay(float segment)
         {
-            Vector2 drawRay = Player.position;
-            Vector2 drawRayMovement = AngleToVector2(Player.angle + segment * detail);
-            int segmentWidth = (Game1.screenSize.X * (FOV_size/detail));
+            drawRayMovement = AngleToVector2(Player.angle + segment);
+            drawRay = Player.position;
 
-            for (int j = 1; j < 600; j++)
+            for (int distance = 1; distance < 1000; distance++)
             {
                 drawRay += drawRayMovement;
                 for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
                 {
-                    if (Tiles.collideRectangle[tileIndex].Contains(drawRay))
+                    if (Tiles.tileType[tileIndex] != 0 && Tiles.collideRectangle[tileIndex].Contains(drawRay))
                     {
-                    int columnHeight = (int)6000/j;
+                        int _columnHeight = (int)(screenSize.Y / distance)*10;
+                        float _colorFilter = (float)(255f * (distance / 10));
                         _spriteBatch.Draw(
-                        Game1.blankTexture, 
-                        new Rectangle((int)(segment * segmentWidth), (int)((screenSize.Y/2) - columnHeight/2), segmentWidth, columnHeight),
-                        Color.White)
+                        Game1.blankTexture,
+                        new Rectangle((int)(segment * segmentWidth), (int)((screenSize.Y / 2) - _columnHeight / 2), segmentWidth, _columnHeight),
+                        new Color(_colorFilter, _colorFilter, _colorFilter));
                         return;
                     }
                 }
@@ -607,12 +617,12 @@ namespace first_game
         protected override void Draw(GameTime gameTime)
         {
 
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Green);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            for (int i = -FOV_Size; i < FOV_Size; i += detail)
+            for (float i = -FOV_Size; i < FOV_Size; i += detail)
             {
-                CastRay(i, detail);
+                CastRay(i);
             }
             _spriteBatch.End();
             base.Draw(gameTime);
