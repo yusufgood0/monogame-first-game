@@ -579,24 +579,30 @@ namespace first_game
 
             base.Update(gameTime);
         }
-        public static object CastRay(int segment, float detail)
+        public static float detail = 0.4f;
+        public static int FOV_Size = 90;
+        public static void CastRay(int segment, float detail)
         {
             Vector2 drawRay = Player.position;
             Vector2 drawRayMovement = AngleToVector2(Player.angle + segment * detail);
+            int segmentWidth = (Game1.screenSize.X * (FOV_size/detail));
 
-            for (int j = 0; j < 700; j++)
+            for (int j = 1; j < 600; j++)
             {
                 drawRay += drawRayMovement;
                 for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
                 {
                     if (Tiles.collideRectangle[tileIndex].Contains(drawRay))
                     {
-                        _spriteBatch.Draw(Game1.blankTexture, new Rectangle((int)(segment * (Game1.screenSize.X * detail)), (int)(screenSize.Y/2) - 1000/j), Game1.screenSize.X * detail, 1000))
-                        return j;
+                    int columnHeight = (int)6000/j;
+                        _spriteBatch.Draw(
+                        Game1.blankTexture, 
+                        new Rectangle((int)(segment * segmentWidth), (int)((screenSize.Y/2) - columnHeight/2), segmentWidth, columnHeight),
+                        Color.White)
+                        return;
                     }
                 }
             }
-            return null;
         }
         protected override void Draw(GameTime gameTime)
         {
@@ -604,9 +610,7 @@ namespace first_game
             GraphicsDevice.Clear(Color.Black);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            float detail = 1;
-            int FOV_Size = 90;
-            for (int i = -FOV_Size; i < FOV_Size * detail; i++)
+            for (int i = -FOV_Size; i < FOV_Size; i += detail)
             {
                 CastRay(i, detail);
             }
