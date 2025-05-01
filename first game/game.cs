@@ -604,11 +604,11 @@ namespace first_game
                     if (Tiles.tileType[tileIndex] != 0 && Tiles.collideRectangle[tileIndex].Contains(drawRay))
                     {
                         int _columnHeight = (int)(screenSize.Y / distance)*10;
-                        float _colorFilter = (float)(255f * (distance / 10));
+                        float _colorFilter = (float)(255f * (distance / 1000));
                         _spriteBatch.Draw(
                         Game1.blankTexture,
                         new Rectangle((int)(segment * segmentWidth), (int)((screenSize.Y / 2) - _columnHeight / 2), segmentWidth, _columnHeight),
-                        new Color(_colorFilter, _colorFilter, _colorFilter));
+                        new Color(25, 50, 75));
                         return;
                     }
                 }
