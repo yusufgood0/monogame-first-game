@@ -21,7 +21,8 @@ namespace first_game
     {
         public static bool IsEnemyCollide(Rectangle _rect, int _index)
         {
-            if (General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, _rect)){
+            if ((bool)General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, _rect)[0])
+			   {
                 return true;
             }
             else { return false; }  
