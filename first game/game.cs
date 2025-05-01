@@ -79,7 +79,7 @@ namespace first_game
         }
         public static Vector2 AngleToVector2(double angle)
         {
-            Vector2 Vector =  new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+            Vector2 Vector = new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
             Vector.Normalize();
             return Vector;
         }
@@ -130,20 +130,20 @@ namespace first_game
             switch (_MoveKeys)
             {
                 case MoveKeys.UP:
-                    Player.speed.Y -= Player.movementSpeed;
+                    Player.speed += Player.angleVector * Player.movementSpeed;
                     Player.frame = 1;
                     break;
                 case MoveKeys.DOWN:
-                    Player.speed.Y += Player.movementSpeed;
+                    Player.speed -= Player.angleVector * Player.movementSpeed;
                     Player.frame = 0;
                     break;
                 case MoveKeys.LEFT:
-                    Player.speed.X -= Player.movementSpeed;
+                    Player.speed += AngleToVector2(Player.angle - (float)Math.PI / 2) * Player.movementSpeed;
                     Player.frame = 2;
                     Player.effect = SpriteEffects.None;
                     break;
                 case MoveKeys.RIGHT:
-                    Player.speed.X += Player.movementSpeed;
+                    Player.speed += AngleToVector2(Player.angle + (float)Math.PI / 2) * Player.movementSpeed;
                     Player.frame = 2;
                     Player.effect = SpriteEffects.FlipHorizontally;
                     break;
@@ -264,7 +264,7 @@ namespace first_game
     public class Game1 : Game
     {
 
-        static Vector2 screenSize = new(Tiles.rows * Tiles.tileXY, Tiles.columns * Tiles.tileXY);
+        static Vector2 screenSize = new();
 
         private readonly GraphicsDeviceManager _graphics;
         public static SpriteBatch _spriteBatch;
@@ -282,6 +282,10 @@ namespace first_game
         public static int EnemyTargetTimer = 0;
 
         public static float playerLightEmit = Constants.maxPlayerLightEmit;
+        public static float LightLevel = Constants.maxLightLevel;
+
+
+        bool previousIsActive;
 
         int gametimer;
         readonly static int maxDashCharge = 2;
@@ -304,7 +308,7 @@ namespace first_game
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            IsMouseVisible = true;
+            IsMouseVisible = false;
         }
         protected override void Initialize()
         {
@@ -376,8 +380,13 @@ namespace first_game
                 mouseState = Mouse.GetState();
                 keyboardState = Keyboard.GetState();
 
-                Player.angleVector = new Vector2(mouseState.X - screenSize.X / 2, mouseState.Y - screenSize.Y / 2);
-                Player.angle = (float)Math.Atan2(angleVector.Y, angleVector.X);
+                if (previousIsActive)
+                    Player.angle += (Mouse.GetState().X - screenSize.X / 2) / 100;
+                if (IsActive)
+                    Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
+                previousIsActive = IsActive;
+
+                Player.angleVector = General.AngleToVector2(Player.angle);
                 Player.angleVector.Normalize();
 
                 if (Player.iFrames > 0)
@@ -532,9 +541,13 @@ namespace first_game
                         Player.TakeDamage(Color.Black, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
 
-                if (playerLightEmit > 0)
+                if (playerLightEmit > 300)
                 {
-                    playerLightEmit -= Constants.maxPlayerLightEmit / 2000;
+                    playerLightEmit -= Constants.maxPlayerLightEmit / 200;
+                }
+                if (LightLevel > 5)
+                {
+                    LightLevel -= 0.3f;
                 }
 
                 if (Color.Black == Darkness(Color.White, RectangleToVector2(Tiles.collideRectangle[TileFromVector2(Player.position)])))
@@ -564,7 +577,7 @@ namespace first_game
 
                 for (int i = 0; i < Projectile.position.Count; i++) Projectile.update(i);
 
-                General.RectMovement(true, ref Player.position, new Vector2(Player.width, Player.height), ref Player.speed, Player.movementSpeed);
+                General.CircleMovement(true, ref Player.position, Player.width / 2, ref Player.speed, Player.movementSpeed);
                 //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
                 previousKeyboardState = Keyboard.GetState();
@@ -579,24 +592,35 @@ namespace first_game
 
             base.Update(gameTime);
         }
-        public static object CastRay(int segment, float detail)
+        public static float detail = 0.01f;
+        public static float FOV_Size = (float)Math.PI / 3;
+        public static Vector2 drawRay = Player.position;
+        public static Vector2 drawRayMovement;
+        public static int segmentWidth = (int)(Game1.screenSize.X / (FOV_Size));
+        public static void CastRay(float segment)
         {
-            Vector2 drawRay = Player.position;
-            Vector2 drawRayMovement = AngleToVector2(Player.angle + segment * detail);
+            drawRay = Player.position;
+            drawRayMovement = AngleToVector2(Player.angle + segment) * 2;
+            segmentWidth = (int)(Game1.screenSize.X / (FOV_Size * 2));
 
-            for (int j = 0; j < 700; j++)
+            for (float Distance = 1; Distance < 1000; Distance += 0.3f)
             {
                 drawRay += drawRayMovement;
                 for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
                 {
-                    if (Tiles.collideRectangle[tileIndex].Contains(drawRay))
+                    if (tileType[tileIndex] != 0 && Tiles.collideRectangle[tileIndex].Contains(drawRay))
                     {
-                        _spriteBatch.Draw(Game1.blankTexture, new Rectangle((int)(segment * (Game1.screenSize.X * detail)), (int)(screenSize.Y/2) - 1000/j), Game1.screenSize.X * detail, 1000))
-                        return j;
+                        int columnHeight = (int)(screenSize.Y / Distance) * 10;
+                        float colorFilter = (255f - 255f / LightLevel * (float)Distance) / 255;
+                        _spriteBatch.Draw(
+                        Game1.blankTexture,
+                        new Rectangle((int)(screenSize.X / 2 + segment * segmentWidth), (int)((screenSize.Y / 2) - columnHeight / 2), (int)(segmentWidth * detail) + 1, columnHeight),
+                        new Color(colorFilter, colorFilter, colorFilter));
+                        return;
                     }
                 }
             }
-            return null;
+            return;
         }
         protected override void Draw(GameTime gameTime)
         {
@@ -604,11 +628,9 @@ namespace first_game
             GraphicsDevice.Clear(Color.Black);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            float detail = 1;
-            int FOV_Size = 90;
-            for (int i = -FOV_Size; i < FOV_Size * detail; i++)
+            for (float i = -FOV_Size; i < FOV_Size; i += detail)
             {
-                CastRay(i, detail);
+                CastRay(i);
             }
             _spriteBatch.End();
             base.Draw(gameTime);

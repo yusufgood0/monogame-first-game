@@ -32,6 +32,8 @@ namespace first_game
 
         public static readonly float maxPlayerLightEmit = (float)Luminance.Player ;
         public static readonly float LightStrength = 0.0003f;
+
+        public static int maxLightLevel = 300;
         public class EnemyStats
         {
             public static List<float> movementSpeed = new();

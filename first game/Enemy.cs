@@ -113,7 +113,7 @@ namespace first_game
         }
         public static void Kill(int _index)
         {
-            Game1.playerLightEmit += Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.type[_index]];
+            Game1.playerLightEmit -= Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.type[_index]];
             if (Game1.playerLightEmit >= Constants.maxPlayerLightEmit)
                 Game1.playerLightEmit = Constants.maxPlayerLightEmit;
 

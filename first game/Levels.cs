@@ -28,7 +28,7 @@ namespace first_game
         }
 
         public static int[][] EnemySaves = {
-            new int[] { 0, 3, 2, 0 },
+            new int[] { 0, 0, 0, 0 },
             new int[] { 4, 2, 0, 3 },
             new int[] { 2, 0, 4, 3 },
             new int[] { 0, 0, 0, 0 },
