@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Threading;
 using first_game;
@@ -19,7 +20,56 @@ namespace first_game
 {
     public class General
     {
+        public static float GetSlope(Vector2 point, Vector2 point2)
+        {
+            return (point2.Y - point.Y) / (point2.X - point.X);
+        }
+        public static float GetYIntercept(Vector2 point, float slope)
+        {
+            return point.Y - (slope * point.X);
+        }
 
+        public static Vector2 lineIntercepts(Vector2 line1point, Vector2 line1point2, Vector2 line2point, Vector2 line2point2)
+        {
+            float m1 = GetSlope(line1point, line1point2);
+            float b1 = GetYIntercept(line1point, m1);
+
+            float m2 = GetSlope(line2point, line2point2);
+            float b2 = GetYIntercept(line1point, m2);
+
+            if (m1 == m2)
+            {
+                return new Vector2(100000, 100000);
+            }
+
+            float x = (b2 - b1) / (m1 - m2);
+            float y = m1 * x + b1;
+            return new Vector2(x, y);
+        }
+
+        public static float PointToRectCollision(Vector2 linePoint, Vector2 linePoint2, Rectangle rect)
+        {
+            Vector2[] intercepts = new Vector2[4];
+            intercepts[0] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y));
+            intercepts[1] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y + rect.Height), new Vector2(rect.X + rect.Width, rect.Y + rect.Height));
+            intercepts[2] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y), new Vector2(rect.X, rect.Y + rect.Height));
+            intercepts[3] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X + rect.Width, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Height));
+            //I FORGOT THE RECTS DOMAINS!!!
+
+
+            float lowestDistance = 10000;
+            float distance;
+            for (int i = 0; i < 4; i++)
+            {
+                distance = DistanceFromPoints(linePoint, intercepts[i]);
+                if (distance < lowestDistance)
+                {
+                    lowestDistance = distance;
+                }
+            }
+
+            return lowestDistance;
+        }
         public static Color Darkness(Color _color, Vector2 _position)
         {
             //if (!Enemy.SightLine(_position, DistanceFromPoints(_position, Player.position)))
@@ -130,23 +180,23 @@ namespace first_game
             switch (_MoveKeys)
             {
                 case MoveKeys.UP:
-                    Player.speed += Player.angleVector * Player.movementSpeed;
-                    Player.frame = 1;
-                    break;
+                Player.speed += Player.angleVector * Player.movementSpeed;
+                Player.frame = 1;
+                break;
                 case MoveKeys.DOWN:
-                    Player.speed -= Player.angleVector * Player.movementSpeed;
-                    Player.frame = 0;
-                    break;
+                Player.speed -= Player.angleVector * Player.movementSpeed;
+                Player.frame = 0;
+                break;
                 case MoveKeys.LEFT:
-                    Player.speed += AngleToVector2(Player.angle - (float)Math.PI / 2) * Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.None;
-                    break;
+                Player.speed += AngleToVector2(Player.angle - (float)Math.PI / 2) * Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.None;
+                break;
                 case MoveKeys.RIGHT:
-                    Player.speed += AngleToVector2(Player.angle + (float)Math.PI / 2) * Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.FlipHorizontally;
-                    break;
+                Player.speed += AngleToVector2(Player.angle + (float)Math.PI / 2) * Player.movementSpeed;
+                Player.frame = 2;
+                Player.effect = SpriteEffects.FlipHorizontally;
+                break;
             }
 
             if (Player.Attacks.swingSpeed == -1)
@@ -594,38 +644,42 @@ namespace first_game
         }
         public static float detail = 0.01f;
         public static float FOV_Size = (float)Math.PI / 3;
-        public static Vector2 drawRay = Player.position;
         public static Vector2 drawRayMovement;
         public static int segmentWidth = (int)(Game1.screenSize.X / (FOV_Size));
+        public static float LowestDistance = 10000;
         public static void CastRay(float segment)
         {
-            drawRay = Player.position;
-            drawRayMovement = AngleToVector2(Player.angle + segment) * 2;
+            drawRayMovement = AngleToVector2(Player.angle + segment);
             segmentWidth = (int)(Game1.screenSize.X / (FOV_Size * 2));
+            LowestDistance = 10000;
 
-            for (float Distance = 1; Distance < 1000; Distance += 0.3f)
+            for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
             {
-                drawRay += drawRayMovement;
-                for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
+                float Distance = PointToRectCollision(Player.position, drawRayMovement, Tiles.collideRectangle[tileIndex]);
+                if (Tiles.tileType[tileIndex] != 0 && Distance < LowestDistance)
                 {
-                    if (tileType[tileIndex] != 0 && Tiles.collideRectangle[tileIndex].Contains(drawRay))
-                    {
-                        int columnHeight = (int)(screenSize.Y / Distance) * 10;
-                        float colorFilter = (255f - 255f / LightLevel * (float)Distance) / 255;
-                        _spriteBatch.Draw(
-                        Game1.blankTexture,
-                        new Rectangle((int)(screenSize.X / 2 + segment * segmentWidth), (int)((screenSize.Y / 2) - columnHeight / 2), (int)(segmentWidth * detail) + 1, columnHeight),
-                        new Color(colorFilter, colorFilter, colorFilter));
-                        return;
-                    }
+                    LowestDistance = Distance;
+
                 }
             }
+            //if (LowestDistance != 1000000)
+            //{
+            int columnHeight = (int)(screenSize.Y / LowestDistance) * 10;
+            float colorFilter = (255f - 255f / LightLevel * (float)LowestDistance) / 255;
+            _spriteBatch.Draw(
+            Game1.blankTexture,
+            new Rectangle((int)(screenSize.X / 2 + segment * segmentWidth), (int)((screenSize.Y / 2) - columnHeight / 2), (int)(segmentWidth * detail) + 1, columnHeight),
+            new Color(colorFilter, colorFilter, colorFilter));
+            _spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, 0), Color.Wheat);
             return;
+
+            //}
+
         }
         protected override void Draw(GameTime gameTime)
         {
 
-            GraphicsDevice.Clear(Color.Green);
+            GraphicsDevice.Clear(Color.Black);
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
             for (float i = -FOV_Size; i < FOV_Size; i += detail)
