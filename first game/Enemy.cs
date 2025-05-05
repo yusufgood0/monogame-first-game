@@ -138,8 +138,6 @@ namespace first_game
         public static Texture2D[] textures = new Texture2D[4];
         public static Vector2[] textureArray = new Vector2[4];
 
-        public static int width;
-        public static int height;
         public static List<int> damage = new();
         public static List<int> abilityTimer = new();
         public static List<float> movementSpeed = new();

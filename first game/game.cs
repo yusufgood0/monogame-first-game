@@ -117,6 +117,7 @@ namespace first_game
         public static void DrawLine(Vector2 pointa, Vector2 pointb)
         {
             float? slope = GetSlope(pointa, pointb);
+            if (!slope.HasValue) { return; }
             float Yintercept = GetYIntercept(pointa, slope.Value);
 
 
@@ -193,7 +194,18 @@ namespace first_game
             _finalLightLevel = _finalLuminance - Constants.LightStrength;
             return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
         }
-
+        public static float InboundAngle(float inputAngle)
+        {
+            while (inputAngle < -Math.PI)
+            {
+                inputAngle += (float)Math.PI;
+            }
+            while (inputAngle > Math.PI)
+            {
+                inputAngle -= (float)Math.PI;
+            }
+            return inputAngle;
+        }
         public static float Vector2ToAngle(Vector2 angle)
         {
             return (float)Math.Atan2(angle.Y, angle.X);
@@ -326,6 +338,10 @@ namespace first_game
         }
         public static object[] CircleCollision(Vector2 circlePosition, float collisionRadius, Rectangle rect)
         {
+            if (rect.Contains(circlePosition))
+            {
+                return new object[] { true, RectangleToVector2(rect) };
+            }
             if (rect.Intersects(Vector2toRectangle(circlePosition, (int)collisionRadius * 2, (int)collisionRadius * 2)))
             {
                 Vector2 closestPoint = new Vector2(
@@ -718,28 +734,25 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
         }
         public static float detail = 0.0069f;
         public static float FOV_Size = (float)Math.PI / 3;
-        public static Vector2 drawRayMovement;
-        public static int segmentWidth = (int)(Game1.screenSize.X / (FOV_Size));
-        public static float LowestDistance = float.PositiveInfinity;
+        public static int segmentWidth;
+        public static float lowestDistance = float.PositiveInfinity;
         public static float _texturePercent;
         public static float texturePercent;
 
         public static void CastRay(float angle)
         {
-            drawRayMovement = AngleToVector2(Player.angle + angle);
             segmentWidth = (int)(Game1.screenSize.X / (FOV_Size * 2));
-            LowestDistance = float.PositiveInfinity;
+            lowestDistance = float.PositiveInfinity;
             int tileIndex = 0;
 
             for (int _tileIndex = 0; _tileIndex < Tiles.numTiles; _tileIndex++)
             {
                 if (Tiles.tileType[_tileIndex] != (int)Tiles.tileTypes.NONE)
                 {
-                    float Distance = .015f * PointToRectCollision(Player.position, Player.position + drawRayMovement, Tiles.collideRectangle[_tileIndex]);
-                    //DrawLine(Player.position, Player.position + drawRayMovement);
-                    if (Distance < LowestDistance)
+                    float Distance = .015f * PointToRectCollision(Player.position, Player.position + AngleToVector2(Player.angle + angle), Tiles.collideRectangle[_tileIndex]);
+                    if (Distance < lowestDistance)
                     {
-                        LowestDistance = Distance;
+                        lowestDistance = Distance;
                         tileIndex = _tileIndex;
                         texturePercent = _texturePercent;
                     }
@@ -748,11 +761,11 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //anti-fisheye
             //LowestDistance = LowestDistance * (float)Math.Cos(segment);
 
-            if (LowestDistance != float.PositiveInfinity)
+            if (lowestDistance != float.PositiveInfinity)
             {
-                int columnHeight = (int)(screenSize.Y / LowestDistance);
-                float colorFilter = (175f - 255f / LightLevel * LowestDistance * 10) / 255;
-                if (colorFilter > 0)
+                int columnHeight = (int)(screenSize.Y / lowestDistance);
+                Color color = ColorFilter(Color.White, lowestDistance * 10);
+                if (color != Color.Black)
                 {
                     _spriteBatch.Draw(
                 Tiles.textures[tileType[tileIndex]],
@@ -766,47 +779,122 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     Tiles.textureRectangle[tileIndex].Y,
                     (int)((segmentWidth * detail) / Tiles.textureRectangle[tileIndex].Width),
                     Tiles.textureRectangle[tileIndex].Height),
-                new Color(colorFilter, colorFilter, colorFilter),
+                //new Color(colorFilter, colorFilter, colorFilter),
+                color,
                 0f,
                 new(),
                 0,
-                0.1f/LowestDistance
+                0.1f / lowestDistance
                 );
                 }
                 //_spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, 0), Color.Wheat);
                 return;
             }
         }
+        public static Color ColorFilter(Color _color, float distance)
+        {
+            return new Color((_color.R - 255f / LightLevel * distance) / 255, (_color.G - 255f / LightLevel * distance) / 255, (_color.B - 255f / LightLevel * distance) / 255);
+        }
         protected override void Draw(GameTime gameTime)
         {
-            //GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Black);
+            offset = screenSize/2 - Player.position;
             // TODO: Add your drawing code here
             _spriteBatch.Begin(SpriteSortMode.FrontToBack);
-            _spriteBatch.Draw(
-                blankTexture,
-                new Rectangle(
-                    (int)screenSize.X / 2 - 50,
-                    (int)screenSize.Y / 2 - 50,
-                    100,
-                    100),
-                new Rectangle(0,0,1,1),
-                Color.White,
-                0f,
-                new(),
-                0,
-                1/20f
-                );
-        
-        _spriteBatch.Draw(
-                blankTexture,
-                new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y),
-                Color.Black
-                );
-            for (int i = 0; i < (int)(2 * FOV_Size / detail); ++i)
+            //_spriteBatch.Draw(
+            //    blankTexture,
+            //new Rectangle(
+            //    (int)screenSize.X / 2 - 50,
+            //    (int)screenSize.Y / 2 - 50,
+            //    100,
+            //    100),
+            //new Rectangle(0, 0, 1, 1),
+            //Color.White,
+            //0f,
+            //new(),
+            //0,
+            //1 / 20f
+            //);
+
+            //_spriteBatch.Draw(
+            //        blankTexture,
+            //        new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y),
+            //        Color.Black
+            //        );
+            //for (int index = 0; index < Tiles.numTiles; index++)
+            //{
+            //    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
+            //        new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
+            //        Tiles.tileXY,
+            //        Tiles.tileXY),
+            //        Tiles.textureRectangle[index],
+            //        Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
+            //        0,
+            //        new Vector2(0, 0),
+            //        0f,
+            //        0.98f);
+            //}
+            //for (int index = 0; index < Enemy.health.Count; index++)
+            //{
+            //    _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
+            //        new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
+            //        Enemy.textureRectangle[index],
+            //        Darkness(Enemy.colorFilter[index], Enemy.position[index]),
+            //        0,
+            //        new Vector2(0, 0),
+            //        0f,
+            //        0.99f);
+            //}
+
+            //_spriteBatch.Draw(
+            //    blankTexture,
+            //    Vector2toRectangle(Player.position + offset + new Vector2(Player.width, Player.height), Player.width, Player.height),
+            //    Player.textureRectangle,
+            //    //new (0,0, 1, 1),
+            //    Player.colorFilter,
+            //    -Player.angle,
+            //    //new(),
+            //    new Vector2(Player.width/4, Player.height/4),
+            //    Player.effect,
+            //    1f
+            //    );
+
+            for (int i = 0; i < (int)(2 * FOV_Size / detail); i++)
             {
                 CastRay(-FOV_Size + i * detail);
             }
+            for (int i = 0; i < Enemy.health.Count; i++)
+            {
+                Vector2 difference = Difference(Enemy.position[i], Player.position);
+                float distance = General.DistanceFromDifference(difference);
 
+                //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
+                //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
+                int width = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Width)*25;
+                int height = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Height)*25;
+                // Step 1: Get angle to enemy relative to player's forward direction
+                float relativeAngle = -Vector2ToAngle(Player.angleVector) + Vector2ToAngle(difference);
+
+                // Step 2: Normalize to range [0, 1] based on full field of view (2π radians)
+                float normalizedAngle = relativeAngle;
+                _spriteBatch.Draw(
+                    Enemy.textures[(int)Enemy.type[i]],
+                    new Rectangle(
+                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width/2,
+                        //(int)(enemyScreenX - width / 2),
+                        //(int)(-((-screenSize.X + width) / 2) + (screenSize.X * (InboundAngle( (float)Math.PI + Player.angle - Vector2ToAngle(difference)) / Math.PI * 2))),
+                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance*10)),
+                        width,
+                        height
+                        ),
+                null,
+                    ColorFilter(Enemy.colorFilter[i], distance/20f),
+                    0f,
+                    new Vector2(0, 0),
+                    SpriteEffects.None,
+                    10f/distance
+                    );
+            }
             _spriteBatch.Draw(
                             blankTexture,
                             new Rectangle((int)(screenSize.X / 2 - bowBarSize.X / 2), (int)(screenSize.Y * .9f), (int)((float)(bowCharge / MaxBowCharge) * bowBarSize.X), (int)bowBarSize.Y),
@@ -840,6 +928,8 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     0.4f
                     );
             }
+            //DrawLine(Player.position + offset, Player.position + offset + Player.angleVector);
+
             _spriteBatch.End();
             base.Draw(gameTime);
         }
