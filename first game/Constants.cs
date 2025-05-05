@@ -33,7 +33,8 @@ namespace first_game
         public static readonly float maxPlayerLightEmit = (float)Luminance.Player ;
         public static readonly float LightStrength = 0.0003f;
 
-        public static int maxLightLevel = 300;
+        public static int maxLightLevel = 300; // the light level where everything is completely lit
+
         public class EnemyStats
         {
             public static List<float> movementSpeed = new();
@@ -45,7 +46,7 @@ namespace first_game
             public static void Setup()
             {
                 //stats for Small enemies
-                movementSpeed.Add(5f);
+                movementSpeed.Add(5f/3f);
                 damage.Add(80);
                 health.Add(50);
                 height.Add(24);
@@ -53,7 +54,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Medium enemies
-                movementSpeed.Add(2.8f);
+                movementSpeed.Add(2.8f / 3f);
                 damage.Add(150);
                 health.Add(150);
                 height.Add(40);
@@ -61,7 +62,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Large enemies
-                movementSpeed.Add(2.1f);
+                movementSpeed.Add(2.1f / 3f);
                 damage.Add(450);
                 health.Add(300);
                 height.Add(60);
@@ -69,7 +70,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(2.3f);
+                movementSpeed.Add(2.3f / 3f);
                 damage.Add(100);
                 health.Add(100);
                 height.Add(40);
