@@ -29,7 +29,7 @@ namespace first_game
             return point.Y - (slope * point.X);
         }
 
-        public static Vector2 lineIntercepts(Vector2 line1point, Vector2 line1point2, Vector2 line2point, Vector2 line2point2)
+        public static Vector2 lineIntercepts(bool domain, Vector2 line1point, Vector2 line1point2, Vector2 line2point, Vector2 line2point2)
         {
             float m1 = GetSlope(line1point, line1point2);
             float b1 = GetYIntercept(line1point, m1);
@@ -44,28 +44,47 @@ namespace first_game
 
             float x = (b2 - b1) / (m1 - m2);
             float y = m1 * x + b1;
+
+            if (domain && (line2point.X < x && x < line2point2.X || line2point.Y < y && y < line2point2.Y))
+            {
+                return new Vector2(100000, 100000); // Invalid intersection if it's out of bounds
+            }
             return new Vector2(x, y);
         }
 
         public static float PointToRectCollision(Vector2 linePoint, Vector2 linePoint2, Rectangle rect)
         {
             Vector2[] intercepts = new Vector2[4];
-            intercepts[0] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y));
-            intercepts[1] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y + rect.Height), new Vector2(rect.X + rect.Width, rect.Y + rect.Height));
-            intercepts[2] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y), new Vector2(rect.X, rect.Y + rect.Height));
-            intercepts[3] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X + rect.Width, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Height));
-            //I FORGOT THE RECTS DOMAINS!!!
+            // RIGHT EDGE
+            intercepts[0] = lineIntercepts(true, linePoint, linePoint2,
+                new Vector2(rect.Right, rect.Top),
+                new Vector2(rect.Right, rect.Bottom));
+            // BOTTOM EDGE
+            intercepts[1] = lineIntercepts(true, linePoint, linePoint2,
+                new Vector2(rect.Right, rect.Bottom),
+                new Vector2(rect.Left, rect.Bottom));
+            // LEFT EDGE
+            intercepts[2] = lineIntercepts(true, linePoint, linePoint2,
+                new Vector2(rect.Left, rect.Bottom),
+                new Vector2(rect.Left, rect.Top));
+            // TOP EDGE
+            intercepts[3] = lineIntercepts(true, linePoint, linePoint2,
+                new Vector2(rect.Left, rect.Top),
+                new Vector2(rect.Right, rect.Top));//I FORGOT THE RECTS DOMAINS!!!
 
 
             float lowestDistance = 10000;
             float distance;
             for (int i = 0; i < 4; i++)
             {
-                distance = DistanceFromPoints(linePoint, intercepts[i]);
-                if (distance < lowestDistance)
-                {
-                    lowestDistance = distance;
-                }
+				if (new Vector2(100000, 100000) != intercepts[i])
+				{
+					distance = DistanceFromPoints(linePoint, intercepts[i]);
+					if (distance < lowestDistance)
+					{
+						lowestDistance = distance;
+					}
+				}
             }
 
             return lowestDistance;
@@ -656,29 +675,31 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             segmentWidth = (int)(Game1.screenSize.X / (FOV_Size * 2));
             LowestDistance = 10000;
 
-            for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
+			for (int tileIndex = 0; tileIndex < Tiles.numTiles; tileIndex++)
             {
-                float Distance = PointToRectCollision(Player.position, drawRayMovement, Tiles.collideRectangle[tileIndex]);
+                float Distance = PointToRectCollision(Player.position,Player.position + drawRayMovement, Tiles.collideRectangle[tileIndex]);
                 if (Tiles.tileType[tileIndex] != 0 && Distance < LowestDistance)
                 {
                     LowestDistance = Distance;
 
                 }
             }
-            //if (LowestDistance != 1000000)
-            //{
-            int columnHeight = (int)(screenSize.Y / LowestDistance) * 10;
+			LowestDistance *= 100000;
+			if (LowestDistance != 1000000)
+			{
+				int columnHeight = (int)((screenSize.Y/2) / LowestDistance) * 10;
+				//int columnHeight = (int)(LowestDistance * 10);
             float colorFilter = (255f - 255f / LightLevel * (float)LowestDistance) / 255;
             _spriteBatch.Draw(
             Game1.blankTexture,
             new Rectangle((int)(screenSize.X / 2 + segment * segmentWidth), (int)((screenSize.Y / 2) - columnHeight / 2), (int)(segmentWidth * detail) + 1, columnHeight),
             new Color(colorFilter, colorFilter, colorFilter));
-            _spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, 0), Color.Wheat);
+            _spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, segment*1000), Color.Red);
             return;
 
-            //}
+			}
 
-        }
+		}
         protected override void Draw(GameTime gameTime)
         {
 
