@@ -73,8 +73,8 @@ namespace first_game
                 movementSpeed.Add(2.3f / 3f);
                 damage.Add(100);
                 health.Add(100);
-                height.Add(40);
-                width.Add(25);
+                height.Add(30);
+                width.Add(30);
                 circle.Add(false);
             }
         }

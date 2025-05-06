@@ -192,7 +192,7 @@ namespace first_game
             }
 
             _finalLightLevel = _finalLuminance - Constants.LightStrength;
-            return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel);
+            return new Color(_color.R * _finalLightLevel, _color.G * _finalLightLevel, _color.B * _finalLightLevel, _color.A * _finalLightLevel);
         }
         public static float InboundAngle(float inputAngle)
         {
@@ -527,7 +527,6 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 previousIsActive = IsActive;
 
                 Player.angleVector = General.AngleToVector2(Player.angle);
-                Player.angleVector.Normalize();
 
                 if (Player.iFrames > 0)
                 {
@@ -589,10 +588,10 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
-                if (Player.health <= 0)
-                {
-                    state = State.Dead;
-                }
+                //if (Player.health <= 0)
+                //{
+                //    state = State.Dead;
+                //}
                 switch (Player.state)
                 {
                     case State.Idle:
@@ -811,7 +810,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //new Rectangle(0, 0, 1, 1),
             //Color.White,
             //0f,
-            //new(),
+            //new(),`
             //0,
             //1 / 20f
             //);
@@ -821,6 +820,21 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y),
             //        Color.Black
             //        );
+
+            //if (Player.Attacks.swingSpeed != 0)
+            //{
+            //    _spriteBatch.Draw(
+            //        swordTexture,
+            //        offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
+            //        (float)Math.Sin(Player.Attacks.swingAngle)),
+            //        null,
+            //        Player.colorFilter,
+            //        (float)(Player.Attacks.swingAngle - Math.PI * .5f),
+            //        new Vector2(swordTexture.Width / 2, 0),
+            //        0.05f,
+            //        SpriteEffects.FlipVertically,
+            //        1);
+            //}
             //for (int index = 0; index < Tiles.numTiles; index++)
             //{
             //    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
@@ -854,7 +868,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //    Player.colorFilter,
             //    -Player.angle,
             //    //new(),
-            //    new Vector2(Player.width/4, Player.height/4),
+            //    new Vector2(Player.width / 4, Player.height / 4),
             //    Player.effect,
             //    1f
             //    );
@@ -870,8 +884,8 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
                 //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
                 //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
-                int width = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Width)*25;
-                int height = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Height)*25;
+                float width = (Enemy.collideRectangle[i].Height * screenSize.Y / (distance));
+                float height = (Enemy.collideRectangle[i].Height * screenSize.Y / (distance));
                 // Step 1: Get angle to enemy relative to player's forward direction
                 float relativeAngle = -Vector2ToAngle(Player.angleVector) + Vector2ToAngle(difference);
 
@@ -880,19 +894,19 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 _spriteBatch.Draw(
                     Enemy.textures[(int)Enemy.type[i]],
                     new Rectangle(
-                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width/2,
+                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2) - width/2),
                         //(int)(enemyScreenX - width / 2),
                         //(int)(-((-screenSize.X + width) / 2) + (screenSize.X * (InboundAngle( (float)Math.PI + Player.angle - Vector2ToAngle(difference)) / Math.PI * 2))),
-                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance*10)),
-                        width,
-                        height
+                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance) * 25),
+                        (int)(width),
+                        (int)(height)
                         ),
                 null,
                     ColorFilter(Enemy.colorFilter[i], distance/20f),
                     0f,
                     new Vector2(0, 0),
                     SpriteEffects.None,
-                    10f/distance
+                    0.1f/(distance/75)
                     );
             }
             _spriteBatch.Draw(

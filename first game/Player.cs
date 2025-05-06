@@ -73,7 +73,7 @@ namespace first_game
             colorFilter = _color;
             Push(_knockback, _enemyPlayerAngle);
             health -= _damage;
-            state = State.Stunned;
+            //state = State.Stunned;
             recoveryTime = _recoveryTime;
             
         }
@@ -94,7 +94,7 @@ namespace first_game
             private static int flipped = -1;
             public static void Swing(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
-                Push(5, angleVector);
+                Push(1, angleVector);
                 flipped = _flipped;
                 recoveryTime = _recoveryTime;
                 swingWidth = (float)Math.PI * _swingWidth;

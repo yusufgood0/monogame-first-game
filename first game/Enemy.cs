@@ -73,6 +73,7 @@ namespace first_game
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
+            Game1.LightLevel -= _damage;
             colorFilter[_index] = _color;
             iFrames[_index] = _iFrames;
             health[_index] -= _damage;
@@ -246,11 +247,11 @@ namespace first_game
 
                     if (_sightline)
                     {
-                        colorFilter[_index] = Color.Crimson;
+                        colorFilter[_index] = Color.White;
                     }
                     else
                     {
-                        colorFilter[_index] = Color.Wheat;
+                        colorFilter[_index] = Color.White;
                     }
                 }
                 Vector2 _position = position[_index];
