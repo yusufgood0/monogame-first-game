@@ -21,11 +21,18 @@ namespace first_game
     {
         public static bool IsEnemyCollide(Rectangle _rect, int _index)
         {
-            if ((bool)General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, _rect)[0])
-			   {
+            if (Constants.EnemyStats.circle[(int)Enemy.enemyType[_index]])
+            {
+                if ((bool)General.CircleCollision(Enemy.position[_index], Enemy.collideRectangle[_index].Width / 2, _rect)[0])
+                {
+                    return true;
+                }
+            }
+            else if (Enemy.collideRectangle[_index].Intersects(_rect))
+            {
                 return true;
             }
-            else { return false; }  
+            return false;
         }
 
         static readonly Random rnd = new();
@@ -102,7 +109,7 @@ namespace first_game
             target.Add(_spawnLocation - new Vector2(0, 10));
             iFrames.Add(1);
             speed.Add(new());
-            type.Add(_EnemyType);
+            enemyType.Add(_EnemyType);
             colorFilter.Add(Color.DarkSalmon);
         }
         public static void KillAll()
@@ -114,7 +121,7 @@ namespace first_game
         }
         public static void Kill(int _index)
         {
-            Game1.playerLightEmit -= Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.type[_index]];
+            Game1.playerLightEmit -= Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.enemyType[_index]];
             if (Game1.playerLightEmit >= Constants.maxPlayerLightEmit)
                 Game1.playerLightEmit = Constants.maxPlayerLightEmit;
 
@@ -131,12 +138,13 @@ namespace first_game
             target.RemoveAt(_index);
             iFrames.RemoveAt(_index);
             speed.RemoveAt(_index);
-            type.RemoveAt(_index);
+            enemyType.RemoveAt(_index);
             colorFilter.RemoveAt(_index);
         }
 
         public static Texture2D[] textures = new Texture2D[4];
         public static Vector2[] textureArray = new Vector2[4];
+        public static Vector2[] visualTextureSize = new Vector2[4];
 
         public static List<int> damage = new();
         public static List<int> abilityTimer = new();
@@ -148,7 +156,7 @@ namespace first_game
         public static List<Vector2> target = new();
         public static List<int> health = new();
         public static List<int> iFrames = new();
-        public static List<EnemyType> type = new();
+        public static List<EnemyType> enemyType = new();
         public static List<Color> colorFilter = new();
 
 
@@ -190,17 +198,17 @@ namespace first_game
             if (Game1.EnemyTargetTimer <= 0)
             {
 
-                switch (type[_index])
+                switch (enemyType[_index])
                 {
                     case EnemyType.ARCHER:
                         if (rnd.Next(4) == 1)
                         {
-                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]] * Constants.Archer.archerStopRange;
+                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
                         }
                         break;
                     default:
                         if (rnd.Next(20) == 1)
-                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
+                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
                         break;
                 }
                 if (_sightline)
@@ -215,8 +223,8 @@ namespace first_game
             {
                 if (iFrames[_index] == 0)
                 {
-                    _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]];
-                    switch (type[_index])
+                    _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
+                    switch (enemyType[_index])
                     {
                         case EnemyType.ARCHER:
                             if (_sightline)
@@ -246,25 +254,26 @@ namespace first_game
 
                     if (_sightline)
                     {
-                        colorFilter[_index] = Color.Crimson;
+                        colorFilter[_index] = Color.White;
                     }
                     else
                     {
-                        colorFilter[_index] = Color.Wheat;
+                        colorFilter[_index] = Color.White;
                     }
                 }
                 Vector2 _position = position[_index];
-                if (Constants.EnemyStats.circle[(int)type[_index]])
+                if (Constants.EnemyStats.circle[(int)enemyType[_index]])
                 {
-                    General.CircleMovement(false, ref _position, Enemy.collideRectangle[_index].Width / 2, ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                    General.CircleMovement(false, ref _position, Enemy.collideRectangle[_index].Width / 2, ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
                 }
                 else
                 {
-                    General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.type[_index]]);
+                    General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
                 }
                 position[_index] = _position;
                 speed[_index] = speed[_index] * 0.6f;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
+                collideRectangle[_index] = General.Vector2toRectangle(position[_index], collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
         }
         public enum EnemyType
@@ -276,10 +285,11 @@ namespace first_game
         }
         public static void Setup(object[] _textures)
         {
-            for (int i = 0; i * 2 < _textures.Length; i++)
+            for (int i = 0; i * 3 < _textures.Length; i++)
             {
-                Enemy.textures[i] = (Texture2D)_textures[i * 2];
-                Enemy.textureArray[i] = (Vector2)_textures[i * 2 + 1];
+                Enemy.textures[i] = (Texture2D)_textures[i * 3];
+                Enemy.textureArray[i] = (Vector2)_textures[i * 3 + 1];
+                Enemy.visualTextureSize[i] = (Vector2)_textures[i * 3 + 2];
             }
         }
     }

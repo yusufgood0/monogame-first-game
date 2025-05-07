@@ -448,7 +448,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = false;
-            _graphics.IsFullScreen = true;
+            _graphics.IsFullScreen = false;
         }
         protected override void Initialize()
         {
@@ -468,12 +468,16 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
+                new Vector2(1, 15),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
+                new Vector2(1, 20),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
+                new Vector2(1, 35),
                 Content.Load<Texture2D>("square"),
                 new Vector2(1, 1),
+                new Vector2(.5f, 30f),
             });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
@@ -527,7 +531,6 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 previousIsActive = IsActive;
 
                 Player.angleVector = General.AngleToVector2(Player.angle);
-                Player.angleVector.Normalize();
 
                 if (Player.iFrames > 0)
                 {
@@ -589,10 +592,10 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
-                if (Player.health <= 0)
-                {
-                    state = State.Dead;
-                }
+                //if (Player.health <= 0)
+                //{
+                //    state = State.Dead;
+                //}
                 switch (Player.state)
                 {
                     case State.Idle:
@@ -634,21 +637,21 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
                         if (Player.state == Player.State.Idle && dashCooldownTimer >= 200)
                         {
-                            Player.Attacks.Swing(1, 0.3f, 40f, 15, 300, 1, 20);
+                            Player.Attacks.SwingStart(1, 0.3f, 60f, 15, 300, 1, 20);
                             Player.state = Player.State.Attacking_1;
-                            dashCooldownTimer = 200;
+                            dashCooldownTimer -= 200;
                         }
                         else if (Player.state == Player.State.Attacking_1 && dashCooldownTimer >= 300)
                         {
-                            Player.Attacks.Swing(-1, 0.5f, 40f, 15, 750, 2, 20);
+                            Player.Attacks.SwingStart(-1, 0.5f, 60f, 15, 750, 2, 20);
                             Player.state = Player.State.Attacking_2;
-                            dashCooldownTimer = 300;
+                            dashCooldownTimer -= 300;
                         }
                         else if (Player.state == Player.State.Attacking_2 && dashCooldownTimer >= 400)
                         {
-                            Player.Attacks.Swing(1, 0.7f, 40f, 20, 1000, 3, 20);
+                            Player.Attacks.SwingStart(1, 0.7f, 60f, 20, 1000, 3, 20);
                             Player.state = Player.State.Attacking_3;
-                            dashCooldownTimer = 400;
+                            dashCooldownTimer -= 400;
                         }
                     }
 
@@ -678,7 +681,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     //if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
                     if (iFrames <= 0 && state != State.Dashing && Enemy.IsEnemyCollide(General.Vector2toRectangle(Player.position, width, height), _index))
                     {
-                        Player.TakeDamage(Color.Black, Constants.EnemyStats.damage[(int)Enemy.type[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
+                        Player.TakeDamage(Color.Black, Constants.EnemyStats.damage[(int)Enemy.enemyType[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
                     }
 
                 if (playerLightEmit > 300)
@@ -870,20 +873,20 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
                 //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
                 //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
-                int width = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Width)*25;
-                int height = (int)(Enemy.collideRectangle[i].Height / distance * Enemy.collideRectangle[i].Height)*25;
+                int height = (int)((Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y * screenSize.Y / (distance)));
+                int width = (int)(Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X * height);
                 // Step 1: Get angle to enemy relative to player's forward direction
                 float relativeAngle = -Vector2ToAngle(Player.angleVector) + Vector2ToAngle(difference);
 
                 // Step 2: Normalize to range [0, 1] based on full field of view (2π radians)
                 float normalizedAngle = relativeAngle;
                 _spriteBatch.Draw(
-                    Enemy.textures[(int)Enemy.type[i]],
+                    Enemy.textures[(int)Enemy.enemyType[i]],
                     new Rectangle(
                         (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width/2,
                         //(int)(enemyScreenX - width / 2),
                         //(int)(-((-screenSize.X + width) / 2) + (screenSize.X * (InboundAngle( (float)Math.PI + Player.angle - Vector2ToAngle(difference)) / Math.PI * 2))),
-                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance*10)),
+                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance*25)),
                         width,
                         height
                         ),
@@ -892,7 +895,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     0f,
                     new Vector2(0, 0),
                     SpriteEffects.None,
-                    10f/distance
+                    0.1f/(distance / 75)
                     );
             }
             _spriteBatch.Draw(

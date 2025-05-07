@@ -71,7 +71,7 @@ namespace first_game
                 {
                     Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
-                    if (!Enemy.TakeDamage(Color.Red, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
+                    if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
                     {
                         Iframes[_index].Add(15);
                         IframesEnemyIndex[_index].Add(EnemyIndex);

@@ -73,7 +73,7 @@ namespace first_game
             colorFilter = _color;
             Push(_knockback, _enemyPlayerAngle);
             health -= _damage;
-            state = State.Stunned;
+            //state = State.Stunned;
             recoveryTime = _recoveryTime;
             
         }
@@ -89,12 +89,12 @@ namespace first_game
             private static float endAngle;
             public static float swingSpeed;
             private static int pierce;
-            private static readonly int swingHitboxSize = 10;
+            private static readonly int swingHitboxSize = 60;
             private static readonly int projectileHitboxSize = 30;
             private static int flipped = -1;
-            public static void Swing(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
+            public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
-                Push(5, angleVector);
+                Push(2, angleVector);
                 flipped = _flipped;
                 recoveryTime = _recoveryTime;
                 swingWidth = (float)Math.PI * _swingWidth;
@@ -109,7 +109,7 @@ namespace first_game
                     Enemy.iFrames[_index] = 0;
                 for (int _index = 0; _index < Tiles.swingIFrames.Length; _index++)
                     Tiles.swingIFrames[_index] = 0;
-                Player.iFrames = 10;
+                Player.iFrames = 20;
             }
             public static void SwingUpdate()
             {
@@ -128,22 +128,22 @@ namespace first_game
                     attackAngleVector = new((float)Math.Cos(swingAngle), (float)Math.Sin(swingAngle));
                     checkpoint = position + attackAngleVector * swingRange;
                     swingAngle -= 0.1f * flipped;
-
+                    Rectangle checkrect = General.Vector2toRectangle(checkpoint, swingHitboxSize, swingHitboxSize);
                     for (int index = 0; index < Enemy.health.Count; index++)
                     {
-                        if (Enemy.IsEnemyCollide(new Rectangle((int)(checkpoint.X - swingHitboxSize / 2), (int)(checkpoint.Y - swingHitboxSize / 2), swingHitboxSize, swingHitboxSize), index) && 
+                        if (Enemy.IsEnemyCollide(checkrect, index) && 
                             Enemy.iFrames[index] <= 0 && 
                             pierce > 0)
                         {
-                            Enemy.Push(50, Enemy.position[index] - position, index);
-                            Enemy.TakeDamage(Color.Red, swingDamage, swingDamage, index);
+                            Enemy.Push(150, Enemy.position[index] - position, index);
+                            Enemy.TakeDamage(Color.Purple, swingDamage, swingDamage, index);
                             pierce -= 1;
                         }
                     }
 
                     for (int index = 0; index < Tiles.numTiles; index++)
                     {
-                        if (Tiles.collideRectangle[index].Contains(checkpoint) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
+                        if (Tiles.collideRectangle[index].Intersects(checkrect) && Tiles.swingIFrames[index] <= 0 && Tiles.tileType[index] == (int)Tiles.tileTypes.BRICK)
                         {
                             Tiles.TakeDamage(Color.AliceBlue, swingDamage, 10, index);
                         }
