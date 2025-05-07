@@ -471,13 +471,13 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 new Vector2(1, 15),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
-                new Vector2(1, 20),
+                new Vector2(1, 30),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
-                new Vector2(1, 35),
+                new Vector2(1, 50),
                 Content.Load<Texture2D>("square"),
                 new Vector2(1, 1),
-                new Vector2(.5f, 30f),
+                new Vector2(.5f, 30),
             });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
@@ -592,10 +592,10 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
-                if (Player.health <= 0)
-                {
-                    state = State.Dead;
-                }
+                //if (Player.health <= 0)
+                //{
+                //    state = State.Dead;
+                //}
                 switch (Player.state)
                 {
                     case State.Idle:
@@ -930,7 +930,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                             0,
                             new Vector2(0, 0),
                             0f,
-                            0.3f
+                            1f
                             );
 
             for (int i = 0; i < maxDashCharge + 1; i++)
@@ -943,7 +943,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     0,
                     new Vector2(0, 0),
                     0f,
-                    0.4f
+                    1f
                     );
             }
             //DrawLine(Player.position + offset, Player.position + offset + Player.angleVector);

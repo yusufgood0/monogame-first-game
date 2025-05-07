@@ -89,7 +89,7 @@ namespace first_game
             private static float endAngle;
             public static float swingSpeed;
             private static int pierce;
-            private static readonly int swingHitboxSize = 60;
+            private static readonly int swingHitboxSize = 40;
             private static readonly int projectileHitboxSize = 30;
             private static int flipped = -1;
             public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
