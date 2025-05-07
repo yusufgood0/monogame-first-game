@@ -825,33 +825,33 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        Color.Black
             //        );
 
-            //if (Player.Attacks.swingSpeed != 0)
-            //{
-            //    _spriteBatch.Draw(
-            //        swordTexture,
-            //        offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
-            //        (float)Math.Sin(Player.Attacks.swingAngle)),
-            //        null,
-            //        Player.colorFilter,
-            //        (float)(Player.Attacks.swingAngle - Math.PI * .5f),
-            //        new Vector2(swordTexture.Width / 2, 0),
-            //        0.05f,
-            //        SpriteEffects.FlipVertically,
-            //        1);
-            //}
-            //for (int index = 0; index < Tiles.numTiles; index++)
-            //{
-            //    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
-            //        new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
-            //        Tiles.tileXY,
-            //        Tiles.tileXY),
-            //        Tiles.textureRectangle[index],
-            //        Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
-            //        0,
-            //        new Vector2(0, 0),
-            //        0f,
-            //        0.98f);
-            //}
+            if (Player.Attacks.swingSpeed != 0)
+            {
+                _spriteBatch.Draw(
+                    swordTexture,
+                    offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
+                    (float)Math.Sin(Player.Attacks.swingAngle)),
+                    null,
+                    Player.colorFilter,
+                    (float)(Player.Attacks.swingAngle - Math.PI * .5f),
+                    new Vector2(swordTexture.Width / 2, 0),
+                    0.05f,
+                    SpriteEffects.FlipVertically,
+                    1);
+            }
+            for (int index = 0; index < Tiles.numTiles; index++)
+            {
+                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
+                    new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
+                    Tiles.tileXY,
+                    Tiles.tileXY),
+                    Tiles.textureRectangle[index],
+                    Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
+                    0,
+                    new Vector2(0, 0),
+                    0f,
+                    .98f);
+            }
             //for (int index = 0; index < Enemy.health.Count; index++)
             //{
             //    _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
@@ -861,21 +861,21 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        0,
             //        new Vector2(0, 0),
             //        0f,
-            //        0.99f);
+            //        0.98f);
             //}
 
-            //_spriteBatch.Draw(
-            //    blankTexture,
-            //    Vector2toRectangle(Player.position + offset + new Vector2(Player.width, Player.height), Player.width, Player.height),
-            //    Player.textureRectangle,
-            //    //new (0,0, 1, 1),
-            //    Player.colorFilter,
-            //    -Player.angle,
-            //    //new(),
-            //    new Vector2(Player.width / 4, Player.height / 4),
-            //    Player.effect,
-            //    1f
-            //    );
+            _spriteBatch.Draw(
+                blankTexture,
+                Vector2toRectangle(screenSize/2 + new Vector2(Player.width/2, Player.height/2), Player.width, Player.height),
+                Player.textureRectangle,
+                //new (0,0, 1, 1),
+                Player.colorFilter,
+                -Player.angle,
+                //new(),
+                new Vector2(Player.width / 4, Player.height / 4),
+                Player.effect,
+                .99f
+                );
 
             for (int i = 0; i < (int)(2 * FOV_Size / detail); i++)
             {

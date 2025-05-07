@@ -100,9 +100,9 @@ namespace first_game
                 swingWidth = (float)Math.PI * _swingWidth;
                 swingRange = _swingRange;
                 swingDamage = _damage;
-                swingAngle = angle + swingWidth * flipped; //flipped shouldo only be 1 or -1
-                startAngle = angle + swingWidth;
-                endAngle = angle - swingWidth;
+                swingAngle = -angle + swingWidth * flipped + (float)Math.PI *.5f; //flipped shouldo only be 1 or -1
+                startAngle = -angle + swingWidth + (float)Math.PI * .5f;
+                endAngle = -angle - swingWidth + (float)Math.PI * .5f;
                 swingSpeed = _swingSpeed;
                 pierce = _pierce;
                 for (int _index = 0; _index < Enemy.iFrames.Count; _index++)
