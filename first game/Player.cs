@@ -94,15 +94,14 @@ namespace first_game
             private static int flipped = -1;
             public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
             {
-                Push(2, angleVector);
                 flipped = _flipped;
                 recoveryTime = _recoveryTime;
                 swingWidth = (float)Math.PI * _swingWidth;
                 swingRange = _swingRange;
                 swingDamage = _damage;
-                swingAngle = -angle + swingWidth * flipped + (float)Math.PI *.5f; //flipped shouldo only be 1 or -1
-                startAngle = -angle + swingWidth + (float)Math.PI * .5f;
-                endAngle = -angle - swingWidth + (float)Math.PI * .5f;
+                swingAngle = angle; //flipped shouldo only be 1 or -1
+                startAngle = angle + swingWidth;
+                endAngle = angle - swingWidth;
                 swingSpeed = _swingSpeed;
                 pierce = _pierce;
                 for (int _index = 0; _index < Enemy.iFrames.Count; _index++)
@@ -113,6 +112,8 @@ namespace first_game
             }
             public static void SwingUpdate()
             {
+                //swingAngle = -angle; //flipped shouldo only be 1 or -1
+                
                 for (int _index = 0; _index < Enemy.iFrames.Count; _index++)
                     if (Enemy.iFrames[_index] > 0) { Enemy.iFrames[_index] -= 1; }
                 for (int _index = 0; _index < Tiles.numTiles; _index++)
@@ -125,8 +126,10 @@ namespace first_game
                         swingSpeed = -1;
                         return;
                     }
-                    attackAngleVector = new((float)Math.Cos(swingAngle), (float)Math.Sin(swingAngle));
-                    checkpoint = position + attackAngleVector * swingRange;
+                    Push(swingRange/10f, General.AngleToVector2(swingAngle));
+
+                    checkpoint = position + General.AngleToVector2(swingAngle) * swingRange;
+                    angle -= 0.05f * flipped;
                     swingAngle -= 0.1f * flipped;
                     Rectangle checkrect = General.Vector2toRectangle(checkpoint, swingHitboxSize, swingHitboxSize);
                     for (int index = 0; index < Enemy.health.Count; index++)
@@ -151,7 +154,7 @@ namespace first_game
 
                     for (int index = 0; index < Projectile.position.Count; index++)
                     {
-                        if (!Projectile.IframesEnemyIndex[index].Contains(-2) && new Rectangle((int)(checkpoint.X - projectileHitboxSize / 2), (int)(checkpoint.Y - projectileHitboxSize / 2), projectileHitboxSize, projectileHitboxSize).Contains(Projectile.position[index]))
+                        if (!Projectile.IframesEnemyIndex[index].Contains(-2) && checkrect.Contains(Projectile.position[index]))
                         {
                             Projectile.pierce[index] += 1;
                             Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;

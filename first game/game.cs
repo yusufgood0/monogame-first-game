@@ -20,6 +20,31 @@ namespace first_game
 {
     public class General
     {
+    
+        public static bool OnKeyPress(Keys _key)
+        {
+            if (Game1.keyboardState.IsKeyDown(_key) && Game1.previousKeyboardState.IsKeyUp(_key))
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool OnRightButtonPress()
+        {
+            if (Game1.mouseState.RightButton == ButtonState.Pressed && Game1.previousMouseState.RightButton != ButtonState.Pressed)
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool OnLeftButtonPress()
+        {
+            if (Game1.mouseState.LeftButton == ButtonState.Pressed && Game1.previousMouseState.LeftButton != ButtonState.Pressed)
+            {
+                return true;
+            }
+            return false;
+        }
         public static float? GetSlope(Vector2 point, Vector2 point2)
         {
             if (point2.X - point.X == 0)
@@ -407,10 +432,8 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
         private readonly GraphicsDeviceManager _graphics;
         public static SpriteBatch _spriteBatch;
-        KeyboardState movementKeyboardState;
-        KeyboardState previousKeyboardState;
-        KeyboardState keyboardState;
-        MouseState mouseState;
+        public static KeyboardState previousKeyboardState, keyboardState;
+        public static MouseState mouseState, previousMouseState;
         static SpriteFont titleFont;
 
         Vector2 offset = new(0, 0);
@@ -537,7 +560,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     Player.iFrames -= 1;
                 }
 
-                if (keyboardState.IsKeyDown(Keys.Tab) && !previousKeyboardState.IsKeyDown(Keys.Tab))
+                if (OnKeyPress(Keys.Tab))
                 {
                     Levels.SetLevel(Levels.Level + 1);
                     Enemy.RandomizePositions();
@@ -547,26 +570,29 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     Exit();
 
                 Player.speed = new Vector2(0, 0);
-
-                if (movementKeyboardState.IsKeyDown(Keys.W))
+                if (dashLengthTimer < 0)
                 {
-                    MoveKeyPressed(Direction.UP);
+                    if (keyboardState.IsKeyDown(Keys.W))
+                    {
+                        MoveKeyPressed(Direction.UP);
 
-                }
-                if (movementKeyboardState.IsKeyDown(Keys.S))
-                {
-                    MoveKeyPressed(Direction.DOWN);
+                    }
+                    if (keyboardState.IsKeyDown(Keys.S))
+                    {
+                        MoveKeyPressed(Direction.DOWN);
 
-                }
-                if (movementKeyboardState.IsKeyDown(Keys.A))
-                {
-                    MoveKeyPressed(Direction.LEFT);
+                    }
+                    if (keyboardState.IsKeyDown(Keys.A))
+                    {
+                        MoveKeyPressed(Direction.LEFT);
 
+                    }
+                    if (keyboardState.IsKeyDown(Keys.D))
+                    {
+                        MoveKeyPressed(Direction.RIGHT);
+                    }
                 }
-                if (movementKeyboardState.IsKeyDown(Keys.D))
-                {
-                    MoveKeyPressed(Direction.RIGHT);
-                }
+                
 
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
@@ -630,28 +656,21 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     if (Player.state == Player.State.Drawing_Bow) Player.movementSpeed = 2;
                     else Player.movementSpeed = 3;
 
-                    movementKeyboardState = Keyboard.GetState();
 
-                    if (keyboardState.IsKeyDown(Keys.Space) && !previousKeyboardState.IsKeyDown(Keys.Space))
+                    if (Player.Attacks.swingSpeed == -1)
                     {
 
-                        if (Player.state == Player.State.Idle && dashCooldownTimer >= 200)
+                        if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && dashCooldownTimer >= 200)
                         {
-                            Player.Attacks.SwingStart(1, 0.3f, 60f, 15, 300, 1, 20);
+                            Player.Attacks.SwingStart(1, 0.3f, 25f, 15, 300, 1, 20);
                             Player.state = Player.State.Attacking_1;
-                            dashCooldownTimer -= 200;
+                            dashCooldownTimer -= 350;
                         }
-                        else if (Player.state == Player.State.Attacking_1 && dashCooldownTimer >= 300)
+                        else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && dashCooldownTimer >= 300)
                         {
-                            Player.Attacks.SwingStart(-1, 0.5f, 60f, 15, 750, 2, 20);
+                            Player.Attacks.SwingStart(-1, 0.3f, 25f, 15, 750, 1, 20);
                             Player.state = Player.State.Attacking_2;
-                            dashCooldownTimer -= 300;
-                        }
-                        else if (Player.state == Player.State.Attacking_2 && dashCooldownTimer >= 400)
-                        {
-                            Player.Attacks.SwingStart(1, 0.7f, 60f, 20, 1000, 3, 20);
-                            Player.state = Player.State.Attacking_3;
-                            dashCooldownTimer -= 400;
+                            dashCooldownTimer -= 350;
                         }
                     }
 
@@ -724,6 +743,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
                 previousKeyboardState = Keyboard.GetState();
+                previousMouseState = Mouse.GetState();
                 gametimer -= Constants.tpsPerSec;
                 if (gametimer > 1000)
                 {
@@ -825,36 +845,36 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        Color.Black
             //        );
 
-            if (Player.Attacks.swingSpeed != 0)
-            {
-                _spriteBatch.Draw(
-                    swordTexture,
-                    offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
-                    (float)Math.Sin(Player.Attacks.swingAngle)),
-                    null,
-                    Player.colorFilter,
-                    (float)(Player.Attacks.swingAngle - Math.PI * .5f),
-                    new Vector2(swordTexture.Width / 2, 0),
-                    0.05f,
-                    SpriteEffects.FlipVertically,
-                    1);
-            }
-            for (int index = 0; index < Tiles.numTiles; index++)
-            {
-                _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
-                    new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
-                    Tiles.tileXY,
-                    Tiles.tileXY),
-                    Tiles.textureRectangle[index],
-                    Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
-                    0,
-                    new Vector2(0, 0),
-                    0f,
-                    .98f);
-            }
+            //if (Player.Attacks.swingSpeed != 0)
+            //{
+            //    _spriteBatch.Draw(
+            //        swordTexture,
+            //        offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
+            //        (float)Math.Sin(Player.Attacks.swingAngle)),
+            //        null,
+            //        Player.colorFilter,
+            //        (float)(Player.Attacks.swingAngle),
+            //        new Vector2(swordTexture.Width / 2, 0),
+            //        0.05f,
+            //        SpriteEffects.FlipVertically,
+            //        1);
+            //}
+            //for (int index = 0; index < Tiles.numTiles; index++)
+            //{
+            //    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
+            //        new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
+            //        Tiles.tileXY,
+            //        Tiles.tileXY),
+            //        Tiles.textureRectangle[index],
+            //        Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
+            //        0,
+            //        new Vector2(0, 0),
+            //        0f,
+            //        .98f);
+            //}
             //for (int index = 0; index < Enemy.health.Count; index++)
             //{
-            //    _spriteBatch.Draw(Enemy.textures[(int)Enemy.type[index]],
+            //    _spriteBatch.Draw(Enemy.textures[(int)Enemy.enemyType[index]],
             //        new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
             //        Enemy.textureRectangle[index],
             //        Darkness(Enemy.colorFilter[index], Enemy.position[index]),
@@ -864,18 +884,18 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        0.98f);
             //}
 
-            _spriteBatch.Draw(
-                blankTexture,
-                Vector2toRectangle(screenSize/2 + new Vector2(Player.width/2, Player.height/2), Player.width, Player.height),
-                Player.textureRectangle,
-                //new (0,0, 1, 1),
-                Player.colorFilter,
-                -Player.angle,
-                //new(),
-                new Vector2(Player.width / 4, Player.height / 4),
-                Player.effect,
-                .99f
-                );
+            //_spriteBatch.Draw(
+            //    blankTexture,
+            //    Vector2toRectangle(screenSize/2 + new Vector2(Player.width/2, Player.height/2), Player.width, Player.height),
+            //    Player.textureRectangle,
+            //    //new (0,0, 1, 1),
+            //    Player.colorFilter,
+            //    -Player.angle,
+            //    //new(),
+            //    new Vector2(Player.width / 4, Player.height / 4),
+            //    Player.effect,
+            //    .99f
+            //    );
 
             for (int i = 0; i < (int)(2 * FOV_Size / detail); i++)
             {
