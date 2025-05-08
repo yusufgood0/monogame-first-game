@@ -216,10 +216,6 @@ namespace first_game
             Vector.Normalize();
             return Vector;
         }
-        public static Rectangle RectangleAddVector2(Rectangle Rect, Vector2 vector)
-        {
-            return new Rectangle((int)(Rect.X + vector.X), (int)(Rect.Y + vector.Y), Rect.Width, Rect.Height);
-        }
         public static Rectangle Vector2toRectangle(Vector2 Position, int _width, int _height)
         {
             return new((int)(Position.X - _width / 2), (int)(Position.Y - _height / 2), _width, _height);
