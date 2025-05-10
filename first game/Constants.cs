@@ -17,6 +17,9 @@ namespace first_game
 {
     internal class Constants
     {
+
+        public static readonly int maxHealth = 1000;
+
         public static readonly int tps = 45; 
         public static readonly int tpsPerSec = 1000 / tps;
 
@@ -46,7 +49,7 @@ namespace first_game
             public static void Setup()
             {
                 //stats for Small enemies
-                movementSpeed.Add(5f/3f);
+                movementSpeed.Add(5f);
                 damage.Add(80);
                 health.Add(50);
                 height.Add(24);
@@ -54,7 +57,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Medium enemies
-                movementSpeed.Add(2.8f / 3f);
+                movementSpeed.Add(2.8f);
                 damage.Add(150);
                 health.Add(150);
                 height.Add(40);
@@ -62,7 +65,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Large enemies
-                movementSpeed.Add(2.1f / 3f);
+                movementSpeed.Add(2.1f);
                 damage.Add(450);
                 health.Add(300);
                 height.Add(60);
@@ -70,7 +73,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(2.3f / 3f);
+                movementSpeed.Add(2.3f);
                 damage.Add(100);
                 health.Add(100);
                 height.Add(30);

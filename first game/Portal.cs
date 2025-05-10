@@ -14,6 +14,7 @@ namespace first_game
     internal class Portal
     {
         public static Color Color = Color.Aquamarine;
+        public static readonly int portalVisualSize = 50;
         public static Texture2D texture;
         public static readonly int amountOfFrames = 3;
         public static double textureFrame;
@@ -46,7 +47,7 @@ namespace first_game
         }
         public static bool RequirementsMet()
         {
-            if (Enemy.health.Count < Levels.EnemySaves[Levels.Level].Sum() / 2) 
+            if (Enemy.health.Count <= Levels.EnemySaves[Levels.Level].Sum() / 2) 
             {
                 return true;
             }

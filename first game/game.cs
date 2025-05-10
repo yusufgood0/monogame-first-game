@@ -20,7 +20,14 @@ namespace first_game
 {
     public class General
     {
-    
+        public static int NegativeOrPositive(float num)
+        {
+            if (num < 0)
+            {
+                return -1;
+            }
+            return 1;
+        }
         public static bool OnKeyPress(Keys _key)
         {
             if (Game1.keyboardState.IsKeyDown(_key) && Game1.previousKeyboardState.IsKeyUp(_key))
@@ -67,6 +74,7 @@ namespace first_game
 
             else if (m1 == null) // Line 1 is vertical
             {
+                //float y = (float)m2 * line1Point1.X + GetYIntercept(line2Point2, m2);
                 return new Vector2(line1Point1.X, (float)(m2 * line1Point1.X + GetYIntercept(line2Point1, m2)));
             }
             else if (m2 == null) // Line 2 is vertical
@@ -84,7 +92,7 @@ namespace first_game
             }
         }
 
-        public static float PointToRectCollision(Vector2 linePoint, Vector2 linePoint2, Rectangle rect)
+        public static float LineToRectCollision(Vector2 linePoint, Vector2 linePoint2, Rectangle rect)
         {
             Vector2[] intercepts = new Vector2[4];
             intercepts[0] = lineIntercepts(linePoint, linePoint2, new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y));                               //horizontal Top
@@ -103,19 +111,29 @@ namespace first_game
                 DirectionIsRight = false;
             }
 
+            //bool DirectionIsDown = false;
+            //if (linePoint.Y - linePoint2.Y > 0)
+            //{
+            //    DirectionIsDown = true;
+            //}
+            //else
+            //{
+            //    DirectionIsDown = false;
+            //}
 
             float lowestDistance = float.PositiveInfinity;
             float distance;
             for (int i = 0; i < 4; i++)
             {
                 if (
-                    intercepts[i].X >= Math.Min(rect.Left, rect.Right) && intercepts[i].X <= Math.Max(rect.Left, rect.Right) && // x in bounds check
-                    intercepts[i].Y >= Math.Min(rect.Top, rect.Bottom) && intercepts[i].Y <= Math.Max(rect.Top, rect.Bottom) && // y in bounds check
-                    ((intercepts[i].X < linePoint.X && DirectionIsRight) || (intercepts[i].X > linePoint.X && !DirectionIsRight)) // correct direction check
+                    intercepts[i].X >= Math.Min(rect.Left, rect.Right) && intercepts[i].X <= Math.Max(rect.Left, rect.Right) // x in bounds check
+                    && intercepts[i].Y >= Math.Min(rect.Top, rect.Bottom) && intercepts[i].Y <= Math.Max(rect.Top, rect.Bottom) // y in bounds check
+                    && ((intercepts[i].X < linePoint.X && DirectionIsRight) || (intercepts[i].X > linePoint.X && !DirectionIsRight)) // correct direction check
+                                                                                                                                     //&& ((intercepts[i].Y < linePoint.Y && DirectionIsDown) || (intercepts[i].Y > linePoint.Y && !DirectionIsDown))
                     )
                 {
                     distance = DistanceFromPoints(linePoint, intercepts[i]);
-                    if (distance < lowestDistance)
+                    if (distance <= lowestDistance)
                     {
                         lowestDistance = distance;
                         switch (i)
@@ -137,7 +155,9 @@ namespace first_game
                 }
             }
 
+
             return lowestDistance;
+
         }
         public static void DrawLine(Vector2 pointa, Vector2 pointb)
         {
@@ -146,7 +166,7 @@ namespace first_game
             float Yintercept = GetYIntercept(pointa, slope.Value);
 
 
-            bool Direction = false;
+            bool Direction;
 
             if (pointa.X - pointb.X > 0)
             {
@@ -237,7 +257,7 @@ namespace first_game
         }
         public static Vector2 AngleToVector2(double angle)
         {
-            Vector2 Vector = new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+            Vector2 Vector = new((float)Math.Cos(angle), (float)Math.Sin(angle));
             Vector.Normalize();
             return Vector;
         }
@@ -262,7 +282,7 @@ namespace first_game
         public static float DistanceFromPoints(Vector2 _pointA, Vector2 _pointB)
         {
             Vector2 _difference = Difference(_pointA, _pointB);
-            if (_difference == new Vector2(0, 0))
+            if (_pointA == _pointB)
                 return 0;
             return (float)Math.Sqrt(_difference.X * _difference.X + _difference.Y * _difference.Y); //X and Y difference 
         }
@@ -277,50 +297,62 @@ namespace first_game
 
         public enum Direction
         {
-            UP, DOWN, LEFT, RIGHT
+            UP = Keys.W,
+            DOWN = Keys.S,
+            LEFT = Keys.A,
+            RIGHT = Keys.D
         }
-        public static void MoveKeyPressed(Direction _MoveKeys)
+        public static void MoveKeyPressed(KeyboardState keyboardState)
         {
-            switch (_MoveKeys)
+            Vector2 speedChange = new ();
+
+            if (keyboardState.IsKeyDown((Keys)Direction.UP))
             {
-                case Direction.UP:
-                    Player.speed += Player.angleVector * Player.movementSpeed;
-                    Player.frame = 1;
-                    break;
-                case Direction.DOWN:
-                    Player.speed -= Player.angleVector * Player.movementSpeed;
-                    Player.frame = 0;
-                    break;
-                case Direction.LEFT:
-                    Player.speed += AngleToVector2(Player.angle - (float)Math.PI / 2) * Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.None;
-                    break;
-                case Direction.RIGHT:
-                    Player.speed += AngleToVector2(Player.angle + (float)Math.PI / 2) * Player.movementSpeed;
-                    Player.frame = 2;
-                    Player.effect = SpriteEffects.FlipHorizontally;
-                    break;
+                speedChange += Player.angleVector;
+                Player.frame = 1;
+            }
+            if (keyboardState.IsKeyDown((Keys)Direction.DOWN))
+            {
+                speedChange -= Player.angleVector;
+                Player.frame = 0;
+            }
+            if (keyboardState.IsKeyDown((Keys)Direction.LEFT))
+            {
+                speedChange += AngleToVector2(Player.angle - (float)Math.PI / 2);
+                Player.frame = 2;
+                Player.effect = SpriteEffects.None;
+            }
+            if (keyboardState.IsKeyDown((Keys)Direction.RIGHT))
+            {
+                speedChange += AngleToVector2(Player.angle + (float)Math.PI / 2);
+                Player.frame = 2;
+                Player.effect = SpriteEffects.FlipHorizontally;
             }
 
-            if (Player.Attacks.swingSpeed == -1)
+            if (speedChange != new Vector2(0, 0))
             {
-                switch (_MoveKeys)
-                {
-                    case Direction.UP:
-                        Player.Attacks.swingAngle = 20;
-                        break;
-                    case Direction.DOWN:
-                        Player.Attacks.swingAngle = 20 + (float)Math.PI;
-                        break;
-                    case Direction.LEFT:
-                        Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
-                        break;
-                    case Direction.RIGHT:
-                        Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
-                        break;
-                }
+                speedChange.Normalize();
+                Player.speed += speedChange * Player.movementSpeed;
+
             }
+
+            //if (Player.Attacks.swingSpeed == -1)
+            //{
+            //    switch (_MoveKeys)
+            //    {
+            //        case Direction.UP:
+            //            break;
+            //        case Direction.DOWN:
+            //            Player.Attacks.swingAngle = 20 + (float)Math.PI;
+            //            break;
+            //        case Direction.LEFT:
+            //            Player.Attacks.swingAngle = 5 + (float)Math.PI * 2.5f;
+            //            break;
+            //        case Direction.RIGHT:
+            //            Player.Attacks.swingAngle = 20 + (float)Math.PI * 2.5f;
+            //            break;
+            //    }
+            //}
             UpdateTexture();
         }
         public static void CollisionY(ref Vector2 position, Vector2 collisionSize, Vector2 speed)
@@ -357,57 +389,94 @@ namespace first_game
                 }
             return;
         }
-        public static object[] CircleCollision(Vector2 circlePosition, float collisionRadius, Rectangle rect)
+        public static Vector2 nearestPoint(Vector2 position, Rectangle rect)
+        {
+            return new Vector2(
+MathHelper.Clamp(position.X, rect.Left, rect.Right),
+MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
+        }
+        public static bool CircleCollisionBool(Vector2 circlePosition, float collisionRadius, Rectangle rect)
         {
             if (rect.Contains(circlePosition))
             {
-                return new object[] { true, RectangleToVector2(rect) };
+                return true;
             }
             if (rect.Intersects(Vector2toRectangle(circlePosition, (int)collisionRadius * 2, (int)collisionRadius * 2)))
             {
-                Vector2 closestPoint = new Vector2(
-MathHelper.Clamp(circlePosition.X, rect.X, rect.X + rect.Width),
-MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
+                Vector2 closestPoint = nearestPoint(circlePosition, rect);
 
-                return new object[] { collisionRadius > DistanceFromPoints(circlePosition, closestPoint), closestPoint };
+                return collisionRadius > DistanceFromPoints(circlePosition, closestPoint);
             };
-            return new object[] { false, new Vector2() };
+            return false;
 
         }
+        public static Vector2 CircleCollisionPoint(Vector2 circlePosition, float collisionRadius, Rectangle rect)
+        {
+            if (rect.Contains(circlePosition))
+            {
+                return RectangleToVector2(rect); // returns centre of rect
+            }
+            if (rect.Intersects(Vector2toRectangle(circlePosition, (int)collisionRadius * 2, (int)collisionRadius * 2)))
+            {
+                return nearestPoint(circlePosition, rect); // returns the closest point
 
+
+            };
+            return new Vector2();
+
+        }
 
         public static void MoveX(bool normalize, Vector2 speed, ref Vector2 position)
         {
             if (normalize && speed != new Vector2(0, 0))
+            {
                 speed.Normalize();
-            if (normalize)
                 position.X += speed.X * movementSpeed;
+            }
             else
+            {
                 position.X += speed.X;
+            }
         }
         public static void MoveY(bool normalize, Vector2 speed, ref Vector2 position)
         {
             if (normalize && speed != new Vector2(0, 0))
+            {
                 speed.Normalize();
-            if (normalize)
                 position.Y += speed.Y * movementSpeed;
+            }
             else
+            {
                 position.Y += speed.Y;
+            }
         }
         public static void CircleMovement(bool normalize, ref Vector2 position, float radius, ref Vector2 speed, float movementSpeed)
         {
+            Vector2 direction = new Vector2(NegativeOrPositive(speed.X), NegativeOrPositive(speed.Y)) * radius;
             MoveX(normalize, speed, ref position);
+            for (int i = 0; i < Tiles.numTiles; i++)
+            {
+                if (Tiles.tileType[i] != 0 && Tiles.collideRectangle[i].Contains(position))
+                {
+                    position.X -= direction.X;
+                }
+            }
             MoveY(normalize, speed, ref position);
             for (int i = 0; i < Tiles.numTiles; i++)
             {
-                while (Tiles.tileType[i] != 0 && (bool)CircleCollision(position, radius, Tiles.collideRectangle[i])[0])
+                if (Tiles.tileType[i] != 0 && Tiles.collideRectangle[i].Contains(position))
                 {
-                    Vector2 difference = Difference(position, (Vector2)CircleCollision(position, radius, Tiles.collideRectangle[i])[1]);
-                    difference.Normalize();
-                    position += difference;
+                    position.Y -= direction.Y;
                 }
             }
-
+            for (int i = 0; i < Tiles.numTiles; i++)
+            {
+                if (Tiles.tileType[i] != 0 && CircleCollisionBool(position, radius, Tiles.collideRectangle[i]))
+                {
+                    Vector2 difference = Difference(position, CircleCollisionPoint(position, radius, Tiles.collideRectangle[i]));
+                    position -= difference - difference * (radius / MathF.Sqrt(difference.X * difference.X + difference.Y * difference.Y));
+                }
+            }
         }
         public static void RectMovement(bool normalize, ref Vector2 position, Vector2 collisionSize, ref Vector2 speed, float movementSpeed)
         {
@@ -417,10 +486,9 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             MoveY(normalize, speed, ref position);
             CollisionY(ref position, collisionSize, speed);
         }
+
+
     }
-
-
-
     public class Game1 : Game
     {
 
@@ -432,26 +500,35 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
         public static MouseState mouseState, previousMouseState;
         static SpriteFont titleFont;
 
-        Vector2 offset = new(0, 0);
+        //Vector2 offset = new(0, 0);
 
-        static Texture2D swordTexture;
+        //static Texture2D swordTexture;
+        static readonly Texture2D[] punchTextures = new Texture2D[4];
+        public static float punchFrame = 5;
+        static Vector2 handRectSize;
+
         public static Texture2D blankTexture;
 
+
         public static int EnemyTargetTimer = 0;
+
+        public static Color screenFilter = new Color(0, 0, 0, 0);
 
         public static float playerLightEmit = Constants.maxPlayerLightEmit;
         public static float LightLevel = Constants.maxLightLevel;
 
+        static int combo = 0;
 
         bool previousIsActive;
 
         int gametimer;
-        readonly static int maxDashCharge = 2;
-        readonly static int dashCooldown = 500; //how long a dash cooldown is in ms
+        readonly static int maxDashCharge = 3;
+        readonly static int dashCost = 500; //how long a how much stamina a dash takes
         readonly int dashLength = 100; //how long a dash is in ms
-        readonly float dashSpeed = 10;
+        readonly float dashSpeed = 8;
         int dashLengthTimer = 0;
-        int dashCooldownTimer = dashCooldown * maxDashCharge;
+        int maxStamina = 1500;
+        int stamina = 1500;
         int timeElapsed;
 
         readonly float BowRechargeRate = 1f;
@@ -461,6 +538,8 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
         readonly Vector2 bowBarSize = new Vector2(1000, 30);
         Color bowChargeBarColor;
+
+
 
         public Game1()
         {
@@ -480,9 +559,14 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             titleFont = Content.Load<SpriteFont>("titleFont");
             Window.Title = "Adding Things";
 
-            swordTexture = Content.Load<Texture2D>("swordNoBg");
+            //swordTexture = Content.Load<Texture2D>("swordNoBg");
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
+
+            for (int i = 1; i < 5; i++)
+            {
+                punchTextures[i-1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
+            }
 
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("circle"),
@@ -509,7 +593,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 Content.Load<Texture2D>("PurpleTile"),
                 new Vector2(4, 4),
             });
-            Portal.Setup(Content.Load<Texture2D>("Portal"));
+            Portal.Setup(Content.Load<Texture2D>("transparentPortal"));
 
 
             Constants.EnemyStats.Setup();
@@ -518,7 +602,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             Levels.SetLevel(Levels.Level);
             Enemy.RandomizePositions();
 
-
+            handRectSize = new Vector2(punchTextures[0].Width * 2.5f, punchTextures[0].Height * 2.5f);
 
             base.Initialize();
         }
@@ -537,6 +621,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             gametimer += timeElapsed;
             Game1.EnemyTargetTimer -= gameTime.ElapsedGameTime.Milliseconds;
 
+            Game1.punchFrame += timeElapsed/30f * combo * .5f;
 
             while (gametimer > Constants.tpsPerSec)
             {
@@ -565,30 +650,11 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                     Exit();
 
-                Player.speed = new Vector2(0, 0);
-                if (dashLengthTimer < 0)
-                {
-                    if (keyboardState.IsKeyDown(Keys.W))
-                    {
-                        MoveKeyPressed(Direction.UP);
+                Player.speed /= 2;
 
-                    }
-                    if (keyboardState.IsKeyDown(Keys.S))
-                    {
-                        MoveKeyPressed(Direction.DOWN);
+                MoveKeyPressed(keyboardState);
 
-                    }
-                    if (keyboardState.IsKeyDown(Keys.A))
-                    {
-                        MoveKeyPressed(Direction.LEFT);
 
-                    }
-                    if (keyboardState.IsKeyDown(Keys.D))
-                    {
-                        MoveKeyPressed(Direction.RIGHT);
-                    }
-                }
-                
 
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
@@ -620,26 +686,17 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 //}
                 switch (Player.state)
                 {
-                    case State.Idle:
-                        Player.colorFilter = Color.White;
-                        break;
                     case State.Drawing_Bow:
                         Player.colorFilter = Color.AliceBlue;
                         break;
                     case State.Attacking_1:
-                        Player.colorFilter = new Color(200, 200, 200);
+                        Player.colorFilter = new Color(0, combo * 10, combo * 10);
                         break;
                     case State.Attacking_2:
-                        Player.colorFilter = new Color(150, 150, 150);
-                        break;
-                    case State.Attacking_3:
-                        Player.colorFilter = new Color(100, 100, 100);
-                        break;
-                    case State.Stunned:
-                        Player.colorFilter = Color.DarkSlateGray;
+                        Player.colorFilter = new Color(0, combo * 10, combo * 10);
                         break;
                     case State.Dashing:
-                        Player.colorFilter = Color.WhiteSmoke * 0.5f;
+                        Player.colorFilter = Color.Purple;
                         break;
                     case State.Dead:
                         Player.colorFilter = Color.Black;
@@ -650,37 +707,47 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 if (dashLengthTimer < 0)
                 {
                     if (Player.state == Player.State.Drawing_Bow) Player.movementSpeed = 2;
-                    else Player.movementSpeed = 3;
+                    else Player.movementSpeed = 2;
 
 
                     if (Player.Attacks.swingSpeed == -1)
                     {
 
-                        if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && dashCooldownTimer >= 200)
+                        if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
                         {
-                            Player.Attacks.SwingStart(1, 0.3f, 25f, 15, 300, 1, 20);
+                            Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
                             Player.state = Player.State.Attacking_1;
-                            dashCooldownTimer -= 350;
+                            stamina -= 200;
+                            combo += 1;
+                            Player.Push(4f / combo, Player.angleVector);
+
+
                         }
-                        else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && dashCooldownTimer >= 300)
+                        else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
                         {
-                            Player.Attacks.SwingStart(-1, 0.3f, 25f, 15, 750, 1, 20);
+                            Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
                             Player.state = Player.State.Attacking_2;
-                            dashCooldownTimer -= 350;
+                            stamina -= 200;
+                            combo += 1;
+                            Player.Push(4f / combo, Player.angleVector);
                         }
                     }
 
                     if (Player.recoveryTime > 0)
                         Player.recoveryTime -= timeElapsed;
                     else
-                        Player.state = Player.State.Idle;
-
-                    if (dashCooldownTimer < (maxDashCharge * dashCooldown))
-                        dashCooldownTimer += timeElapsed;
-
-                    if (dashCooldownTimer > dashCooldown && keyboardState.IsKeyDown(Keys.LeftShift) && !previousKeyboardState.IsKeyDown(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
                     {
-                        dashCooldownTimer -= dashCooldown;
+                        Player.state = Player.State.Idle;
+                        combo = 0;
+
+                    }
+
+                    if (stamina < maxStamina)
+                        stamina += timeElapsed/2;
+
+                    if (stamina > dashCost && General.OnKeyPress(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
+                    {
+                        stamina -= dashCost;
                         dashLengthTimer = dashLength;
                     }
                 }
@@ -693,25 +760,21 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 }
 
                 for (int _index = 0; _index < Enemy.health.Count; _index++)
-                    //if (iFrames <= 0 && state != State.Dashing && Enemy.collideRectangle[_index].Intersects(new Rectangle((int)Player.position.X - Player.collisionSize / 2, (int)Player.position.Y - Player.collisionSize / 2, Player.collisionSize, Player.collisionSize)))
                     if (iFrames <= 0 && state != State.Dashing && Enemy.IsEnemyCollide(General.Vector2toRectangle(Player.position, width, height), _index))
                     {
-                        Player.TakeDamage(Color.Black, Constants.EnemyStats.damage[(int)Enemy.enemyType[_index]], 10, 500, 30, Player.position - Enemy.position[_index]);
-                    }
+                        Player.TakeDamage(Color.Red, Constants.EnemyStats.damage[(int)Enemy.enemyType[_index]], 10, 500, 10, Difference(Player.position, Enemy.position[_index]));
+                        combo = 0;
 
-                if (playerLightEmit > 300)
-                {
-                    playerLightEmit -= Constants.maxPlayerLightEmit / 200;
-                }
+                    }
                 if (LightLevel > 10)
                 {
-                    LightLevel -= 0.2f;
+                    LightLevel = Math.Min(LightLevel-0.2f, Constants.maxLightLevel);
                 }
 
                 if (Color.Black == Darkness(Color.White, RectangleToVector2(Tiles.collideRectangle[TileFromVector2(Player.position)])))
                 {
                     Player.TakeDamage(
-                        Color.White,
+                        Color.Red,
                         2,
                         0,
                         0,
@@ -735,7 +798,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
                 for (int i = 0; i < Projectile.position.Count; i++) Projectile.update(i);
 
-                General.CircleMovement(true, ref Player.position, Player.width / 2, ref Player.speed, Player.movementSpeed);
+                General.CircleMovement(false, ref Player.position, Player.width / 2, ref Player.speed, Player.movementSpeed);
                 //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
                 previousKeyboardState = Keyboard.GetState();
@@ -751,12 +814,14 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
             base.Update(gameTime);
         }
+
         public static float detail = 0.0069f;
         public static float FOV_Size = (float)Math.PI / 3;
         public static int segmentWidth;
         public static float lowestDistance = float.PositiveInfinity;
         public static float _texturePercent;
         public static float texturePercent;
+        public static float PlayerHeight = 1.7f;
 
         public static void CastRay(float angle)
         {
@@ -768,10 +833,10 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             {
                 if (Tiles.tileType[_tileIndex] != (int)Tiles.tileTypes.NONE)
                 {
-                    float Distance = .015f * PointToRectCollision(Player.position, Player.position + AngleToVector2(Player.angle + angle), Tiles.collideRectangle[_tileIndex]);
-                    if (Distance < lowestDistance)
+                    float distance = .015f * LineToRectCollision(Player.position, Player.position + AngleToVector2(Player.angle + angle), Tiles.collideRectangle[_tileIndex]);
+                    if (distance < lowestDistance)
                     {
-                        lowestDistance = Distance;
+                        lowestDistance = distance;
                         tileIndex = _tileIndex;
                         texturePercent = _texturePercent;
                     }
@@ -784,13 +849,13 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             {
                 int columnHeight = (int)(screenSize.Y / lowestDistance);
                 Color color = ColorFilter(Color.White, lowestDistance * 10);
-                if (color != Color.Black)
-                {
+                //if (color != Color.Black)
+                //{
                     _spriteBatch.Draw(
                 Tiles.textures[tileType[tileIndex]],
                 new Rectangle(
                     (int)(screenSize.X / 2 + angle * segmentWidth),
-                    (int)((screenSize.Y / 2) - columnHeight / 2),
+                    (int)((screenSize.Y / 2) - columnHeight / PlayerHeight),
                     (int)(segmentWidth * detail) + 1,
                     columnHeight),
                 new Rectangle(
@@ -801,11 +866,12 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 //new Color(colorFilter, colorFilter, colorFilter),
                 color,
                 0f,
-                new(),
+                new Vector2(),
                 0,
+                //lowestDistance / 100000
                 0.1f / lowestDistance
                 );
-                }
+                //}
                 //_spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, 0), Color.Wheat);
                 return;
             }
@@ -814,10 +880,18 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
         {
             return new Color((_color.R - 255f / LightLevel * distance) / 255, (_color.G - 255f / LightLevel * distance) / 255, (_color.B - 255f / LightLevel * distance) / 255);
         }
+        float AngleDifference(float a, float b)
+        {
+            float diff = a - b;
+            while (diff > MathF.PI) diff -= MathF.Tau;
+            while (diff < -MathF.PI) diff += MathF.Tau;
+            return diff;
+        }
+
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
-            offset = screenSize/2 - Player.position;
+            //offset = screenSize / 2 - Player.position;
             // TODO: Add your drawing code here
             _spriteBatch.Begin(SpriteSortMode.FrontToBack);
             //_spriteBatch.Draw(
@@ -879,10 +953,9 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
             //        0f,
             //        0.98f);
             //}
-
             //_spriteBatch.Draw(
             //    blankTexture,
-            //    Vector2toRectangle(screenSize/2 + new Vector2(Player.width/2, Player.height/2), Player.width, Player.height),
+            //    Vector2toRectangle(screenSize / 2 + new Vector2(Player.width / 2, Player.height / 2), Player.width, Player.height),
             //    Player.textureRectangle,
             //    //new (0,0, 1, 1),
             //    Player.colorFilter,
@@ -907,28 +980,54 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                 int height = (int)((Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y * screenSize.Y / (distance)));
                 int width = (int)(Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X * height);
                 // Step 1: Get angle to enemy relative to player's forward direction
-                float relativeAngle = -Vector2ToAngle(Player.angleVector) + Vector2ToAngle(difference);
+                float relativeAngle = AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(difference));
 
-                // Step 2: Normalize to range [0, 1] based on full field of view (2π radians)
-                float normalizedAngle = relativeAngle;
+
+
                 _spriteBatch.Draw(
                     Enemy.textures[(int)Enemy.enemyType[i]],
                     new Rectangle(
-                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width/2,
-                        //(int)(enemyScreenX - width / 2),
-                        //(int)(-((-screenSize.X + width) / 2) + (screenSize.X * (InboundAngle( (float)Math.PI + Player.angle - Vector2ToAngle(difference)) / Math.PI * 2))),
-                        (int)(screenSize.Y/2 - height + (screenSize.Y / distance*25)),
+                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width / 2,
+                        (int)(screenSize.Y / 2 - height + (screenSize.Y / distance * 25) * (PlayerHeight - 1)),
                         width,
                         height
                         ),
                 null,
-                    ColorFilter(Enemy.colorFilter[i], distance/20f),
+                    ColorFilter(Enemy.colorFilter[i], distance / 25f),
                     0f,
                     new Vector2(0, 0),
                     SpriteEffects.None,
-                    0.1f/(distance / 75)
+                    //distance / 100000
+                    0.1f / (distance / 75)
                     );
             }
+
+            Vector2 portalDifference = Difference(RectangleToVector2(Portal.collideRectangle), Player.position);
+            float portalDistance = General.DistanceFromDifference(portalDifference);
+
+            //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
+            //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
+            int PortalWidthHeight = (int)(Portal.portalVisualSize * screenSize.Y / portalDistance);
+            //int width = (int)(Portal.collideRectangle.X * PortalWidthHeight);
+            float portalRelativeAngle = AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(portalDifference));
+;
+            _spriteBatch.Draw(
+                Portal.texture,
+                new Rectangle(
+                    (int)((-portalRelativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - PortalWidthHeight / 2,
+                    (int)(screenSize.Y / 2 - PortalWidthHeight + (screenSize.Y / portalDistance * 25) * (PlayerHeight - 1)),
+                    PortalWidthHeight,
+                    PortalWidthHeight
+                    ),
+            new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
+                Portal.Color,
+                0f,
+                new Vector2(0, 0),
+                SpriteEffects.None,
+                //distance / 100000
+                0.1f / (portalDistance / 75)
+                );
+
             _spriteBatch.Draw(
                             blankTexture,
                             new Rectangle((int)(screenSize.X / 2 - bowBarSize.X / 2), (int)(screenSize.Y * .9f), (int)((float)(bowCharge / MaxBowCharge) * bowBarSize.X), (int)bowBarSize.Y),
@@ -940,20 +1039,31 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
 
             _spriteBatch.Draw(
                             blankTexture,
-                            new Rectangle(0, 0, (int)((float)(dashCooldownTimer / (float)(maxDashCharge * dashCooldown)) * 300), 50),
+                            new Rectangle(10, 10, (int)((float)(Player.health / (float)Constants.maxHealth) * 300), 30),
                             null,
-                            Color.White,
+                            Color.Red,
                             0,
                             new Vector2(0, 0),
                             0f,
                             1f
                             );
 
+            _spriteBatch.Draw(
+                            blankTexture,
+                            new Rectangle(10, 40, (int)((float)(stamina / (float)maxStamina) * 200), 20),
+                            null,
+                            Color.White,
+                            0,
+                            new Vector2(0, 0),
+                            0f,
+                            .99f
+                            );
+
             for (int i = 0; i < maxDashCharge + 1; i++)
             {
                 _spriteBatch.Draw(
                     blankTexture,
-                    new Rectangle(i * (300 / maxDashCharge), 0, 5, 50),
+                    new Rectangle(i * (200 / maxDashCharge) + 10, 40, 5, 20),
                     null,
                     Color.Blue,
                     0,
@@ -962,6 +1072,22 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     1f
                     );
             }
+            colorFilter = new Color(colorFilter.R / 2, colorFilter.G / 2, colorFilter.B / 2);
+            if (punchFrame < 4)
+            {
+                if (Player.Attacks.flipped == -1)
+                {
+                    _spriteBatch.Draw(punchTextures[(int)punchFrame], new(0, (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), SpriteEffects.FlipHorizontally, 1);
+
+                }
+                else if (Player.Attacks.flipped == 1)
+                {
+                    _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
+                }
+            }
+
+            //_spriteBatch.DrawString(titleFont, combo.ToString(), new(10, 300), Color.Red);
+            _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.1f, 0, new(), 0, 1);
             //DrawLine(Player.position + offset, Player.position + offset + Player.angleVector);
 
             _spriteBatch.End();

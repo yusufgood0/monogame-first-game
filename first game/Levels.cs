@@ -16,9 +16,9 @@ namespace first_game
                 return;
             Level = _Level;
             Enemy.KillAll();
+            Levels.UpdateTileMap();
             Enemy.CreateEnemies(EnemySaves[Level]);
             Enemy.RandomizePositions();
-            Levels.UpdateTileMap();
             if (breakableObsticales[Level])
             {
                 Tiles.regenerateTilemap();
