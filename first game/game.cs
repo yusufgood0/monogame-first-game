@@ -761,32 +761,30 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             if (gameState == GameState.Playing)
             {
                 gametimer += timeElapsed;
-            }
 
-            if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
-            {
-
-                if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
+                if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
                 {
-                    Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
-                    Player.state = Player.State.Attacking_1;
-                    stamina -= 200;
-                    combo += 1;
-                    Player.Push(4f / combo, Player.angleVector);
+
+                    if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
+                    {
+                        Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                        Player.state = Player.State.Attacking_1;
+                        stamina -= 200;
+                        combo += 1;
+                        Player.Push(4f / combo, Player.angleVector);
 
 
-                }
-                else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
-                {
-                    Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
-                    Player.state = Player.State.Attacking_2;
-                    stamina -= 200;
-                    combo += 1;
-                    Player.Push(4f / combo, Player.angleVector);
+                    }
+                    else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
+                    {
+                        Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                        Player.state = Player.State.Attacking_2;
+                        stamina -= 200;
+                        combo += 1;
+                        Player.Push(4f / combo, Player.angleVector);
+                    }
                 }
             }
-
-
             while (gametimer > 1000 / Constants.tps)
             {
                 if (previousIsActive)
