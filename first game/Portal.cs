@@ -27,7 +27,6 @@ namespace first_game
         public static void ReloadPortalPosition()
         {
             collideRectangle = Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)];
-            Portal.Color = Color.Aquamarine;
         }
         public static void update()
         {

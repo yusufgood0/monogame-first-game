@@ -20,6 +20,94 @@ namespace first_game
 {
     public class General
     {
+        public static void Slider(MouseState _mouseState, MouseState _previousMouseState, ref float sliderValue, float minValue, float maxValue, Rectangle sliderSize)
+        {
+            if (sliderSize.Contains(_previousMouseState.Position) && _mouseState.LeftButton == ButtonState.Pressed)
+            {
+                sliderValue = Math.Max(Math.Min(((float)(_mouseState.X - sliderSize.X) / sliderSize.Width) * (maxValue - minValue) + minValue, maxValue), minValue);
+            }
+        }
+        public static void SliderDraw(SpriteBatch _spritebatch, float sliderValue, float minValue, float maxValue, Rectangle sliderSize, Color backgroundColor, Color sliderColor, string text, float textScale, float visualSliderValueMultiplier)
+        {
+            string visualSliderValue = ((int)(sliderValue * visualSliderValueMultiplier)).ToString();
+            _spritebatch.DrawString(
+            Game1.titleFont,
+            visualSliderValue,
+            new(sliderSize.Right - Game1.titleFont.MeasureString(visualSliderValue).X * textScale, sliderSize.Y - Game1.titleFont.LineSpacing * textScale),
+            backgroundColor,
+            0,
+            new(),
+            textScale,
+            0,
+            .99f
+            );
+
+            _spritebatch.DrawString(
+                Game1.titleFont,
+                text,
+                new(sliderSize.X, sliderSize.Y - Game1.titleFont.LineSpacing * textScale),
+                backgroundColor,
+                0,
+                new(),
+                textScale,
+                0,
+                .99f
+                );
+            _spritebatch.Draw(
+                Game1.blankTexture,
+                sliderSize,
+                null,
+                backgroundColor,
+                0,
+                new(),
+                0,
+                .98f
+                );
+            _spritebatch.Draw(
+                Game1.blankTexture,
+                new(sliderSize.X, sliderSize.Y, (int)(sliderSize.Width / (maxValue - minValue) * (sliderValue - minValue)), sliderSize.Height),
+                null,
+                sliderColor,
+                0,
+                new(),
+                0,
+                .99f
+                );
+        }
+        public static void SliderDraw(SpriteBatch _spritebatch, float sliderValue, float minValue, float maxValue, Rectangle sliderSize, Color backgroundColor, Color sliderColor, string text, float textScale)
+        {
+            _spritebatch.DrawString(
+                Game1.titleFont,
+                text,
+                new(sliderSize.X, sliderSize.Y - Game1.titleFont.LineSpacing * textScale),
+                backgroundColor,
+                0,
+                new(),
+                textScale,
+                0,
+                .99f
+                );
+            _spritebatch.Draw(
+                Game1.blankTexture,
+                sliderSize,
+                null,
+                backgroundColor,
+                0,
+                new(),
+                0,
+                .98f
+                );
+            _spritebatch.Draw(
+                Game1.blankTexture,
+                new(sliderSize.X, sliderSize.Y, (int)(sliderSize.Width / (maxValue - minValue) * (sliderValue - minValue)), sliderSize.Height),
+                null,
+                sliderColor,
+                0,
+                new(),
+                0,
+                .99f
+                );
+        }
         public static int NegativeOrPositive(float num)
         {
             if (num < 0)
@@ -304,7 +392,7 @@ namespace first_game
         }
         public static void MoveKeyPressed(KeyboardState keyboardState)
         {
-            Vector2 speedChange = new ();
+            Vector2 speedChange = new();
 
             if (keyboardState.IsKeyDown((Keys)Direction.UP))
             {
@@ -492,13 +580,30 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     public class Game1 : Game
     {
 
+        public static float detail = Constants.maxDetail * .7f;
+        public static float FOV = Constants.maxFOV * .6f;
+        public static int segmentWidth;
+        public static float lowestDistance = float.PositiveInfinity;
+        public static float _texturePercent;
+        public static float texturePercent;
+        public static float PlayerHeight = 1.7f;
+
+        private enum GameState
+        {
+            Playing,
+            paused
+        }
+        private static GameState gameState = GameState.Playing;
+
+        private static float sensitivity = Constants.maxSensitivity;
+
         public static Vector2 screenSize = new();
 
         private readonly GraphicsDeviceManager _graphics;
         public static SpriteBatch _spriteBatch;
         public static KeyboardState previousKeyboardState, keyboardState;
         public static MouseState mouseState, previousMouseState;
-        static SpriteFont titleFont;
+        public static SpriteFont titleFont;
 
         //Vector2 offset = new(0, 0);
 
@@ -527,8 +632,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         readonly int dashLength = 100; //how long a dash is in ms
         readonly float dashSpeed = 8;
         int dashLengthTimer = 0;
-        int maxStamina = 1500;
-        int stamina = 1500;
+        int stamina = Constants.maxStamina;
         int timeElapsed;
 
         readonly float BowRechargeRate = 1f;
@@ -546,7 +650,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = false;
-            _graphics.IsFullScreen = false;
+            _graphics.IsFullScreen = true;
         }
         protected override void Initialize()
         {
@@ -565,7 +669,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             for (int i = 1; i < 5; i++)
             {
-                punchTextures[i-1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
+                punchTextures[i - 1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
             }
 
             Enemy.Setup(new object[] {
@@ -610,7 +714,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+            Constants.healthSliderRect = new Rectangle(10, 10, 300, 30);
+            Constants.staminaSliderRect = new Rectangle(10, 40, 200, 20);
+            Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             // TODO: use this.Content to load your game content here
         }
 
@@ -618,28 +726,78 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         {
 
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
-            gametimer += timeElapsed;
+
             Game1.EnemyTargetTimer -= gameTime.ElapsedGameTime.Milliseconds;
 
-            Game1.punchFrame += timeElapsed/30f * combo * .5f;
+            Game1.punchFrame += timeElapsed / 30f * combo * .5f;
 
-            while (gametimer > Constants.tpsPerSec)
+            keyboardState = Keyboard.GetState();
+            mouseState = Mouse.GetState();
+
+            if (OnKeyPress(Keys.V))
             {
-                mouseState = Mouse.GetState();
-                keyboardState = Keyboard.GetState();
+                switch (gameState)
+                {
+                    case GameState.Playing:
+                        gameState = GameState.paused;
+                        IsMouseVisible = true;
+                        break;
+                    case GameState.paused:
+                        gameState = GameState.Playing;
+                        IsMouseVisible = false;
+                        Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
+                        break;
+                }
+            }
 
+            if (gameState == GameState.paused)
+            {
+                Slider(mouseState, previousMouseState, ref sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect);
+                Slider(mouseState, previousMouseState, ref FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect);
+                Slider(mouseState, previousMouseState, ref detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect);
+
+            }
+
+            if (gameState == GameState.Playing)
+            {
+                gametimer += timeElapsed;
+            }
+
+            if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
+            {
+
+                if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
+                {
+                    Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                    Player.state = Player.State.Attacking_1;
+                    stamina -= 200;
+                    combo += 1;
+                    Player.Push(4f / combo, Player.angleVector);
+
+
+                }
+                else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
+                {
+                    Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                    Player.state = Player.State.Attacking_2;
+                    stamina -= 200;
+                    combo += 1;
+                    Player.Push(4f / combo, Player.angleVector);
+                }
+            }
+
+
+            while (gametimer > 1000 / Constants.tps)
+            {
                 if (previousIsActive)
-                    Player.angle += (Mouse.GetState().X - screenSize.X / 2) / 100;
+                    Player.angle += (Mouse.GetState().X - screenSize.X / 2) * sensitivity;
                 if (IsActive)
                     Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
                 previousIsActive = IsActive;
 
                 Player.angleVector = General.AngleToVector2(Player.angle);
 
-                if (Player.iFrames > 0)
-                {
-                    Player.iFrames -= 1;
-                }
+                Player.iFrames = Math.Max(Player.iFrames-1, 0);
 
                 if (OnKeyPress(Keys.Tab))
                 {
@@ -654,8 +812,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 MoveKeyPressed(keyboardState);
 
-
-
+                if (keyboardState.IsKeyDown(Keys.H) && Player.health < Constants.maxHealth && LightLevel > 10)
+                {
+                    LightLevel -= .5f;
+                    Player.health += 1;
+                }
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
                     Player.state = Player.State.Drawing_Bow;
@@ -706,32 +867,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 if (dashLengthTimer < 0)
                 {
+
                     if (Player.state == Player.State.Drawing_Bow) Player.movementSpeed = 2;
                     else Player.movementSpeed = 2;
-
-
-                    if (Player.Attacks.swingSpeed == -1)
-                    {
-
-                        if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
-                        {
-                            Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
-                            Player.state = Player.State.Attacking_1;
-                            stamina -= 200;
-                            combo += 1;
-                            Player.Push(4f / combo, Player.angleVector);
-
-
-                        }
-                        else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
-                        {
-                            Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
-                            Player.state = Player.State.Attacking_2;
-                            stamina -= 200;
-                            combo += 1;
-                            Player.Push(4f / combo, Player.angleVector);
-                        }
-                    }
 
                     if (Player.recoveryTime > 0)
                         Player.recoveryTime -= timeElapsed;
@@ -742,11 +880,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                     }
 
-                    if (stamina < maxStamina)
-                        stamina += timeElapsed/2;
+                    if (stamina < Constants.maxStamina)
+                        stamina += timeElapsed / 2;
 
                     if (stamina > dashCost && General.OnKeyPress(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
                     {
+                        Player.iFrames = (int)(dashLength * .7f);
                         stamina -= dashCost;
                         dashLengthTimer = dashLength;
                     }
@@ -766,10 +905,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         combo = 0;
 
                     }
-                if (LightLevel > 10)
-                {
-                    LightLevel = Math.Min(LightLevel-0.2f, Constants.maxLightLevel);
-                }
+                LightLevel = Math.Max(Math.Min(LightLevel - 0.1f, Constants.maxLightLevel), 10);
+
 
                 if (Color.Black == Darkness(Color.White, RectangleToVector2(Tiles.collideRectangle[TileFromVector2(Player.position)])))
                 {
@@ -801,9 +938,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 General.CircleMovement(false, ref Player.position, Player.width / 2, ref Player.speed, Player.movementSpeed);
                 //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
-                previousKeyboardState = Keyboard.GetState();
-                previousMouseState = Mouse.GetState();
-                gametimer -= Constants.tpsPerSec;
+                gametimer -= 1000 / Constants.tps;
                 if (gametimer > 1000)
                 {
                     gametimer = 0;
@@ -812,20 +947,17 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             }
             // TODO: Add your update logic here
 
+            previousKeyboardState = Keyboard.GetState();
+            previousMouseState = Mouse.GetState();
+
             base.Update(gameTime);
         }
 
-        public static float detail = 0.0069f;
-        public static float FOV_Size = (float)Math.PI / 3;
-        public static int segmentWidth;
-        public static float lowestDistance = float.PositiveInfinity;
-        public static float _texturePercent;
-        public static float texturePercent;
-        public static float PlayerHeight = 1.7f;
+
 
         public static void CastRay(float angle)
         {
-            segmentWidth = (int)(Game1.screenSize.X / (FOV_Size * 2));
+            segmentWidth = (int)(Game1.screenSize.X / (FOV * 2));
             lowestDistance = float.PositiveInfinity;
             int tileIndex = 0;
 
@@ -851,26 +983,26 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Color color = ColorFilter(Color.White, lowestDistance * 10);
                 //if (color != Color.Black)
                 //{
-                    _spriteBatch.Draw(
-                Tiles.textures[tileType[tileIndex]],
-                new Rectangle(
-                    (int)(screenSize.X / 2 + angle * segmentWidth),
-                    (int)((screenSize.Y / 2) - columnHeight / PlayerHeight),
-                    (int)(segmentWidth * detail) + 1,
-                    columnHeight),
-                new Rectangle(
-                    Tiles.textureRectangle[tileIndex].X + (int)(Tiles.textureRectangle[tileIndex].Width * Game1.texturePercent),
-                    Tiles.textureRectangle[tileIndex].Y,
-                    (int)((segmentWidth * detail) / Tiles.textureRectangle[tileIndex].Width),
-                    Tiles.textureRectangle[tileIndex].Height),
-                //new Color(colorFilter, colorFilter, colorFilter),
-                color,
-                0f,
-                new Vector2(),
-                0,
-                //lowestDistance / 100000
-                0.1f / lowestDistance
-                );
+                _spriteBatch.Draw(
+            Tiles.textures[tileType[tileIndex]],
+            new Rectangle(
+                (int)(screenSize.X / 2 + angle * segmentWidth),
+                (int)((screenSize.Y / 2) - columnHeight / PlayerHeight),
+                (int)(segmentWidth * detail) + 1,
+                columnHeight),
+            new Rectangle(
+                Tiles.textureRectangle[tileIndex].X + (int)(Tiles.textureRectangle[tileIndex].Width * Game1.texturePercent),
+                Tiles.textureRectangle[tileIndex].Y,
+                (int)((segmentWidth * detail) / Tiles.textureRectangle[tileIndex].Width),
+                Tiles.textureRectangle[tileIndex].Height),
+            //new Color(colorFilter, colorFilter, colorFilter),
+            color,
+            0f,
+            new Vector2(),
+            0,
+            //lowestDistance / 100000
+            0.1f / lowestDistance
+            );
                 //}
                 //_spriteBatch.DrawString(titleFont, LowestDistance.ToString(), new Vector2(0, 0), Color.Wheat);
                 return;
@@ -966,9 +1098,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             //    .99f
             //    );
 
-            for (int i = 0; i < (int)(2 * FOV_Size / detail); i++)
+            for (int i = 0; i < (int)(2 * FOV / detail); i++)
             {
-                CastRay(-FOV_Size + i * detail);
+                CastRay(-FOV + i * detail);
             }
             for (int i = 0; i < Enemy.health.Count; i++)
             {
@@ -987,7 +1119,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 _spriteBatch.Draw(
                     Enemy.textures[(int)Enemy.enemyType[i]],
                     new Rectangle(
-                        (int)((-relativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - width / 2,
+                        (int)((-relativeAngle * screenSize.X) / (FOV * 2) + (screenSize.X / 2)) - width / 2,
                         (int)(screenSize.Y / 2 - height + (screenSize.Y / distance * 25) * (PlayerHeight - 1)),
                         width,
                         height
@@ -1010,11 +1142,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             int PortalWidthHeight = (int)(Portal.portalVisualSize * screenSize.Y / portalDistance);
             //int width = (int)(Portal.collideRectangle.X * PortalWidthHeight);
             float portalRelativeAngle = AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(portalDifference));
-;
+            ;
             _spriteBatch.Draw(
                 Portal.texture,
                 new Rectangle(
-                    (int)((-portalRelativeAngle * screenSize.X) / (FOV_Size * 2) + (screenSize.X / 2)) - PortalWidthHeight / 2,
+                    (int)((-portalRelativeAngle * screenSize.X) / (FOV * 2) + (screenSize.X / 2)) - PortalWidthHeight / 2,
                     (int)(screenSize.Y / 2 - PortalWidthHeight + (screenSize.Y / portalDistance * 25) * (PlayerHeight - 1)),
                     PortalWidthHeight,
                     PortalWidthHeight
@@ -1036,28 +1168,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             0,
                             new Vector2(0, 0), 0f, 0.3f
                             );
-
-            _spriteBatch.Draw(
-                            blankTexture,
-                            new Rectangle(10, 10, (int)((float)(Player.health / (float)Constants.maxHealth) * 300), 30),
-                            null,
-                            Color.Red,
-                            0,
-                            new Vector2(0, 0),
-                            0f,
-                            1f
-                            );
-
-            _spriteBatch.Draw(
-                            blankTexture,
-                            new Rectangle(10, 40, (int)((float)(stamina / (float)maxStamina) * 200), 20),
-                            null,
-                            Color.White,
-                            0,
-                            new Vector2(0, 0),
-                            0f,
-                            .99f
-                            );
+            SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, Color.DarkRed, Color.Red, "", 0);
+            SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, Color.DarkGreen, Color.LightGreen, "", 0);
 
             for (int i = 0; i < maxDashCharge + 1; i++)
             {
@@ -1084,6 +1196,17 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 {
                     _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
                 }
+            }
+
+            if (gameState == GameState.paused)
+            {
+                _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X * 8 / 2, screenSize.Y * 0.08f), Color.White, 0, new(), 8, 0, .99f);
+                _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.Black * 0.5f, 0, new(), 0, .97f);
+
+                SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 4, 10000);
+                SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 4, 100f / Constants.maxFOV);
+                SliderDraw(_spriteBatch, detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect, Color.AliceBlue, Color.DarkBlue, "Strip Size", 4, 100f / Constants.maxDetail);
+
             }
 
             //_spriteBatch.DrawString(titleFont, combo.ToString(), new(10, 300), Color.Red);

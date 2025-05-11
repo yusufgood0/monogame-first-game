@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static first_game.Constants;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 /*
  * DARK WIZARD
  * EPIC BOSS
@@ -17,11 +20,27 @@ namespace first_game
 {
     internal class Constants
     {
+        //slider Positions
+        public static Rectangle healthSliderRect;
+        public static Rectangle staminaSliderRect;
+
+        public static Rectangle sensitivitySliderRect;
+        public static Rectangle FOVSliderRect;
+        public static Rectangle detailSliderRect;
 
         public static readonly int maxHealth = 1000;
+        public static readonly int maxStamina = 1500;
+
+        public static readonly float maxDetail = 0.01f;
+        public static readonly float maxSensitivity = 1f / 100f;
+        public static readonly float maxFOV = (float)Math.PI * .67f;
+
+        public static readonly float minDetail = 0.0030f;
+        public static readonly float minSensitivity = .25f / 100f;
+        public static readonly float minFOV = (float)Math.PI * .33f;
 
         public static readonly int tps = 45; 
-        public static readonly int tpsPerSec = 1000 / tps;
+        //public static readonly int tpsPerSec = 1000 / tps;
 
         public static float cameraLag = 0.25f; // how much the camera sould lag behind the player
 
@@ -33,7 +52,7 @@ namespace first_game
             public static float LevelEnd = .1f;
         }
 
-        public static readonly float maxPlayerLightEmit = (float)Luminance.Player ;
+        public static readonly float maxPlayerLightEmit = (float)Luminance.Player;
         public static readonly float LightStrength = 0.0003f;
 
         public static int maxLightLevel = 300; // the light level where everything is completely lit

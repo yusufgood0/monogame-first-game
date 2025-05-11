@@ -226,6 +226,11 @@ namespace first_game
             {
                 if (iFrames[_index] == 0)
                 {
+                    if (_sightline)
+                    {
+                        colorFilter[_index] = Color.Red;
+                    }
+
                     _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
                     switch (enemyType[_index])
                     {
@@ -269,10 +274,7 @@ namespace first_game
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
                 collideRectangle[_index] = General.Vector2toRectangle(position[_index], collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
-            if (_sightline)
-            {
-                colorFilter[_index] = Color.Red;
-            }
+            
         }
         public enum EnemyType
         {

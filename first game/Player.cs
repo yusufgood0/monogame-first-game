@@ -73,7 +73,7 @@ namespace first_game
 
             colorFilter = _color;
             Push(_knockback, _enemyPlayerAngle);
-            health -= _damage;
+            health = Math.Max(health-_damage, 0);
             //state = State.Stunned;
             recoveryTime = _recoveryTime;
             
