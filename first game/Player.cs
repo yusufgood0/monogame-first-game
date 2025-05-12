@@ -155,14 +155,12 @@ namespace first_game
 
                     for (int index = 0; index < Projectile.position.Count; index++)
                     {
-                        if (!Projectile.IframesEnemyIndex[index].Contains(-2) && checkrect.Contains(Projectile.position[index]))
+                        if (Projectile.Type[index] != Projectile.projectileType.PLAYER_PROJECTILE && checkrect.Contains(Projectile.position[index]))
                         {
                             //Projectile.pierce[index] += 1;
-                            Projectile.speed[index] = -Projectile.speed[index];
+                            Projectile.speed[index] *= -3;
                             Projectile.damage[index] = (int)(Projectile.damage[index] * .1f);
                             Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
-                            Projectile.IframesEnemyIndex[index].Add(-2);
-                            Projectile.Iframes[index].Add(100);
                         }
                     }
                 }

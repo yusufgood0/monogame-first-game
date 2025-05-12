@@ -844,8 +844,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 if (OnKeyRelease(Keys.LeftControl) && bowCharge >= MinBowCharge)
                 {
                     if (!keyboardState.IsKeyDown(Keys.LeftControl))
-                        Projectile.create(
-                            projectileType.PLAYER_PROJECTILE,
+                        Projectile.create(projectileType.PLAYER_PROJECTILE,
                             Player.position,
                             Player.angleVector,
                             5 + (int)bowCharge / 10,
