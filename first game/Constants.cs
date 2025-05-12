@@ -28,6 +28,11 @@ namespace first_game
         public static Rectangle FOVSliderRect;
         public static Rectangle detailSliderRect;
 
+        public static readonly float jumpHeight = 400;
+        public static readonly float jumpWidth = 6;
+        public static readonly float eyeLevel = 350;
+        public static readonly float floorLevel = -500;
+
         public static readonly int maxHealth = 1000;
         public static readonly int maxStamina = 1500;
 

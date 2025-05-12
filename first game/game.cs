@@ -20,6 +20,41 @@ namespace first_game
 {
     public class General
     {
+        public static Color ColorFilter(Color _color, float distance)
+        {
+            return new Color((_color.R - 255f / Game1.LightLevel * distance) / 255, (_color.G - 255f / Game1.LightLevel * distance) / 255, (_color.B - 255f / Game1.LightLevel * distance) / 255);
+        }
+        public static float AngleDifference(float a, float b)
+        {
+            float diff = a - b;
+            while (diff > MathF.PI) diff -= MathF.Tau;
+            while (diff < -MathF.PI) diff += MathF.Tau;
+            return diff;
+        }
+        public static void drawObject(SpriteBatch _spriteBatch, Texture2D texture, Rectangle? textureRect, Color color, Vector2 objectPosition, float objectY, float objectHeight, float objectwidthRatio)
+        {
+            Vector2 difference = Difference(objectPosition, Player.position);
+            float distance = General.DistanceFromDifference(difference) / 75;
+            int Height = (int)(objectHeight * Game1.screenSize.Y / (distance * 75));
+            int width = (int)(Height / objectwidthRatio);
+            _spriteBatch.Draw(
+                texture,
+                new Rectangle(
+                    (int)((-AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(difference)) * Game1.screenSize.X) / (Game1.FOV * 2) + (Game1.screenSize.X / 2)) - width / 2,
+                    (int)(Game1.screenSize.Y / 2 - Height + (Game1.screenSize.Y / distance) / 2 + ( Game1.PlayerHeight - objectY) / distance),
+                    width,
+                    Height
+                    ),
+                textureRect,
+                ColorFilter(color, distance / 25f),
+                //color,
+                0f,
+                new Vector2(0, 0),
+                SpriteEffects.None,
+                0.1f / distance
+                );
+
+        }
         public static void Slider(MouseState _mouseState, MouseState _previousMouseState, ref float sliderValue, float minValue, float maxValue, Rectangle sliderSize)
         {
             if (sliderSize.Contains(_previousMouseState.Position) && _mouseState.LeftButton == ButtonState.Pressed)
@@ -119,6 +154,14 @@ namespace first_game
         public static bool OnKeyPress(Keys _key)
         {
             if (Game1.keyboardState.IsKeyDown(_key) && Game1.previousKeyboardState.IsKeyUp(_key))
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool OnKeyRelease(Keys _key)
+        {
+            if (Game1.keyboardState.IsKeyUp(_key) && Game1.previousKeyboardState.IsKeyDown(_key))
             {
                 return true;
             }
@@ -579,6 +622,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     }
     public class Game1 : Game
     {
+        public static float jumpTime = Constants.jumpWidth;
 
         public static float detail = Constants.maxDetail * .7f;
         public static float FOV = Constants.maxFOV * .6f;
@@ -586,7 +630,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         public static float lowestDistance = float.PositiveInfinity;
         public static float _texturePercent;
         public static float texturePercent;
-        public static float PlayerHeight = 1.7f;
+        public static float PlayerHeight = Constants.floorLevel;
 
         private enum GameState
         {
@@ -630,7 +674,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         readonly static int maxDashCharge = 3;
         readonly static int dashCost = 500; //how long a how much stamina a dash takes
         readonly int dashLength = 100; //how long a dash is in ms
-        readonly float dashSpeed = 8;
+        readonly float dashSpeed = 10;
         int dashLengthTimer = 0;
         int stamina = Constants.maxStamina;
         int timeElapsed;
@@ -675,16 +719,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
-                new Vector2(1, 15),
+                new Vector2(1.5f, 40),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
-                new Vector2(1, 30),
+                new Vector2(1.25f, 55),
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
-                new Vector2(1, 50),
+                new Vector2(1, 70),
                 Content.Load<Texture2D>("square"),
                 new Vector2(1, 1),
-                new Vector2(.5f, 30),
+                new Vector2(2f, 60),
             });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
@@ -714,8 +758,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            Constants.healthSliderRect = new Rectangle(10, 10, 300, 30);
-            Constants.staminaSliderRect = new Rectangle(10, 40, 200, 20);
+            Constants.healthSliderRect = new Rectangle((int)(Game1.screenSize.X * .03f), (int)(Game1.screenSize.Y * .05f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .03f));
+            Constants.staminaSliderRect = new Rectangle((int)(Game1.screenSize.X * .03f), (int)(Game1.screenSize.Y * .08f), (int)(Game1.screenSize.X * .2f), (int)(Game1.screenSize.Y * .03f));
             Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
@@ -755,12 +799,19 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Slider(mouseState, previousMouseState, ref sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect);
                 Slider(mouseState, previousMouseState, ref FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect);
                 Slider(mouseState, previousMouseState, ref detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect);
-
             }
 
             if (gameState == GameState.Playing)
             {
                 gametimer += timeElapsed;
+
+
+                PlayerHeight = Constants.floorLevel + Constants.eyeLevel+ (- 4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
+                jumpTime = Math.Min(jumpTime + 0.1f, Constants.jumpWidth);
+                if (OnKeyPress(Keys.Space))
+                {
+                    jumpTime = 0;
+                }
 
                 if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
                 {
@@ -784,6 +835,25 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         Player.Push(4f / combo, Player.angleVector);
                     }
                 }
+                if (stamina > dashCost && General.OnKeyPress(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
+                {
+                    Player.iFrames = (int)(dashLength * .7f);
+                    stamina -= dashCost;
+                    dashLengthTimer = dashLength;
+                }
+                if (OnKeyRelease(Keys.LeftControl) && bowCharge >= MinBowCharge)
+                {
+                    if (!keyboardState.IsKeyDown(Keys.LeftControl))
+                        Projectile.create(
+                            projectileType.PLAYER_PROJECTILE,
+                            Player.position,
+                            Player.angleVector,
+                            5 + (int)bowCharge / 10,
+                            2,
+                            5,
+                            1 + (int)(bowCharge / MaxBowCharge),
+                            (int)bowCharge / 10);
+                }
             }
             while (gametimer > 1000 / Constants.tps)
             {
@@ -795,7 +865,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 Player.angleVector = General.AngleToVector2(Player.angle);
 
-                Player.iFrames = Math.Max(Player.iFrames-1, 0);
+                Player.iFrames = Math.Max(Player.iFrames - 1, 0);
 
                 if (OnKeyPress(Keys.Tab))
                 {
@@ -818,20 +888,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
                     Player.state = Player.State.Drawing_Bow;
-                    if (bowCharge < MaxBowCharge) bowCharge += BowRechargeRate;
+                    bowCharge = Math.Min(bowCharge + BowRechargeRate, MaxBowCharge);
                     if (bowCharge >= MinBowCharge)
                     {
                         bowChargeBarColor = Color.Red;
-                        if (!keyboardState.IsKeyDown(Keys.LeftControl))
-                            Projectile.create(
-                                projectileType.PLAYER_PROJECTILE,
-                                Player.position,
-                                Player.angleVector,
-                                5 + (int)bowCharge / 10,
-                                2,
-                                5,
-                                1 + (int)(bowCharge / MaxBowCharge),
-                                (int)bowCharge / 2);
                     }
                 }
                 else
@@ -880,13 +940,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                     if (stamina < Constants.maxStamina)
                         stamina += timeElapsed / 2;
-
-                    if (stamina > dashCost && General.OnKeyPress(Keys.LeftShift) && Player.speed != new Vector2(0, 0))
-                    {
-                        Player.iFrames = (int)(dashLength * .7f);
-                        stamina -= dashCost;
-                        dashLengthTimer = dashLength;
-                    }
                 }
                 else
                 {
@@ -897,7 +950,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 }
 
                 for (int _index = 0; _index < Enemy.health.Count; _index++)
-                    if (iFrames <= 0 && state != State.Dashing && Enemy.IsEnemyCollide(General.Vector2toRectangle(Player.position, width, height), _index))
+                    if (iFrames <= 0 && state != State.Dashing && Enemy.IsEnemyCollide(General.Vector2toRectangle(Player.position, width, Player.height), _index))
                     {
                         Player.TakeDamage(Color.Red, Constants.EnemyStats.damage[(int)Enemy.enemyType[_index]], 10, 500, 10, Difference(Player.position, Enemy.position[_index]));
                         combo = 0;
@@ -985,7 +1038,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Tiles.textures[tileType[tileIndex]],
             new Rectangle(
                 (int)(screenSize.X / 2 + angle * segmentWidth),
-                (int)((screenSize.Y / 2) - columnHeight / PlayerHeight),
+                (int)((screenSize.Y / 2) - columnHeight / 2 + PlayerHeight / lowestDistance),
                 (int)(segmentWidth * detail) + 1,
                 columnHeight),
             new Rectangle(
@@ -1006,17 +1059,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 return;
             }
         }
-        public static Color ColorFilter(Color _color, float distance)
-        {
-            return new Color((_color.R - 255f / LightLevel * distance) / 255, (_color.G - 255f / LightLevel * distance) / 255, (_color.B - 255f / LightLevel * distance) / 255);
-        }
-        float AngleDifference(float a, float b)
-        {
-            float diff = a - b;
-            while (diff > MathF.PI) diff -= MathF.Tau;
-            while (diff < -MathF.PI) diff += MathF.Tau;
-            return diff;
-        }
+
 
         protected override void Draw(GameTime gameTime)
         {
@@ -1102,61 +1145,35 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             }
             for (int i = 0; i < Enemy.health.Count; i++)
             {
-                Vector2 difference = Difference(Enemy.position[i], Player.position);
-                float distance = General.DistanceFromDifference(difference);
-
-                //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
-                //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
-                int height = (int)((Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y * screenSize.Y / (distance)));
-                int width = (int)(Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X * height);
-                // Step 1: Get angle to enemy relative to player's forward direction
-                float relativeAngle = AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(difference));
-
-
-
-                _spriteBatch.Draw(
+                drawObject(_spriteBatch,
                     Enemy.textures[(int)Enemy.enemyType[i]],
-                    new Rectangle(
-                        (int)((-relativeAngle * screenSize.X) / (FOV * 2) + (screenSize.X / 2)) - width / 2,
-                        (int)(screenSize.Y / 2 - height + (screenSize.Y / distance * 25) * (PlayerHeight - 1)),
-                        width,
-                        height
-                        ),
-                null,
-                    ColorFilter(Enemy.colorFilter[i], distance / 25f),
-                    0f,
-                    new Vector2(0, 0),
-                    SpriteEffects.None,
-                    //distance / 100000
-                    0.1f / (distance / 75)
-                    );
+                    null,
+                    Enemy.colorFilter[i],
+                    Enemy.position[i],
+                    0,
+                    Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y,
+                    Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X);
+            }
+            for (int i = 0; i < Projectile.position.Count; i++)
+            {
+                drawObject(_spriteBatch,
+                    blankTexture,
+                    null,
+                    Color.Azure,
+                    Projectile.position[i],
+                    Projectile.height[i],
+                    6,
+                    1);
             }
 
-            Vector2 portalDifference = Difference(RectangleToVector2(Portal.collideRectangle), Player.position);
-            float portalDistance = General.DistanceFromDifference(portalDifference);
-
-            //int width = (int)(Enemy.collideRectangle[i].Width*10 - distance / Enemy.collideRectangle[i].Width * 10);
-            //int height = (int)(Enemy.collideRectangle[i].Height*10 - distance / Enemy.collideRectangle[i].Height * 10);
-            int PortalWidthHeight = (int)(Portal.portalVisualSize * screenSize.Y / portalDistance);
-            //int width = (int)(Portal.collideRectangle.X * PortalWidthHeight);
-            float portalRelativeAngle = AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(portalDifference));
-            ;
-            _spriteBatch.Draw(
+            drawObject(_spriteBatch, 
                 Portal.texture,
-                new Rectangle(
-                    (int)((-portalRelativeAngle * screenSize.X) / (FOV * 2) + (screenSize.X / 2)) - PortalWidthHeight / 2,
-                    (int)(screenSize.Y / 2 - PortalWidthHeight + (screenSize.Y / portalDistance * 25) * (PlayerHeight - 1)),
-                    PortalWidthHeight,
-                    PortalWidthHeight
-                    ),
-            new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
+                new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
                 Portal.Color,
-                0f,
-                new Vector2(0, 0),
-                SpriteEffects.None,
-                //distance / 100000
-                0.1f / (portalDistance / 75)
-                );
+                RectangleToVector2(Portal.collideRectangle),
+                10,
+                Portal.portalVisualSize,
+                1);
 
             _spriteBatch.Draw(
                             blankTexture,
@@ -1164,7 +1181,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             null,
                             bowChargeBarColor,
                             0,
-                            new Vector2(0, 0), 0f, 0.3f
+                            new Vector2(0, 0), 
+                            0f, 
+                            0.99f
                             );
             SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, Color.DarkRed, Color.Red, "", 0);
             SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, Color.DarkGreen, Color.LightGreen, "", 0);
@@ -1173,7 +1192,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             {
                 _spriteBatch.Draw(
                     blankTexture,
-                    new Rectangle(i * (200 / maxDashCharge) + 10, 40, 5, 20),
+                    new Rectangle(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X, Constants.staminaSliderRect.Y, 10, Constants.staminaSliderRect.Height),
                     null,
                     Color.Blue,
                     0,

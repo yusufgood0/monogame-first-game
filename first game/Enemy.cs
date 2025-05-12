@@ -240,7 +240,14 @@ namespace first_game
                                 if (abilityTimer[_index] < 0)
                                 {
                                     abilityTimer[_index] = Constants.Archer.attackDelay;
-                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, position[_index], General.Difference(Player.position, Enemy.position[_index]), 7f, 1000, 10, 1, Constants.Archer.archerDamage);
+                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, 
+                                        position[_index], 
+                                        General.Difference(Player.position, Enemy.position[_index]), 
+                                        7f, 
+                                        1000, 
+                                        10, 
+                                        1,
+                                        Constants.Archer.archerDamage);
                                 }
                                 else
                                 {

@@ -18,6 +18,7 @@ namespace first_game
     {
         public static List<Vector2> speed = new();
         public static List<Vector2> position = new();
+        public static List<float> height = new();
         public static List<projectileType> Type = new();
         public static List<List<int>> Iframes = new();
         public static List<List<int>> IframesEnemyIndex = new();
@@ -41,6 +42,7 @@ namespace first_game
             {
                 angleVector.Normalize();
             }
+            height.Add(Game1.PlayerHeight - Constants.floorLevel);
             speed.Add(angleVector * projectileSpeed);
             position.Add(spawnLocation);
             Type.Add(type);
@@ -71,7 +73,9 @@ namespace first_game
                 {
                     Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
-                    if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
+                    if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex) 
+                        || pierce[_index] >= 0
+                        )
                     {
                         Iframes[_index].Add(15);
                         IframesEnemyIndex[_index].Add(EnemyIndex);
@@ -102,11 +106,11 @@ namespace first_game
 
             if (Player.iFrames <= 0 && Player.state != Player.State.Dashing && projectileType.ENEMY_PROJECTILE == Projectile.Type[_index] && !IframesEnemyIndex[_index].Contains(-1) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(new Rectangle((int)(Player.position.X - Player.width / 2), (int)(Player.position.Y - Player.height / 2), Player.width, Player.height)))
             {
-                pierce[_index] -= 1;
+                //pierce[_index] -= 1;
                 Player.TakeDamage(Color.Red, damage[_index], 10, 10, damage[_index] / 10, speed[_index]);
                 Iframes[_index].Add(15);
                 IframesEnemyIndex[_index].Add(-1);
-
+                kill(_index);
             }
             
 

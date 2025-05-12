@@ -119,7 +119,7 @@ namespace first_game
                 for (int _index = 0; _index < Tiles.numTiles; _index++)
                     if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
 
-                for (int i = 0; i <= swingSpeed*10; i++)
+                for (int i = 0; i <= swingSpeed * 10; i++)
                 {
                     if (!(swingAngle >= endAngle && swingAngle <= startAngle))
                     {
@@ -157,12 +157,12 @@ namespace first_game
                     {
                         if (!Projectile.IframesEnemyIndex[index].Contains(-2) && checkrect.Contains(Projectile.position[index]))
                         {
-                            Projectile.pierce[index] += 1;
-                            Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;
-                            Projectile.damage[index] = (int)(Projectile.damage[index] * 2.5f);
+                            //Projectile.pierce[index] += 1;
+                            Projectile.speed[index] = -Projectile.speed[index];
+                            Projectile.damage[index] = (int)(Projectile.damage[index] * .1f);
                             Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
-                            Projectile.Iframes[index].Add(10);
                             Projectile.IframesEnemyIndex[index].Add(-2);
+                            Projectile.Iframes[index].Add(100);
                         }
                     }
                 }
