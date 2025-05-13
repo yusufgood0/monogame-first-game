@@ -708,7 +708,7 @@ MathHelper.Clamp(circlePosition.Y, rect.Y, rect.Y + rect.Height));
                     playerLightEmit -= Constants.maxPlayerLightEmit / 200;
                 }
                 if (LightLevel > 10)
-                {
+                {  
                     LightLevel -= 0.2f;
                 }
 
