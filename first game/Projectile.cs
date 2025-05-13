@@ -35,7 +35,19 @@ namespace first_game
                 5,
                 10,
             };
+        public static Color GetProjectileColor(int index)
+        {
+            switch (Type[index])
+            {
+                case projectileType.PLAYER_PROJECTILE:
+                    return Color.DarkOrchid;
 
+                case projectileType.ENEMY_PROJECTILE:
+                    return Color.DarkViolet;
+            }
+            return Color.White;
+
+        }
         public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize, int _pierce, int _damage)
         {
             if (angleVector != new Vector2(0, 0))
@@ -117,6 +129,8 @@ namespace first_game
         }
         public static void kill(int _index)
         {
+            height.RemoveAt(_index);
+
             pierce.RemoveAt(_index);
             speed.RemoveAt(_index);
             position.RemoveAt(_index);

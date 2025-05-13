@@ -30,7 +30,7 @@ namespace first_game
 
         public static readonly float jumpHeight = 400;
         public static readonly float jumpWidth = 6;
-        public static readonly float eyeLevel = 350;
+        public static readonly float defaultPlayerHeight = 350;
         public static readonly float floorLevel = -500;
 
         public static readonly int maxHealth = 1000;

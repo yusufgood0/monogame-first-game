@@ -15,11 +15,16 @@ using static first_game.General;
 using static first_game.Player;
 using static first_game.Projectile;
 using static first_game.Tiles;
+using static first_game.Gems;
 
 namespace first_game
 {
     public class General
     {
+        public static Color ColorMultiply(Color color1, float multiplier)
+        {
+            return new Color((int)(color1.R * multiplier), (int)(color1.G * multiplier), (int)(color1.B * multiplier));
+        }
         public static Color ColorFilter(Color _color, float distance)
         {
             return new Color((_color.R - 255f / Game1.LightLevel * distance) / 255, (_color.G - 255f / Game1.LightLevel * distance) / 255, (_color.B - 255f / Game1.LightLevel * distance) / 255);
@@ -120,7 +125,7 @@ namespace first_game
                 new(),
                 textScale,
                 0,
-                .99f
+                .91f
                 );
             _spritebatch.Draw(
                 Game1.blankTexture,
@@ -130,7 +135,7 @@ namespace first_game
                 0,
                 new(),
                 0,
-                .98f
+                .90f
                 );
             _spritebatch.Draw(
                 Game1.blankTexture,
@@ -140,7 +145,7 @@ namespace first_game
                 0,
                 new(),
                 0,
-                .99f
+                .91f
                 );
         }
         public static int NegativeOrPositive(float num)
@@ -658,9 +663,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         public static Texture2D blankTexture;
 
-
         public static int EnemyTargetTimer = 0;
 
+        public static Color healthBarColor;
         public static Color screenFilter = new Color(0, 0, 0, 0);
 
         public static float playerLightEmit = Constants.maxPlayerLightEmit;
@@ -757,9 +762,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void LoadContent()
         {
+            Gems.gemTexture = Content.Load<Texture2D>("Gems");
+            Gems.setup();
+
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            Constants.healthSliderRect = new Rectangle((int)(Game1.screenSize.X * .03f), (int)(Game1.screenSize.Y * .05f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .03f));
-            Constants.staminaSliderRect = new Rectangle((int)(Game1.screenSize.X * .03f), (int)(Game1.screenSize.Y * .08f), (int)(Game1.screenSize.X * .2f), (int)(Game1.screenSize.Y * .03f));
+            Constants.healthSliderRect = new Rectangle((int)(Game1.screenSize.X * .04f), (int)(Game1.screenSize.Y * .05f), (int)(Game1.screenSize.X * .4f), (int)(Game1.screenSize.Y * .05f));
+            Constants.staminaSliderRect = new Rectangle((int)(Game1.screenSize.X * .04f), (int)(Game1.screenSize.Y * .1f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
@@ -806,7 +814,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 gametimer += timeElapsed;
 
 
-                PlayerHeight = Constants.floorLevel + Constants.eyeLevel+ (- 4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
+                PlayerHeight = Constants.floorLevel + Constants.defaultPlayerHeight+ (- 4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
                 jumpTime = Math.Min(jumpTime + 0.1f, Constants.jumpWidth);
                 if (OnKeyPress(Keys.Space))
                 {
@@ -881,8 +889,13 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 if (keyboardState.IsKeyDown(Keys.H) && Player.health < Constants.maxHealth && LightLevel > 10)
                 {
+                    healthBarColor = Color.MediumVioletRed;
                     LightLevel -= .5f;
                     Player.health += 1;
+                }
+                else
+                {
+                    healthBarColor = ColorMultiply(Color.DeepPink, .9f);
                 }
                 if (previousKeyboardState.IsKeyDown(Keys.LeftControl))
                 {
@@ -1138,7 +1151,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             //    .99f
             //    );
 
-            for (int i = 0; i < (int)(2 * FOV / detail); i++)
+            for (int i = 0; i < (int)(2 * FOV / detail) + 1; i++)
             {
                 CastRay(-FOV + i * detail);
             }
@@ -1158,7 +1171,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 drawObject(_spriteBatch,
                     blankTexture,
                     null,
-                    Color.Azure,
+                    GetProjectileColor(i),
                     Projectile.position[i],
                     Projectile.height[i],
                     6,
@@ -1184,20 +1197,69 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             0f, 
                             0.99f
                             );
-            SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, Color.DarkRed, Color.Red, "", 0);
-            SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, Color.DarkGreen, Color.LightGreen, "", 0);
 
-            for (int i = 0; i < maxDashCharge + 1; i++)
-            {
-                _spriteBatch.Draw(
-                    blankTexture,
-                    new Rectangle(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X, Constants.staminaSliderRect.Y, 10, Constants.staminaSliderRect.Height),
-                    null,
-                    Color.Blue,
+            //draws the health and stamina bars
+            SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, ColorMultiply(healthBarColor, 0.55f), healthBarColor, "", 0);
+            SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, new Color(5, 15, 50), Color.MediumPurple, "", 0);
+
+            //draws the magic gem
+            _spriteBatch.Draw(
+                    gemTexture,
+                    new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom - 10),
+                    new Rectangle(0, (int)(gemTexture.Height / gemTextureArray.Y), (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    Color.DarkSlateBlue,
                     0,
-                    new Vector2(0, 0),
-                    0f,
-                    1f
+                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
+                    1.5f,
+                    SpriteEffects.None,
+                    1
+                    );
+
+            //draws the heart gem
+            _spriteBatch.Draw(
+                    gemTexture,
+                    new Vector2(Constants.healthSliderRect.Left + Constants.healthSliderRect.Width * ((float)Player.health / Constants.maxHealth), Constants.healthSliderRect.Center.Y - 10),
+                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 2, 0, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    Color.Pink,
+                    0,
+                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
+                    .7f,
+                    SpriteEffects.None,
+                    .99f
+                    );
+            _spriteBatch.Draw(
+                    gemTexture,
+                    new Vector2(Constants.healthSliderRect.Right, Constants.healthSliderRect.Center.Y - 10),
+                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 2, 0, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    Color.DeepPink,
+                    0,
+                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
+                    .7f,
+                    SpriteEffects.None,
+                    .98f
+                    );
+            //draws the stamina gems
+            for (int i = 1; i < maxDashCharge+1; i++)
+            {
+                Color gemColor;
+                if (stamina >= i*(Constants.maxStamina / maxDashCharge))
+                {
+                    gemColor = Color.AliceBlue;
+                }
+                else
+                {
+                    gemColor = Color.DarkSlateGray;
+                }
+                _spriteBatch.Draw(
+                    gemTexture,
+                    new Vector2((int)(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 7),
+                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 3, (int)(gemTexture.Height / gemTextureArray.Y) * 2, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    gemColor,
+                    0,
+                    new((int)(gemTexture.Width / gemTextureArray.X)/2, (int)(gemTexture.Height / gemTextureArray.Y)/2),
+                    .7f,
+                    SpriteEffects.None,
+                    1
                     );
             }
             colorFilter = new Color(colorFilter.R / 2, colorFilter.G / 2, colorFilter.B / 2);
@@ -1213,6 +1275,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
                 }
             }
+
+            //for (int i = 0; i < 12; i++)
+            //{
+            //    Gems.Draw(_spriteBatch, i, Color.Wheat);
+            //}
 
             if (gameState == GameState.paused)
             {
