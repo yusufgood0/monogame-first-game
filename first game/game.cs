@@ -58,7 +58,6 @@ namespace first_game
                 SpriteEffects.None,
                 0.1f / distance
                 );
-
         }
         public static void Slider(MouseState _mouseState, MouseState _previousMouseState, ref float sliderValue, float minValue, float maxValue, Rectangle sliderSize)
         {
