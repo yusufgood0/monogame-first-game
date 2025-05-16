@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static first_game.Constants;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 /*
  * DARK WIZARD
  * EPIC BOSS
@@ -17,8 +20,32 @@ namespace first_game
 {
     internal class Constants
     {
+        //slider Positions
+        public static Rectangle healthSliderRect;
+        public static Rectangle staminaSliderRect;
+
+        public static Rectangle sensitivitySliderRect;
+        public static Rectangle FOVSliderRect;
+        public static Rectangle detailSliderRect;
+
+        public static readonly float jumpHeight = 400;
+        public static readonly float jumpWidth = 6;
+        public static readonly float defaultPlayerHeight = 350;
+        public static readonly float floorLevel = -500;
+
+        public static readonly int maxHealth = 1000;
+        public static readonly int maxStamina = 1500;
+
+        public static readonly float maxDetail = 0.01f;
+        public static readonly float maxSensitivity = 1f / 100f;
+        public static readonly float maxFOV = (float)Math.PI * .67f;
+
+        public static readonly float minDetail = 0.0030f;
+        public static readonly float minSensitivity = .25f / 100f;
+        public static readonly float minFOV = (float)Math.PI * .33f;
+
         public static readonly int tps = 45; 
-        public static readonly int tpsPerSec = 1000 / tps;
+        //public static readonly int tpsPerSec = 1000 / tps;
 
         public static float cameraLag = 0.25f; // how much the camera sould lag behind the player
 
@@ -30,7 +57,7 @@ namespace first_game
             public static float LevelEnd = .1f;
         }
 
-        public static readonly float maxPlayerLightEmit = (float)Luminance.Player ;
+        public static readonly float maxPlayerLightEmit = (float)Luminance.Player;
         public static readonly float LightStrength = 0.0003f;
 
         public static int maxLightLevel = 300; // the light level where everything is completely lit
@@ -46,7 +73,7 @@ namespace first_game
             public static void Setup()
             {
                 //stats for Small enemies
-                movementSpeed.Add(5f/3f);
+                movementSpeed.Add(5f);
                 damage.Add(80);
                 health.Add(50);
                 height.Add(24);
@@ -54,7 +81,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Medium enemies
-                movementSpeed.Add(2.8f / 3f);
+                movementSpeed.Add(2.8f);
                 damage.Add(150);
                 health.Add(150);
                 height.Add(40);
@@ -62,7 +89,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Large enemies
-                movementSpeed.Add(2.1f / 3f);
+                movementSpeed.Add(2.1f);
                 damage.Add(450);
                 health.Add(300);
                 height.Add(60);
@@ -70,7 +97,7 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(2.3f / 3f);
+                movementSpeed.Add(2.3f);
                 damage.Add(100);
                 health.Add(100);
                 height.Add(30);

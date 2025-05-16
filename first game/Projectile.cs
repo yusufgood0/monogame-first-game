@@ -18,6 +18,7 @@ namespace first_game
     {
         public static List<Vector2> speed = new();
         public static List<Vector2> position = new();
+        public static List<float> height = new();
         public static List<projectileType> Type = new();
         public static List<List<int>> Iframes = new();
         public static List<List<int>> IframesEnemyIndex = new();
@@ -34,13 +35,26 @@ namespace first_game
                 5,
                 10,
             };
+        public static Color GetProjectileColor(int index)
+        {
+            switch (Type[index])
+            {
+                case projectileType.PLAYER_PROJECTILE:
+                    return Color.DarkOrchid;
 
+                case projectileType.ENEMY_PROJECTILE:
+                    return Color.DarkViolet;
+            }
+            return Color.White;
+
+        }
         public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize, int _pierce, int _damage)
         {
             if (angleVector != new Vector2(0, 0))
             {
                 angleVector.Normalize();
             }
+            height.Add(Game1.PlayerHeight - Constants.floorLevel);
             speed.Add(angleVector * projectileSpeed);
             position.Add(spawnLocation);
             Type.Add(type);
@@ -71,7 +85,9 @@ namespace first_game
                 {
                     Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                     pierce[_index] -= 1;
-                    if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex) || pierce[_index] >= 0)
+                    if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex) 
+                        || pierce[_index] >= 0
+                        )
                     {
                         Iframes[_index].Add(15);
                         IframesEnemyIndex[_index].Add(EnemyIndex);
@@ -106,7 +122,6 @@ namespace first_game
                 Player.TakeDamage(Color.Red, damage[_index], 10, 10, damage[_index] / 10, speed[_index]);
                 Iframes[_index].Add(15);
                 IframesEnemyIndex[_index].Add(-1);
-
             }
             
 
@@ -114,6 +129,8 @@ namespace first_game
         }
         public static void kill(int _index)
         {
+            height.RemoveAt(_index);
+
             pierce.RemoveAt(_index);
             speed.RemoveAt(_index);
             position.RemoveAt(_index);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 using static first_game.Tiles;
 
 namespace first_game
@@ -12,13 +13,14 @@ namespace first_game
         public static int Level = 0;
         public static void SetLevel(int _Level)
         {
+            Portal.Color = Color.Aquamarine;
             if (_Level > levelMaps.Length - 1)
                 return;
             Level = _Level;
             Enemy.KillAll();
+            Levels.UpdateTileMap();
             Enemy.CreateEnemies(EnemySaves[Level]);
             Enemy.RandomizePositions();
-            Levels.UpdateTileMap();
             if (breakableObsticales[Level])
             {
                 Tiles.regenerateTilemap();

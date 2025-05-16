@@ -34,7 +34,7 @@ namespace first_game
         public const int height = (int)(width * 1.25f);
         public const int collisionSize = 30;
 
-        public static Rectangle textureRectangle = new(0, 0, width, height);
+        public static Rectangle textureRectangle = new(0, 0, 40, 40);
         public static int frame = 0;
         public static double frameState = 0;
         public static SpriteEffects effect;
@@ -67,12 +67,13 @@ namespace first_game
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _recoveryTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
+            Player.colorFilter = _color;
             if (iFrames <= _iFrames)
             iFrames = _iFrames;
 
             colorFilter = _color;
             Push(_knockback, _enemyPlayerAngle);
-            health -= _damage;
+            health = Math.Max(health-_damage, 0);
             //state = State.Stunned;
             recoveryTime = _recoveryTime;
             
@@ -91,8 +92,8 @@ namespace first_game
             private static int pierce;
             private static readonly int swingHitboxSize = 40;
             private static readonly int projectileHitboxSize = 30;
-            private static int flipped = -1;
-            public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, int _swingSpeed, int _pierce)
+            public static int flipped = -1;
+            public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, float _swingSpeed, int _pierce)
             {
                 flipped = _flipped;
                 recoveryTime = _recoveryTime;
@@ -109,24 +110,24 @@ namespace first_game
                 for (int _index = 0; _index < Tiles.swingIFrames.Length; _index++)
                     Tiles.swingIFrames[_index] = 0;
                 Player.iFrames = 20;
+                Game1.punchFrame = 0;
             }
             public static void SwingUpdate()
-            {
-                //swingAngle = -angle; //flipped shouldo only be 1 or -1
-                
+            {                
                 for (int _index = 0; _index < Enemy.iFrames.Count; _index++)
                     if (Enemy.iFrames[_index] > 0) { Enemy.iFrames[_index] -= 1; }
                 for (int _index = 0; _index < Tiles.numTiles; _index++)
                     if (Tiles.swingIFrames[_index] > 0) { Tiles.swingIFrames[_index] -= 1; }
 
-                for (int i = 0; i <= swingSpeed; i++)
+                for (int i = 0; i <= swingSpeed * 10; i++)
                 {
                     if (!(swingAngle >= endAngle && swingAngle <= startAngle))
                     {
                         swingSpeed = -1;
                         return;
                     }
-                    Push(swingRange/10f, General.AngleToVector2(swingAngle));
+
+                    Push(swingRange/20f, General.AngleToVector2(swingAngle));
 
                     checkpoint = position + General.AngleToVector2(swingAngle) * swingRange;
                     angle -= 0.05f * flipped;
@@ -138,7 +139,7 @@ namespace first_game
                             Enemy.iFrames[index] <= 0 && 
                             pierce > 0)
                         {
-                            Enemy.Push(150, Enemy.position[index] - position, index);
+                            Enemy.Push(swingRange*20, Enemy.position[index] - position, index);
                             Enemy.TakeDamage(Color.Purple, swingDamage, swingDamage, index);
                             pierce -= 1;
                         }
@@ -154,14 +155,12 @@ namespace first_game
 
                     for (int index = 0; index < Projectile.position.Count; index++)
                     {
-                        if (!Projectile.IframesEnemyIndex[index].Contains(-2) && checkrect.Contains(Projectile.position[index]))
+                        if (Projectile.Type[index] != Projectile.projectileType.PLAYER_PROJECTILE && checkrect.Contains(Projectile.position[index]))
                         {
-                            Projectile.pierce[index] += 1;
-                            Projectile.speed[index] = Player.Attacks.attackAngleVector * 20;
-                            Projectile.damage[index] = (int)(Projectile.damage[index] * 2.5f);
+                            //Projectile.pierce[index] += 1;
+                            Projectile.speed[index] *= -3;
+                            Projectile.damage[index] = (int)(Projectile.damage[index] * .1f);
                             Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
-                            Projectile.Iframes[index].Add(10);
-                            Projectile.IframesEnemyIndex[index].Add(-2);
                         }
                     }
                 }
