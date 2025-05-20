@@ -26,18 +26,20 @@ namespace first_game
                 }
             }
         }
-        public static void Draw(SpriteBatch _spriteBatch, int gemstone, Color color)
+        public static void Draw(SpriteBatch _spriteBatch, Vector2 position, int gemstone, Color color, float size, float layer)
         {
+            int scale = (int)(size / (gemTexture.Width / gemTextureArray.X));
             _spriteBatch.Draw(
                     gemTexture,
-                    new Vector2((int)(gemTexture.Width / gemTextureArray.X) * gemstone + 100, 1000),
+                    new (position.X - size/2, position.Y - size / 2),
                     TextureRect[gemstone],
                     color,
                     0,
-                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
-                    .7f,
+                    new(),
+                    //new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
+                    size / (gemTexture.Width / gemTextureArray.X),
                     SpriteEffects.None,
-                    1
+                    layer
                     );
         }
     }

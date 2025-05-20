@@ -46,7 +46,7 @@ namespace first_game
                 texture,
                 new Rectangle(
                     (int)((-AngleDifference(Vector2ToAngle(Player.angleVector), Vector2ToAngle(difference)) * Game1.screenSize.X) / (Game1.FOV * 2) + (Game1.screenSize.X / 2)) - width / 2,
-                    (int)(Game1.screenSize.Y / 2 - Height + (Game1.screenSize.Y / distance) / 2 + ( Game1.PlayerHeight - objectY) / distance),
+                    (int)(Game1.screenSize.Y / 2 - Height + (Game1.screenSize.Y / distance) / 2 + (Game1.PlayerHeight - objectY) / distance),
                     width,
                     Height
                     ),
@@ -274,17 +274,17 @@ namespace first_game
                         switch (i)
                         {
                             case 0: // Top
-                                Game1._texturePercent = (rect.Right - intercepts[i].X) / Tiles.tileXY;
-                                break;
+                            Game1._texturePercent = (rect.Right - intercepts[i].X) / Tiles.tileXY;
+                            break;
                             case 1: // Bottom
-                                Game1._texturePercent = (intercepts[i].X - rect.Left) / Tiles.tileXY;
-                                break;
+                            Game1._texturePercent = (intercepts[i].X - rect.Left) / Tiles.tileXY;
+                            break;
                             case 2: // Left
-                                Game1._texturePercent = (intercepts[i].Y - rect.Top) / Tiles.tileXY;
-                                break;
+                            Game1._texturePercent = (intercepts[i].Y - rect.Top) / Tiles.tileXY;
+                            break;
                             case 3: // Right
-                                Game1._texturePercent = (rect.Bottom - intercepts[i].Y) / Tiles.tileXY;
-                                break;
+                            Game1._texturePercent = (rect.Bottom - intercepts[i].Y) / Tiles.tileXY;
+                            break;
                         }
                     }
                 }
@@ -659,6 +659,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         static readonly Texture2D[] punchTextures = new Texture2D[4];
         public static float punchFrame = 5;
         static Vector2 handRectSize;
+        bool punchSideLeft;
+
 
         public static Texture2D blankTexture;
 
@@ -780,7 +782,22 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             Game1.EnemyTargetTimer -= gameTime.ElapsedGameTime.Milliseconds;
 
-            Game1.punchFrame += timeElapsed / 30f * combo * .5f;
+            if (Player.Attacks.flipped == -1)
+            {
+                punchSideLeft = true;
+            }
+            else
+            {
+                punchSideLeft = false;
+            }
+            if (punchFrame < 3 || combo == 0)
+            {
+                Game1.punchFrame += timeElapsed / 30f * (combo*.65f+0.1f) * .5f;
+            }
+            if (punchFrame >= 3)
+            {
+                punchSideLeft = !punchSideLeft;
+            }
 
             keyboardState = Keyboard.GetState();
             mouseState = Mouse.GetState();
@@ -790,14 +807,14 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 switch (gameState)
                 {
                     case GameState.Playing:
-                        gameState = GameState.paused;
-                        IsMouseVisible = true;
-                        break;
+                    gameState = GameState.paused;
+                    IsMouseVisible = true;
+                    break;
                     case GameState.paused:
-                        gameState = GameState.Playing;
-                        IsMouseVisible = false;
-                        Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
-                        break;
+                    gameState = GameState.Playing;
+                    IsMouseVisible = false;
+                    Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
+                    break;
                 }
             }
 
@@ -813,9 +830,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 gametimer += timeElapsed;
 
 
-                PlayerHeight = Constants.floorLevel + Constants.defaultPlayerHeight+ (- 4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
+                PlayerHeight = Constants.floorLevel + Constants.defaultPlayerHeight + (-4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
                 jumpTime = Math.Min(jumpTime + 0.1f, Constants.jumpWidth);
-                if (OnKeyPress(Keys.Space))
+                if (OnKeyPress(Keys.Space) && jumpTime == Constants.jumpWidth)
                 {
                     jumpTime = 0;
                 }
@@ -916,21 +933,21 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 //}
                 switch (Player.state)
                 {
-                    case State.Drawing_Bow:
-                        Player.colorFilter = Color.AliceBlue;
-                        break;
+                    //case State.Drawing_Bow:
+                    //Player.colorFilter = Color.AliceBlue;
+                    //break;
                     case State.Attacking_1:
-                        Player.colorFilter = new Color(0, combo * 10, combo * 10);
-                        break;
+                    Player.colorFilter = new Color(0, combo * 10, combo * 10);
+                    break;
                     case State.Attacking_2:
-                        Player.colorFilter = new Color(0, combo * 10, combo * 10);
-                        break;
+                    Player.colorFilter = new Color(0, combo * 10, combo * 10);
+                    break;
                     case State.Dashing:
-                        Player.colorFilter = Color.Purple;
-                        break;
+                    Player.colorFilter = Color.Purple;
+                    break;
                     case State.Dead:
-                        Player.colorFilter = Color.Black;
-                        break;
+                    Player.colorFilter = Color.Black;
+                    break;
 
                 }
 
@@ -1177,7 +1194,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     1);
             }
 
-            drawObject(_spriteBatch, 
+            drawObject(_spriteBatch,
                 Portal.texture,
                 new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
                 Portal.Color,
@@ -1192,8 +1209,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             null,
                             bowChargeBarColor,
                             0,
-                            new Vector2(0, 0), 
-                            0f, 
+                            new Vector2(0, 0),
+                            0f,
                             0.99f
                             );
 
@@ -1202,46 +1219,42 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, new Color(5, 15, 50), Color.MediumPurple, "", 0);
 
             //draws the magic gem
-            _spriteBatch.Draw(
-                    gemTexture,
-                    new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom - 10),
-                    new Rectangle(0, (int)(gemTexture.Height / gemTextureArray.Y), (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+            //_spriteBatch.Draw(
+            //        gemTexture,
+            //        new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom - 10),
+            //        new Rectangle(0, (int)(gemTexture.Height / gemTextureArray.Y), (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+            //        Color.DarkSlateBlue,
+            //        0,
+            //        new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
+            //        1.5f,
+            //        SpriteEffects.None,
+            //        .96f
+            //        );
+            Gems.Draw(_spriteBatch,
+                    new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom),
+                    1,
                     Color.DarkSlateBlue,
-                    0,
-                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
-                    1.5f,
-                    SpriteEffects.None,
-                    .96f
-                    );
-
+                    Constants.healthSliderRect.Height * 4,
+                    .97f);
             //draws the heart gem
-            _spriteBatch.Draw(
-                    gemTexture,
+            //        );
+            Gems.Draw(_spriteBatch,
                     new Vector2(Constants.healthSliderRect.Left + Constants.healthSliderRect.Width * ((float)Player.health / Constants.maxHealth), Constants.healthSliderRect.Center.Y - 10),
-                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 2, 0, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    6,
                     Color.Pink,
-                    0,
-                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
-                    .7f,
-                    SpriteEffects.None,
-                    .96f
-                    );
-            _spriteBatch.Draw(
-                    gemTexture,
+                    Constants.healthSliderRect.Height * 2,
+                    .96f);
+            Gems.Draw(_spriteBatch,
                     new Vector2(Constants.healthSliderRect.Right, Constants.healthSliderRect.Center.Y - 10),
-                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 2, 0, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                    6,
                     Color.DeepPink,
-                    0,
-                    new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
-                    .7f,
-                    SpriteEffects.None,
-                    .96f
-                    );
+                    Constants.healthSliderRect.Height * 2,
+                    .95f);
             //draws the stamina gems
-            for (int i = 1; i < maxDashCharge+1; i++)
+            for (int i = 1; i < maxDashCharge + 1; i++)
             {
                 Color gemColor;
-                if (stamina >= i*(Constants.maxStamina / maxDashCharge))
+                if (stamina >= i * (Constants.maxStamina / maxDashCharge))
                 {
                     gemColor = Color.AliceBlue;
                 }
@@ -1249,36 +1262,31 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 {
                     gemColor = Color.DarkSlateGray;
                 }
-                _spriteBatch.Draw(
-                    gemTexture,
-                    new Vector2((int)(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 7),
-                    new Rectangle((int)(gemTexture.Width / gemTextureArray.X) * 3, (int)(gemTexture.Height / gemTextureArray.Y) * 2, (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
+                Gems.Draw(_spriteBatch,
+                    new Vector2((int)(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 12),
+                    2,
                     gemColor,
-                    0,
-                    new((int)(gemTexture.Width / gemTextureArray.X)/2, (int)(gemTexture.Height / gemTextureArray.Y)/2),
-                    .7f,
-                    SpriteEffects.None,
-                    .95f
-                    );
+                    Constants.staminaSliderRect.Height * 2,
+                    .96f);
             }
             colorFilter = new Color(colorFilter.R / 2, colorFilter.G / 2, colorFilter.B / 2);
             if (punchFrame < 4)
             {
-                if (Player.Attacks.flipped == -1)
+                if (punchSideLeft)
                 {
                     _spriteBatch.Draw(punchTextures[(int)punchFrame], new(0, (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), SpriteEffects.FlipHorizontally, 1);
 
                 }
-                else if (Player.Attacks.flipped == 1)
+                else
                 {
                     _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
                 }
             }
 
-            //for (int i = 0; i < 12; i++)
-            //{
-            //    Gems.Draw(_spriteBatch, i, Color.Wheat);
-            //}
+            for (int i = 0; i < 12; i++)
+            {
+                Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
+            }
 
             if (gameState == GameState.paused)
             {
