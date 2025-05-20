@@ -1212,7 +1212,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
                     1.5f,
                     SpriteEffects.None,
-                    1
+                    .96f
                     );
 
             //draws the heart gem
@@ -1225,7 +1225,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
                     .7f,
                     SpriteEffects.None,
-                    .99f
+                    .96f
                     );
             _spriteBatch.Draw(
                     gemTexture,
@@ -1236,7 +1236,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
                     .7f,
                     SpriteEffects.None,
-                    .98f
+                    .96f
                     );
             //draws the stamina gems
             for (int i = 1; i < maxDashCharge+1; i++)
@@ -1259,7 +1259,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     new((int)(gemTexture.Width / gemTextureArray.X)/2, (int)(gemTexture.Height / gemTextureArray.Y)/2),
                     .7f,
                     SpriteEffects.None,
-                    1
+                    .95f
                     );
             }
             colorFilter = new Color(colorFilter.R / 2, colorFilter.G / 2, colorFilter.B / 2);
@@ -1283,17 +1283,17 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             if (gameState == GameState.paused)
             {
-                _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X * 8 / 2, screenSize.Y * 0.08f), Color.White, 0, new(), 8, 0, .99f);
+                _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X * 2 / 2, screenSize.Y * 0.1f), Color.White, 0, new(), 2, 0, .99f);
                 _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.Black * 0.5f, 0, new(), 0, .97f);
 
-                SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 4, 10000);
-                SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 4, 100f / Constants.maxFOV);
-                SliderDraw(_spriteBatch, detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect, Color.AliceBlue, Color.DarkBlue, "Strip Size", 4, 100f / Constants.maxDetail);
+                SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 1, 10000);
+                SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 1, 100f / Constants.maxFOV);
+                SliderDraw(_spriteBatch, detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect, Color.AliceBlue, Color.DarkBlue, "Strip Size", 1, 100f / Constants.maxDetail);
 
             }
 
             //_spriteBatch.DrawString(titleFont, combo.ToString(), new(10, 300), Color.Red);
-            _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.1f, 0, new(), 0, 1);
+            _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.1f, 0, new(), 0, .96f);
             //DrawLine(Player.position + offset, Player.position + offset + Player.angleVector);
 
             _spriteBatch.End();
