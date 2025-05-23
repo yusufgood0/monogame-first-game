@@ -16,6 +16,7 @@ using static first_game.Player;
 using static first_game.Projectile;
 using static first_game.Tiles;
 using static first_game.Gems;
+using System.Reflection.PortableExecutable;
 
 namespace first_game
 {
@@ -335,7 +336,7 @@ namespace first_game
             float _finalLightLevel;
 
             _points.Add(Player.position);
-            _luminanceLevels.Add(Game1.playerLightEmit);
+            _luminanceLevels.Add(Constants.Luminance.Player);
 
             foreach (Vector2 _projectilePosition in Projectile.position)
             {
@@ -645,6 +646,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         private static float sensitivity = Constants.maxSensitivity;
 
+        private static bool cheats = false;
+
         public static Vector2 screenSize = new();
 
         private readonly GraphicsDeviceManager _graphics;
@@ -653,9 +656,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         public static MouseState mouseState, previousMouseState;
         public static SpriteFont titleFont;
 
-        //Vector2 offset = new(0, 0);
+        Vector2 offset = new(0, 0);
 
-        //static Texture2D swordTexture;
+        static Texture2D swordTexture;
         static readonly Texture2D[] punchTextures = new Texture2D[4];
         public static float punchFrame = 5;
         static Vector2 handRectSize;
@@ -713,7 +716,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             titleFont = Content.Load<SpriteFont>("titleFont");
             Window.Title = "Adding Things";
 
-            //swordTexture = Content.Load<Texture2D>("swordNoBg");
+            swordTexture = Content.Load<Texture2D>("swordNoBg");
             blankTexture = new Texture2D(GraphicsDevice, 1, 1);
             blankTexture.SetData(new[] { Color.White }); // Fills the texture with color
 
@@ -792,7 +795,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             }
             if (punchFrame < 3 || combo == 0)
             {
-                Game1.punchFrame += timeElapsed / 30f * (combo*.65f+0.1f) * .5f;
+                Game1.punchFrame += timeElapsed / 30f * (combo * .65f + 0.1f) * .5f;
             }
             if (punchFrame >= 3)
             {
@@ -817,7 +820,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     break;
                 }
             }
-
+            if (OnKeyPress(Keys.LeftAlt))
+            {
+                cheats = !cheats;
+            }
             if (gameState == GameState.paused)
             {
                 Slider(mouseState, previousMouseState, ref sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect);
@@ -1060,6 +1066,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             {
                 int columnHeight = (int)(screenSize.Y / lowestDistance);
                 Color color = ColorFilter(Color.White, lowestDistance * 10);
+                if (cheats) { color = Color.White; }
                 //if (color != Color.Black)
                 //{
                 _spriteBatch.Draw(
@@ -1074,7 +1081,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Tiles.textureRectangle[tileIndex].Y,
                 (int)((segmentWidth * detail) / Tiles.textureRectangle[tileIndex].Width),
                 Tiles.textureRectangle[tileIndex].Height),
-            //new Color(colorFilter, colorFilter, colorFilter),
             color,
             0f,
             new Vector2(),
@@ -1092,80 +1098,78 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
-            //offset = screenSize / 2 - Player.position;
+            offset = screenSize / 2 - Player.position;
             // TODO: Add your drawing code here
             _spriteBatch.Begin(SpriteSortMode.FrontToBack);
-            //_spriteBatch.Draw(
-            //    blankTexture,
-            //new Rectangle(
-            //    (int)screenSize.X / 2 - 50,
-            //    (int)screenSize.Y / 2 - 50,
-            //    100,
-            //    100),
-            //new Rectangle(0, 0, 1, 1),
-            //Color.White,
-            //0f,
-            //new(),`
-            //0,
-            //1 / 20f
-            //);
+            if (cheats)
+            {
+                _spriteBatch.Draw(
+                    Portal.texture,
+                    new (Portal.collideRectangle.X + (int)offset.X, Portal.collideRectangle.Y + (int)offset.Y, Portal.collideRectangle.Width, Portal.collideRectangle.Height),
+                    new Rectangle((int)Portal.textureFrame * Portal.texture.Width / Portal.amountOfFrames, 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
+                    Darkness(Portal.Color, RectangleToVector2(Portal.collideRectangle)),
+                    0,
+                    new Vector2(0, 0),
+                    0f,
+                    0.5f);
 
-            //_spriteBatch.Draw(
-            //        blankTexture,
-            //        new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y),
-            //        Color.Black
-            //        );
+                _spriteBatch.Draw(
+                        blankTexture,
+                        new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y),
+                        Color.Black
+                        );
 
-            //if (Player.Attacks.swingSpeed != 0)
-            //{
-            //    _spriteBatch.Draw(
-            //        swordTexture,
-            //        offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
-            //        (float)Math.Sin(Player.Attacks.swingAngle)),
-            //        null,
-            //        Player.colorFilter,
-            //        (float)(Player.Attacks.swingAngle),
-            //        new Vector2(swordTexture.Width / 2, 0),
-            //        0.05f,
-            //        SpriteEffects.FlipVertically,
-            //        1);
-            //}
-            //for (int index = 0; index < Tiles.numTiles; index++)
-            //{
-            //    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
-            //        new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
-            //        Tiles.tileXY,
-            //        Tiles.tileXY),
-            //        Tiles.textureRectangle[index],
-            //        Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
-            //        0,
-            //        new Vector2(0, 0),
-            //        0f,
-            //        .98f);
-            //}
-            //for (int index = 0; index < Enemy.health.Count; index++)
-            //{
-            //    _spriteBatch.Draw(Enemy.textures[(int)Enemy.enemyType[index]],
-            //        new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
-            //        Enemy.textureRectangle[index],
-            //        Darkness(Enemy.colorFilter[index], Enemy.position[index]),
-            //        0,
-            //        new Vector2(0, 0),
-            //        0f,
-            //        0.98f);
-            //}
-            //_spriteBatch.Draw(
-            //    blankTexture,
-            //    Vector2toRectangle(screenSize / 2 + new Vector2(Player.width / 2, Player.height / 2), Player.width, Player.height),
-            //    Player.textureRectangle,
-            //    //new (0,0, 1, 1),
-            //    Player.colorFilter,
-            //    -Player.angle,
-            //    //new(),
-            //    new Vector2(Player.width / 4, Player.height / 4),
-            //    Player.effect,
-            //    .99f
-            //    );
+                if (Player.Attacks.swingSpeed != 0)
+                {
+                    _spriteBatch.Draw(
+                        swordTexture,
+                        offset + Player.position + new Vector2((float)Math.Cos(Player.Attacks.swingAngle),
+                        (float)Math.Sin(Player.Attacks.swingAngle)),
+                        null,
+                        Player.colorFilter,
+                        (float)(Player.Attacks.swingAngle),
+                        new Vector2(swordTexture.Width / 2, 0),
+                        0.05f,
+                        SpriteEffects.FlipVertically,
+                        1);
+                }
+                for (int index = 0; index < Tiles.numTiles; index++)
+                {
+                    _spriteBatch.Draw(Tiles.textures[Tiles.tileType[index]],
+                        new Rectangle(Tiles.collideRectangle[index].X + (int)offset.X, Tiles.collideRectangle[index].Y + (int)offset.Y,
+                        Tiles.tileXY,
+                        Tiles.tileXY),
+                        Tiles.textureRectangle[index],
+                        Darkness(Color.White, new Vector2(Tiles.collideRectangle[index].X + Tiles.collideRectangle[index].Width / 2, Tiles.collideRectangle[index].Y + +Tiles.collideRectangle[index].Height / 2)),
+                        0,
+                        new Vector2(0, 0),
+                        0f,
+                        .98f);
+                }
+                for (int index = 0; index < Enemy.health.Count; index++)
+                {
+                    _spriteBatch.Draw(Enemy.textures[(int)Enemy.enemyType[index]],
+                        new Rectangle(Enemy.collideRectangle[index].X + (int)offset.X, Enemy.collideRectangle[index].Y + (int)offset.Y, Enemy.collideRectangle[index].Width, Enemy.collideRectangle[index].Height),
+                        Enemy.textureRectangle[index],
+                        Darkness(Enemy.colorFilter[index], Enemy.position[index]),
+                        0,
+                        new Vector2(0, 0),
+                        0f,
+                        0.98f);
+                }
+                _spriteBatch.Draw(
+                    blankTexture,
+                    Vector2toRectangle(screenSize / 2 + new Vector2(Player.width / 2, Player.height / 2), Player.width, Player.height),
+                    Player.textureRectangle,
+                    //new (0,0, 1, 1),
+                    Player.colorFilter,
+                    -Player.angle,
+                    //new(),
+                    new Vector2(Player.width / 4, Player.height / 4),
+                    Player.effect,
+                    .99f
+                    );
+            }
 
             for (int i = 0; i < (int)(2 * FOV / detail) + 1; i++)
             {
@@ -1283,10 +1287,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 }
             }
 
-            for (int i = 0; i < 12; i++)
-            {
-                Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
-            }
+            //for (int i = 0; i < 12; i++)
+            //{
+            //    Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
+            //}
 
             if (gameState == GameState.paused)
             {
