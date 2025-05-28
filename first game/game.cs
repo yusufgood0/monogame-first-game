@@ -724,7 +724,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             {
                 punchTextures[i - 1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
             }
-
+            Projectile.Setup(new object[] {
+                Gems.gemTexture,
+                Gems.TextureRect[11],
+                Gems.gemTexture,
+                Gems.TextureRect[1],
+            });
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
@@ -877,11 +882,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         Projectile.create(projectileType.PLAYER_PROJECTILE,
                             Player.position,
                             Player.angleVector,
-                            5 + (int)bowCharge / 10,
+                            5 + (int)bowCharge / 5,
                             2,
                             5,
                             1 + (int)(bowCharge / MaxBowCharge),
-                            (int)bowCharge / 10);
+                            (int)bowCharge / 5);
                 }
             }
             while (gametimer > 1000 / Constants.tps)
@@ -909,11 +914,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 MoveKeyPressed(keyboardState);
 
-                if (keyboardState.IsKeyDown(Keys.H) && Player.health < Constants.maxHealth && LightLevel > 10)
+                if (keyboardState.IsKeyDown(Keys.H) && Player.health < Constants.maxHealth && LightLevel > Constants.minLightLevel)
                 {
                     healthBarColor = Color.MediumVioletRed;
-                    LightLevel -= .5f;
-                    Player.health += 1;
+                    LightLevel -= Constants.lightlevelLoss;
+                    Player.health += 2;
                 }
                 else
                 {
@@ -990,7 +995,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         combo = 0;
 
                     }
-                LightLevel = Math.Max(Math.Min(LightLevel - 0.1f, Constants.maxLightLevel), 10);
+                LightLevel = Math.Max(Math.Min(LightLevel - Constants.lightlevelLoss, Constants.maxLightLevel), Constants.minLightLevel);
 
 
                 if (Color.Black == Darkness(Color.White, RectangleToVector2(Tiles.collideRectangle[TileFromVector2(Player.position)])))
@@ -1186,11 +1191,15 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X);
             }
+
             for (int i = 0; i < Projectile.position.Count; i++)
             {
+
+
+
                 drawObject(_spriteBatch,
-                    blankTexture,
-                    null,
+                    Gems.gemTexture,
+                    Projectile.textureRects[(int)Projectile.Type[i]],
                     GetProjectileColor(i),
                     Projectile.position[i],
                     Projectile.height[i],
@@ -1222,18 +1231,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, ColorMultiply(healthBarColor, 0.55f), healthBarColor, "", 0);
             SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, new Color(5, 15, 50), Color.MediumPurple, "", 0);
 
-            //draws the magic gem
-            //_spriteBatch.Draw(
-            //        gemTexture,
-            //        new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom - 10),
-            //        new Rectangle(0, (int)(gemTexture.Height / gemTextureArray.Y), (int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y)),
-            //        Color.DarkSlateBlue,
-            //        0,
-            //        new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
-            //        1.5f,
-            //        SpriteEffects.None,
-            //        .96f
-            //        );
             Gems.Draw(_spriteBatch,
                     new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom),
                     1,
@@ -1241,7 +1238,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     Constants.healthSliderRect.Height * 4,
                     .97f);
             //draws the heart gem
-            //        );
             Gems.Draw(_spriteBatch,
                     new Vector2(Constants.healthSliderRect.Left + Constants.healthSliderRect.Width * ((float)Player.health / Constants.maxHealth), Constants.healthSliderRect.Center.Y - 10),
                     6,
@@ -1287,10 +1283,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 }
             }
 
-            //for (int i = 0; i < 12; i++)
-            //{
-            //    Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
-            //}
+            for (int i = 0; i < 12; i++)
+            {
+                Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
+            }
 
             if (gameState == GameState.paused)
             {

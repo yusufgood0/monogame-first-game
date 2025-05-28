@@ -20,6 +20,8 @@ namespace first_game
         public static List<Vector2> position = new();
         public static List<float> height = new();
         public static List<projectileType> Type = new();
+        public static Texture2D[] textures = new Texture2D[2];
+        public static Rectangle[] textureRects = new Rectangle[2];
         public static List<List<int>> Iframes = new();
         public static List<List<int>> IframesEnemyIndex = new();
         public static List<int> pierce = new();
@@ -30,6 +32,16 @@ namespace first_game
             PLAYER_PROJECTILE = 0,
             ENEMY_PROJECTILE = 1,
         }
+        public static void Setup(object[] _textures)
+        {
+            for (int i = 0; i*2 < _textures.Length; i++)
+            {
+                Projectile.textures[i] = (Texture2D)_textures[i*2];
+                Projectile.textureRects[i] = (Rectangle)_textures[i * 2 + 1];
+            }
+        }
+
+
         public static int[] collisionSizeData =
             {
                 5,

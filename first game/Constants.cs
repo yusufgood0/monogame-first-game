@@ -61,6 +61,8 @@ namespace first_game
         public static readonly float LightStrength = 0.0003f;
 
         public static int maxLightLevel = 300; // the light level where everything is completely lit
+        public static int minLightLevel = 30; // the lowest possible light level
+        public static float lightlevelLoss = .3f; // the light lost speed
 
         public class EnemyStats
         {
@@ -109,9 +111,9 @@ namespace first_game
         {
             public static readonly int archerDamage = 250;
             public static readonly int attackDelay = tps * 3;
-            public static readonly int archerStopRange = Tiles.tileXY * 3; // how close the archer can get before stopping
-            public static readonly float archerBackupRange = archerStopRange * 0.6f; // at what range should the archer starts backing up
-            public static readonly float archerBackupSpeed = 1f; // how fast to the archers movement speed should he back up
+            public static readonly int archerStopRange = Tiles.tileXY * 5; // how close the archer can get before stopping
+            public static readonly float archerBackupRange = archerStopRange * 0.8f; // at what range should the archer starts backing up
+            public static readonly float archerBackupSpeed = 2f; // how fast to the archers movement speed should he back up
         }
     }
 }

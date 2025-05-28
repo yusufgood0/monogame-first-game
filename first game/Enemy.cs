@@ -80,7 +80,7 @@ namespace first_game
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
-            Game1.LightLevel += _damage;
+            Game1.LightLevel += _damage * 3;
             colorFilter[_index] = _color;
             iFrames[_index] = _iFrames;
             health[_index] -= _damage;

@@ -15,13 +15,13 @@ namespace first_game
         public static Rectangle[] TextureRect = new Rectangle[12];
         public static void setup()
         {
-            Vector2 vector2 = new Vector2((int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y));
+            Vector2 size = new Vector2((int)(gemTexture.Width / gemTextureArray.X), (int)(gemTexture.Height / gemTextureArray.Y));
             int a = 0;
             for (int rows = 0; rows < 4; rows++)
             {
                 for (int colums = 0; colums < 3; colums++)
                 {
-                    TextureRect[a] = new Rectangle((int)vector2.X * rows, (int)vector2.Y * colums, (int)vector2.X, (int)vector2.Y);
+                    TextureRect[a] = new Rectangle((int)size.X * rows, (int)size.Y * colums, (int)size.X, (int)size.Y);
                     a += 1;
                 }
             }
@@ -36,7 +36,6 @@ namespace first_game
                     color,
                     0,
                     new(),
-                    //new((int)(gemTexture.Width / gemTextureArray.X) / 2, (int)(gemTexture.Height / gemTextureArray.Y) / 2),
                     size / (gemTexture.Width / gemTextureArray.X),
                     SpriteEffects.None,
                     layer
