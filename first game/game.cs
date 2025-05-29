@@ -505,7 +505,6 @@ namespace first_game
                     }
                     return;
                 }
-            return;
         }
         public static void CollisionX(ref Vector2 position, Vector2 collisionSize, Vector2 speed)
         {
@@ -522,7 +521,6 @@ namespace first_game
                     }
                     return; // it has collided with smth
                 }
-            return;
         }
         public static Vector2 nearestPoint(Vector2 position, Rectangle rect)
         {
