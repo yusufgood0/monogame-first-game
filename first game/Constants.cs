@@ -99,11 +99,19 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(2.3f);
+                movementSpeed.Add(1.5f);
                 damage.Add(100);
                 health.Add(100);
                 height.Add(30);
                 width.Add(30);
+                circle.Add(false);
+
+                //stats for BOSS enemy
+                movementSpeed.Add(.5f);
+                damage.Add(10);
+                health.Add(1500);
+                height.Add(80);
+                width.Add(80);
                 circle.Add(false);
             }
         }
@@ -113,7 +121,7 @@ namespace first_game
             public static readonly int attackDelay = tps * 3;
             public static readonly int archerStopRange = Tiles.tileXY * 5; // how close the archer can get before stopping
             public static readonly float archerBackupRange = archerStopRange * 0.8f; // at what range should the archer starts backing up
-            public static readonly float archerBackupSpeed = 2f; // how fast to the archers movement speed should he back up
+            public static readonly float archerBackupSpeed = 2.5f; // how fast to the archers movement speed should he back up
         }
     }
 }

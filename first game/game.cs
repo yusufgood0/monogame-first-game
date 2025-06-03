@@ -664,7 +664,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         static Vector2 handRectSize;
         bool punchSideLeft;
 
-
+        public static Texture2D crosshairTexture;
         public static Texture2D blankTexture;
 
         public static int EnemyTargetTimer = 0;
@@ -724,12 +724,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             {
                 punchTextures[i - 1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
             }
-            Projectile.Setup(new object[] {
-                Gems.gemTexture,
-                Gems.TextureRect[11],
-                Gems.gemTexture,
-                Gems.TextureRect[1],
-            });
+            
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("circle"),
                 new Vector2(1, 1),
@@ -743,6 +738,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Content.Load<Texture2D>("square"),
                 new Vector2(1, 1),
                 new Vector2(2f, 60),
+                Content.Load<Texture2D>("square"),
+                new Vector2(1, 1),
+                new Vector2(1.75f, 90),
             });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
@@ -773,6 +771,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         {
             Gems.gemTexture = Content.Load<Texture2D>("Gems");
             Gems.setup();
+
+            Projectile.Setup(new object[] {
+                Gems.TextureRect[11],
+                Gems.TextureRect[0],
+            });
+            crosshairTexture = Content.Load<Texture2D>("Crosshair");
 
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             Constants.healthSliderRect = new Rectangle((int)(Game1.screenSize.X * .04f), (int)(Game1.screenSize.Y * .05f), (int)(Game1.screenSize.X * .4f), (int)(Game1.screenSize.Y * .05f));
@@ -886,7 +890,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             2,
                             5,
                             1 + (int)(bowCharge / MaxBowCharge),
-                            (int)bowCharge / 5);
+                            (int)bowCharge / 5,
+                            100);
                 }
             }
             while (gametimer > 1000 / Constants.tps)
@@ -1176,6 +1181,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     );
             }
 
+            _spriteBatch.Draw(crosshairTexture, new(), null, Color.White, 0, new(), 0, 0, 1.99f);
+
             for (int i = 0; i < (int)(2 * FOV / detail) + 1; i++)
             {
                 CastRay(-FOV + i * detail);
@@ -1263,7 +1270,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     gemColor = Color.DarkSlateGray;
                 }
                 Gems.Draw(_spriteBatch,
-                    new Vector2((int)(i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 12),
+                    new Vector2((i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 12),
                     2,
                     gemColor,
                     Constants.staminaSliderRect.Height * 2,
@@ -1299,9 +1306,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             }
 
-            //_spriteBatch.DrawString(titleFont, combo.ToString(), new(10, 300), Color.Red);
             _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.1f, 0, new(), 0, .96f);
-            //DrawLine(Player.position + offset, Player.position + offset + Player.angleVector);
+            
 
             _spriteBatch.End();
             base.Draw(gameTime);

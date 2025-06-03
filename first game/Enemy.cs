@@ -57,12 +57,12 @@ namespace first_game
                     switch (Tiles.tileType[tileIndex])
                     {
                         case (int)Tiles.tileTypes.SOLID:
-                            return true;
+                        return true;
 
                         case (int)Tiles.tileTypes.BRICK:
-                            Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
-                            Tiles.loadTiles(tileIndex, tileIndex);
-                            return true;
+                        Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
+                        Tiles.loadTiles(tileIndex, tileIndex);
+                        return true;
 
                     }
 
@@ -143,9 +143,9 @@ namespace first_game
             colorFilter.RemoveAt(_index);
         }
 
-        public static Texture2D[] textures = new Texture2D[4];
-        public static Vector2[] textureArray = new Vector2[4];
-        public static Vector2[] visualTextureSize = new Vector2[4];
+        public static Texture2D[] textures = new Texture2D[5];
+        public static Vector2[] textureArray = new Vector2[5];
+        public static Vector2[] visualTextureSize = new Vector2[5];
 
         public static List<int> damage = new();
         public static List<int> abilityTimer = new();
@@ -163,7 +163,7 @@ namespace first_game
 
         public static bool SightLine(Vector2 _point)
         {
-            float _detail = General.DistanceFromPoints(_point, Player.position)/10;
+            float _detail = General.DistanceFromPoints(_point, Player.position) / 10;
             Vector2 _difference = (Player.position - _point) / _detail;
             for (int i = 0; i < _detail; i++)
             {
@@ -188,6 +188,17 @@ namespace first_game
             float _distance = General.DistanceFromDifference(_difference); //hypotinuse/distance to target
             _difference.Normalize();
 
+            if (EnemyType.BOSS == enemyType[_index])
+            {
+                if (_distance < 100)
+                {
+                    Enemy.Push(10, _difference, _index);
+                }
+                else
+                {
+                }
+            }
+
             Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
             bool _sightline = SightLine(position[_index]);
 
@@ -196,32 +207,29 @@ namespace first_game
 
             _newTargetAngle.Normalize();
 
+
             if (Game1.EnemyTargetTimer <= 0)
             {
-
                 switch (enemyType[_index])
                 {
                     case EnemyType.ARCHER:
-                        if (rnd.Next(4) == 1)
-                        {
-                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
-                        }
-                        break;
+                    if (rnd.Next(4) == 1)
+                    {
+                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
+                    }
+                    break;
                     default:
-                        if (rnd.Next(20) == 1)
-                            target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
-                        break;
+                    if (rnd.Next(20) == 1)
+                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
+                    break;
                 }
-                if (_sightline)
+                if (_sightline && EnemyType.BOSS != enemyType[_index])
                 {
                     colorFilter[_index] = Color.Coral;
                     target[_index] = Player.position;
                 }
 
             }
-
-            
-
             if (_distance > 10)
             {
                 if (iFrames[_index] == 0)
@@ -235,36 +243,44 @@ namespace first_game
                     switch (enemyType[_index])
                     {
                         case EnemyType.ARCHER:
-                            if (_sightline)
+                        if (_sightline)
+                        {
+                            if (abilityTimer[_index] < 0)
                             {
-                                if (abilityTimer[_index] < 0)
+                                abilityTimer[_index] = Constants.Archer.attackDelay;
+                                Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE,
+                                    position[_index],
+                                    General.Difference(Player.position, Enemy.position[_index]),
+                                    7f,
+                                    1000,
+                                    10,
+                                    1,
+                                    Constants.Archer.archerDamage,
+                                    3000);
+                            }
+                            else
+                            {
+                                abilityTimer[_index] -= 1;
+                            }
+                            if (_distance < Constants.Archer.archerStopRange)
+                            {
+                                _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
+                                if (_distance < Constants.Archer.archerBackupRange)
                                 {
-                                    abilityTimer[_index] = Constants.Archer.attackDelay;
-                                    Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE, 
-                                        position[_index], 
-                                        General.Difference(Player.position, Enemy.position[_index]), 
-                                        7f, 
-                                        1000, 
-                                        10, 
-                                        1,
-                                        Constants.Archer.archerDamage);
-                                }
-                                else
-                                {
-                                    abilityTimer[_index] -= 1;
-                                }
-                                if (_distance < Constants.Archer.archerStopRange)
-                                {
-                                    _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
-                                    if (_distance < Constants.Archer.archerBackupRange)
-                                    {
-                                        _speed -= _difference * Constants.Archer.archerBackupSpeed;
-                                    }
+                                    _speed -= _difference * Constants.Archer.archerBackupSpeed;
                                 }
                             }
-                            break;
-                        case EnemyType.LARGE:
-                            break;
+                        }
+                        break;
+                        case EnemyType.BOSS:
+                        _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.BOSS];
+                        while (Vector2.Distance(target[_index], Player.position) < 100)
+                        target[_index] = new(position[_index].X + rnd.Next(-300, 300), position[_index].Y + rnd.Next(-300, 300));
+                        if (_distance < Constants.Archer.archerBackupRange)
+                        {
+                            _speed += _difference * 8;
+                        }
+                        break;
                     }
                 }
                 Vector2 _position = position[_index];
@@ -277,11 +293,11 @@ namespace first_game
                     General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
                 }
                 position[_index] = _position;
-                speed[_index] = speed[_index] * 0.6f;
+                speed[_index] *= 0.6f;
                 collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
                 collideRectangle[_index] = General.Vector2toRectangle(position[_index], collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
-            
+
         }
         public enum EnemyType
         {
@@ -289,6 +305,7 @@ namespace first_game
             MEDIUM = 1,
             LARGE = 2,
             ARCHER = 3,
+            BOSS = 4,
         }
         public static void Setup(object[] _textures)
         {
