@@ -20,8 +20,8 @@ namespace first_game
         public static List<Vector2> position = new();
         public static List<float> height = new();
         public static List<projectileType> Type = new();
-        public static Texture2D[] textures = new Texture2D[2];
-        public static Rectangle[] textureRects = new Rectangle[2];
+        public static Texture2D[] textures = new Texture2D[3];
+        public static Rectangle[] textureRects = new Rectangle[3];
         public static List<List<int>> Iframes = new();
         public static List<List<int>> IframesEnemyIndex = new();
         public static List<int> pierce = new();
@@ -46,6 +46,7 @@ namespace first_game
             {
                 5,
                 10,
+                5
             };
         public static Color GetProjectileColor(int index)
         {
@@ -56,6 +57,9 @@ namespace first_game
 
                 case projectileType.ENEMY_PROJECTILE:
                 return Color.DarkViolet;
+
+                case projectileType.HOMING_PROJECTILE:
+                return Color.WhiteSmoke;
             }
             return Color.White;
 
@@ -82,7 +86,7 @@ namespace first_game
 
             if (projectileType.HOMING_PROJECTILE == Projectile.Type[_index])
             {
-                Vector2 difference = General.Difference(Projectile.position[_index], Player.position);
+                Vector2 difference = General.Difference(Player.position, Projectile.position[_index]);
                 difference.Normalize();
                 speed[_index] += difference;
             }

@@ -775,6 +775,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Projectile.Setup(new object[] {
                 Gems.TextureRect[11],
                 Gems.TextureRect[0],
+                Gems.TextureRect[9],
             });
             crosshairTexture = Content.Load<Texture2D>("Crosshair");
 

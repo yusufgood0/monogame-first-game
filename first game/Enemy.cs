@@ -40,10 +40,10 @@ namespace first_game
         {
             for (int _enemyIndex = Enemy.collideRectangle.Count - 1; _enemyIndex >= 0; _enemyIndex--)
             {
-                Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
+                Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)]);
                 while (SightLine(position[_enemyIndex]))
                 {
-                    Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
+                    Enemy.position[_enemyIndex] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)]);
                 }
             }
 
@@ -218,6 +218,13 @@ namespace first_game
                         target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
                     }
                     break;
+                    case EnemyType.BOSS:
+                    while (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(30) == 1)
+                    {
+                        Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
+                        target[_index] = new(position.X, position.Y);
+                    }
+                    break;
                     default:
                     if (rnd.Next(20) == 1)
                         target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
@@ -273,13 +280,17 @@ namespace first_game
                         }
                         break;
                         case EnemyType.BOSS:
-                        _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.BOSS];
-                        while (Vector2.Distance(target[_index], Player.position) < 100)
-                        target[_index] = new(position[_index].X + rnd.Next(-300, 300), position[_index].Y + rnd.Next(-300, 300));
-                        if (_distance < Constants.Archer.archerBackupRange)
-                        {
-                            _speed += _difference * 8;
-                        }
+
+                        Projectile.create(projectileType.HOMING_PROJECTILE, 
+                            position[_index], 
+                            new((float)rnd.NextDouble()-.5f, (float)rnd.NextDouble() - .5f),
+                            (float)rnd.NextDouble() * 5,
+                            4,
+                            0,
+                            1,
+                            5,
+                            100
+                            );
                         break;
                     }
                 }

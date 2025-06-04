@@ -107,7 +107,7 @@ namespace first_game
                 circle.Add(false);
 
                 //stats for BOSS enemy
-                movementSpeed.Add(.5f);
+                movementSpeed.Add(9f);
                 damage.Add(10);
                 health.Add(1500);
                 height.Add(80);

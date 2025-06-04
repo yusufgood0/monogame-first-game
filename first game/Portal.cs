@@ -26,7 +26,7 @@ namespace first_game
 
         public static void ReloadPortalPosition()
         {
-            collideRectangle = Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)];
+            collideRectangle = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)];
         }
         public static void update()
         {

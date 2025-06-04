@@ -60,7 +60,7 @@ namespace first_game
             }
         }
 
-        public static int RandomOpen(tileTypes _tileType)
+        public static int RandomTile(tileTypes _tileType)
         {
             int _tileIndex = rnd.Next(Tiles.numTiles - 1);
             while (Tiles.tileType[_tileIndex] != (int)_tileType)
