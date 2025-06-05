@@ -886,6 +886,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     if (!keyboardState.IsKeyDown(Keys.LeftControl))
                         Projectile.create(projectileType.PLAYER_PROJECTILE,
                             Player.position,
+                            Player.height,
                             Player.angleVector,
                             5 + (int)bowCharge / 5,
                             2,
@@ -1211,7 +1212,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     GetProjectileColor(i),
                     Projectile.position[i],
                     Projectile.height[i],
-                    6,
+                    Projectile.collisionSizeData[(int)Projectile.Type[i]],
                     1);
             }
 

@@ -190,13 +190,13 @@ namespace first_game
 
             if (EnemyType.BOSS == enemyType[_index])
             {
-                if (_distance < 100)
-                {
-                    Enemy.Push(10, _difference, _index);
-                }
-                else
-                {
-                }
+                //if (_distance < 100)
+                //{
+                //    Enemy.Push(10, _difference, _index);
+                //}
+                //else
+                //{
+                //}
             }
 
             Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
@@ -257,6 +257,7 @@ namespace first_game
                                 abilityTimer[_index] = Constants.Archer.attackDelay;
                                 Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE,
                                     position[_index],
+                                    10,
                                     General.Difference(Player.position, Enemy.position[_index]),
                                     7f,
                                     1000,
@@ -281,16 +282,25 @@ namespace first_game
                         break;
                         case EnemyType.BOSS:
 
-                        Projectile.create(projectileType.HOMING_PROJECTILE, 
-                            position[_index], 
-                            new((float)rnd.NextDouble()-.5f, (float)rnd.NextDouble() - .5f),
-                            (float)rnd.NextDouble() * 5,
-                            4,
-                            0,
-                            1,
-                            5,
-                            100
-                            );
+                            if (abilityTimer[_index] <= 0)
+                            {
+                                Projectile.create(projectileType.HOMING_PROJECTILE,
+                                    position[_index],
+                                    rnd.Next(0, 50),
+                                    new((float)rnd.NextDouble() - .5f, (float)rnd.NextDouble() - .5f),
+                                    (float)rnd.Next(5, 20),
+                                    4,
+                                    0,
+                                    1,
+                                    5,
+                                    100
+                                    );
+                                abilityTimer[_index] += rnd.Next(1, 8);
+                            }
+                            else
+                            {
+                                abilityTimer[_index] -= 1;
+                            }
                         break;
                     }
                 }

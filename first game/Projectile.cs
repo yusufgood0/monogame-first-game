@@ -46,31 +46,31 @@ namespace first_game
             {
                 5,
                 10,
-                5
+                20
             };
         public static Color GetProjectileColor(int index)
         {
             switch (Type[index])
             {
                 case projectileType.PLAYER_PROJECTILE:
-                return Color.DarkOrchid;
+                    return Color.DarkOrchid;
 
                 case projectileType.ENEMY_PROJECTILE:
-                return Color.DarkViolet;
+                    return Color.DarkViolet;
 
                 case projectileType.HOMING_PROJECTILE:
-                return Color.WhiteSmoke;
+                    return Color.WhiteSmoke;
             }
             return Color.White;
 
         }
-        public static void create(projectileType type, Vector2 spawnLocation, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize, int _pierce, int _damage, int _timeLimit)
+        public static void create(projectileType type, Vector2 spawnLocation, float _height, Vector2 angleVector, float projectileSpeed, int projectileLife, int _collisionSize, int _pierce, int _damage, int _timeLimit)
         {
             if (angleVector != new Vector2(0, 0))
             {
                 angleVector.Normalize();
             }
-            height.Add(Game1.PlayerHeight - Constants.floorLevel - 40);
+            height.Add(_height - Constants.floorLevel - 40);
             speed.Add(angleVector * projectileSpeed);
             position.Add(spawnLocation);
             Type.Add(type);
@@ -86,13 +86,29 @@ namespace first_game
 
             if (projectileType.HOMING_PROJECTILE == Projectile.Type[_index])
             {
+
                 Vector2 difference = General.Difference(Player.position, Projectile.position[_index]);
-                difference.Normalize();
-                speed[_index] += difference;
+                //float num = 1f / MathF.Sqrt(difference.X * difference.X + difference.Y * difference.Y);
+                //speed[_index] += difference * num;
+                if (difference.X < speed[_index].X)
+                {
+                    speed[_index] = speed[_index] - new Vector2(Constants.homingStrength, 0);
+                }
+                else
+                {
+                    speed[_index] = speed[_index] + new Vector2(Constants.homingStrength, 0);
+                }
+                if (difference.Y < speed[_index].Y)
+                {
+                    speed[_index] = speed[_index] - new Vector2(0, Constants.homingStrength);
+                }
+                else
+                {
+                    speed[_index] = speed[_index] + new Vector2(0, Constants.homingStrength);
+                }
             }
 
-
-                for (int iFramesIndex = 0; iFramesIndex < Iframes[_index].Count; iFramesIndex++)
+            for (int iFramesIndex = 0; iFramesIndex < Iframes[_index].Count; iFramesIndex++)
             {
                 if (Iframes[_index][iFramesIndex] > 0)
                 {
@@ -129,22 +145,21 @@ namespace first_game
                     switch (Tiles.tileType[TileIndex])
                     {
                         case (int)tileTypes.BRICK:
-                        Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, TileIndex);
-                        pierce[_index] -= 1;
-                        break;
+                            Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, TileIndex);
+                            pierce[_index] -= 1;
+                            break;
 
                         case (int)tileTypes.SOLID:
-                        kill(_index);
-                        return;
-
+                            kill(_index);
+                            return;
                     }
 
                 }
             }
 
-            if (Player.iFrames <= 0 && Player.state != Player.State.Dashing && 
-                projectileType.PLAYER_PROJECTILE != Projectile.Type[_index] && 
-                !IframesEnemyIndex[_index].Contains(-1) && 
+            if (Player.iFrames <= 0 && Player.state != Player.State.Dashing &&
+                projectileType.PLAYER_PROJECTILE != Projectile.Type[_index] &&
+                !IframesEnemyIndex[_index].Contains(-1) &&
                 new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(new Rectangle((int)(Player.position.X - Player.width / 2), (int)(Player.position.Y - Player.height / 2), Player.width, Player.height)))
             {
                 pierce[_index] -= 1;

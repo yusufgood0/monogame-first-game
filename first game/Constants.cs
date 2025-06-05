@@ -20,6 +20,8 @@ namespace first_game
 {
     internal class Constants
     {
+        public static readonly float homingStrength = .7f;
+
         //slider Positions
         public static Rectangle healthSliderRect;
         public static Rectangle staminaSliderRect;
