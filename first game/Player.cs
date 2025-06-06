@@ -53,7 +53,7 @@ namespace first_game
 
         public static void reloadPlayerPosition()
         {
-            Player.position = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomOpen(tileTypes.NONE)]);
+            Player.position = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)]);
 
         }
         public static void Push(float _knockback, Vector2 _Angle)

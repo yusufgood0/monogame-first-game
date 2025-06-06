@@ -20,6 +20,8 @@ namespace first_game
 {
     internal class Constants
     {
+        public static readonly float homingStrength = .7f;
+
         //slider Positions
         public static Rectangle healthSliderRect;
         public static Rectangle staminaSliderRect;
@@ -61,6 +63,8 @@ namespace first_game
         public static readonly float LightStrength = 0.0003f;
 
         public static int maxLightLevel = 300; // the light level where everything is completely lit
+        public static int minLightLevel = 30; // the lowest possible light level
+        public static float lightlevelLoss = .3f; // the light lost speed
 
         public class EnemyStats
         {
@@ -97,11 +101,19 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(2.3f);
+                movementSpeed.Add(1.5f);
                 damage.Add(100);
                 health.Add(100);
                 height.Add(30);
                 width.Add(30);
+                circle.Add(false);
+
+                //stats for BOSS enemy
+                movementSpeed.Add(9f);
+                damage.Add(10);
+                health.Add(1500);
+                height.Add(80);
+                width.Add(80);
                 circle.Add(false);
             }
         }
@@ -109,9 +121,9 @@ namespace first_game
         {
             public static readonly int archerDamage = 250;
             public static readonly int attackDelay = tps * 3;
-            public static readonly int archerStopRange = Tiles.tileXY * 3; // how close the archer can get before stopping
-            public static readonly float archerBackupRange = archerStopRange * 0.6f; // at what range should the archer starts backing up
-            public static readonly float archerBackupSpeed = 1f; // how fast to the archers movement speed should he back up
+            public static readonly int archerStopRange = Tiles.tileXY * 5; // how close the archer can get before stopping
+            public static readonly float archerBackupRange = archerStopRange * 0.8f; // at what range should the archer starts backing up
+            public static readonly float archerBackupSpeed = 2.5f; // how fast to the archers movement speed should he back up
         }
     }
 }
