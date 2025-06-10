@@ -145,6 +145,9 @@ namespace first_game
                 case EnemyType.SMALL:
                     textureRectangle[_index] = new(0, 480, 75, 79);
                     break;
+                case EnemyType.MEDIUM:
+                    textureRectangle[_index] = new(0, 635, 85, 75);
+                    break;
             }
         }
         public static void Delete(int _index)
@@ -354,7 +357,7 @@ namespace first_game
                         position[_index] = _position;
                         for (int i = 0; i < Enemy.health.Count; i++)
                         {
-                            while (!isDead[_index] && IsEnemyCollide(position[_index], Enemy.collideRectangle[_index].Width, i) && i != _index)
+                            while (!isDead[i] && IsEnemyCollide(position[_index], Enemy.collideRectangle[_index].Width, i) && i != _index)
                             {
                                 Vector2 difference = General.Difference(position[_index], Enemy.position[i]);
                                 difference.Normalize();
@@ -389,14 +392,28 @@ namespace first_game
                 case EnemyType.SMALL:
                     if (isDead[_index])
                     {
-                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 375), 480, 75, 79);
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 375), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
                     }
                     else
                     {
                         textureRectangle[_index] = new(43, textureRectangle[_index].Y + textureRectangle[_index].Height, 75, 79);
                         if (textureRectangle[_index].Y >= textureRectangle[_index].Height * 6)
                         {
-                            textureRectangle[_index] = new(43, 0, 75, 79);
+                            textureRectangle[_index] = new(textureRectangle[_index].X, 0, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                        }
+                    }
+                    break;
+                case EnemyType.MEDIUM:
+                    if (isDead[_index])
+                    {
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 425-85), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                    }
+                    else
+                    {
+                        textureRectangle[_index] = new(40, textureRectangle[_index].Y + textureRectangle[_index].Height, 64, 76);
+                        if (textureRectangle[_index].Y >= textureRectangle[_index].Height * 5)
+                        {
+                            textureRectangle[_index] = new(textureRectangle[_index].X, 20, textureRectangle[_index].Width, textureRectangle[_index].Height);
                         }
                     }
                     break;

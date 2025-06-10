@@ -62,10 +62,10 @@ namespace first_game
 
         public static int RandomTile(tileTypes _tileType)
         {
-            int _tileIndex = rnd.Next(Tiles.numTiles - 1);
+            int _tileIndex = rnd.Next(Tiles.numTiles);
             while (Tiles.tileType[_tileIndex] != (int)_tileType)
             {
-                _tileIndex = rnd.Next(Tiles.numTiles - 1);
+                _tileIndex = rnd.Next(Tiles.numTiles);
             }
             return _tileIndex;
         }

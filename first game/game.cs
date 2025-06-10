@@ -667,6 +667,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         public static Texture2D blankTexture;
 
         public static int EnemyTargetTimer = 0;
+        public static int enemyAnimationTimer = 0;
+
 
         public static Color healthBarColor;
         public static Color screenFilter = new Color(0, 0, 0, 0);
@@ -692,6 +694,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         readonly int MinBowCharge = 5;
         readonly int MaxBowCharge = 100;
         float bowCharge = 0;
+
 
         readonly Vector2 bowBarSize = new Vector2(1000, 30);
         Color bowChargeBarColor;
@@ -729,7 +732,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Content.Load<Texture2D>("smallEnemySpritesheet"),
                 new Vector2(1, 1),
                 new Vector2(1f, 40),
-                Content.Load<Texture2D>("circle"),
+                Content.Load<Texture2D>("mediumEnemySpritesheet"),
                 new Vector2(1, 1),
                 new Vector2(1.25f, 55),
                 Content.Load<Texture2D>("circle"),
@@ -794,10 +797,18 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
 
             Game1.EnemyTargetTimer -= gameTime.ElapsedGameTime.Milliseconds;
-            for (int i = 0; i < Enemy.health.Count; i++)
+            Game1.enemyAnimationTimer += gameTime.ElapsedGameTime.Milliseconds;
+
+            while (enemyAnimationTimer > 100)
             {
-                Enemy.UpdateTexture(i);
+                for (int i = 0; i < Enemy.health.Count; i++)
+                {
+                    if (rnd.Next(1, 5) != 1)
+                    Enemy.UpdateTexture(i);
+                }
+                enemyAnimationTimer -= rnd.Next(75, 100);
             }
+
 
             if (Player.Attacks.flipped == -1)
             {
@@ -847,6 +858,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             if (gameState == GameState.Playing)
             {
+
+
                 gametimer += timeElapsed;
 
 
@@ -902,6 +915,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             }
             while (gametimer > 1000 / Constants.tps)
             {
+
                 if (previousIsActive)
                     Player.angle += (Mouse.GetState().X - screenSize.X / 2) * sensitivity;
                 if (IsActive)

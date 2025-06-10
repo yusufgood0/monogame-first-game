@@ -18,15 +18,20 @@ namespace first_game
                 return;
             Level = _Level;
             Enemy.DeleteAll();
-            Player.reloadPlayerPosition();
+
             Levels.UpdateTileMap();
-            Enemy.CreateEnemies(EnemySaves[Level]);
-            Enemy.RandomizePositions();
             if (breakableObsticales[Level])
             {
                 Tiles.regenerateTilemap();
             }
             loadTiles(0, numTiles);
+
+            Portal.ReloadPortalPosition();
+            Player.reloadPlayerPosition();
+
+            Enemy.CreateEnemies(EnemySaves[Level]);
+            Enemy.RandomizePositions();
+            
         }
 
         public static int[][] EnemySaves = {

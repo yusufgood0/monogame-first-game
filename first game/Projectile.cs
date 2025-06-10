@@ -135,7 +135,7 @@ namespace first_game
             if (projectileType.PLAYER_PROJECTILE == Projectile.Type[_index])
                 for (int EnemyIndex = 0; EnemyIndex < Enemy.health.Count; EnemyIndex++)
                 {
-                    if (!Enemy.isDead[_index] && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
+                    if (!Enemy.isDead[EnemyIndex] && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
                     {
                         Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                         pierce[_index] -= 1;
