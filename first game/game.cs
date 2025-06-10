@@ -1216,7 +1216,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     Enemy.textureRectangle[i],
                     Enemy.colorFilter[i],
                     Enemy.position[i],
-                    0,
+                    -100,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X);
         }
