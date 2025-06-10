@@ -62,7 +62,7 @@ namespace first_game
             {
                 _Angle.Normalize();
                 speed += _Angle * _knockback;
-                movementSpeed = _knockback;
+                movementSpeed += _knockback;
             }
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _recoveryTime, float _knockback, Vector2 _enemyPlayerAngle)
@@ -127,7 +127,7 @@ namespace first_game
                         return;
                     }
 
-                    Push(swingRange/20f, General.AngleToVector2(swingAngle));
+                    Push(swingRange/20, General.AngleToVector2(swingAngle));
 
                     checkpoint = position + General.AngleToVector2(swingAngle) * swingRange;
                     angle -= 0.05f * flipped;
@@ -158,7 +158,7 @@ namespace first_game
                         if (Projectile.Type[index] != Projectile.projectileType.PLAYER_PROJECTILE && checkrect.Contains(Projectile.position[index]))
                         {
                             //Projectile.pierce[index] += 1;
-                            Projectile.speed[index] *= -3;
+                            Projectile.speed[index] *= -2;
                             Projectile.damage[index] = (int)(Projectile.damage[index] * .1f);
                             Projectile.Type[index] = Projectile.projectileType.PLAYER_PROJECTILE;
                         }

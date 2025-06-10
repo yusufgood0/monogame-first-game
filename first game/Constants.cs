@@ -20,7 +20,7 @@ namespace first_game
 {
     internal class Constants
     {
-        public static readonly float homingStrength = .7f;
+        public static readonly float homingStrength = 1f;
 
         //slider Positions
         public static Rectangle healthSliderRect;
@@ -94,7 +94,7 @@ namespace first_game
 
                 //stats for Large enemies
                 movementSpeed.Add(2.1f);
-                damage.Add(450);
+                damage.Add(350);
                 health.Add(300);
                 height.Add(60);
                 width.Add(60);
@@ -111,7 +111,7 @@ namespace first_game
                 //stats for BOSS enemy
                 movementSpeed.Add(9f);
                 damage.Add(10);
-                health.Add(1500);
+                health.Add(800);
                 height.Add(80);
                 width.Add(80);
                 circle.Add(false);

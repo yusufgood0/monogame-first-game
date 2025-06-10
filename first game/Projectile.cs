@@ -27,6 +27,7 @@ namespace first_game
         public static List<int> pierce = new();
         public static List<int> damage = new();
         public static List<int> timeLimit = new();
+        public static List<List<Vector4>> afterImages = new();
         public enum projectileType
         {
             PLAYER_PROJECTILE = 0,
@@ -59,7 +60,7 @@ namespace first_game
                     return Color.DarkViolet;
 
                 case projectileType.HOMING_PROJECTILE:
-                    return Color.WhiteSmoke;
+                    return new(225, 100, 240);
             }
             return Color.White;
 
@@ -79,33 +80,44 @@ namespace first_game
             pierce.Add(_pierce);
             damage.Add(_damage);
             timeLimit.Add(_timeLimit);
+            afterImages.Add(new List<Vector4> { });
         }
         public static void update(int _index)
         {
+            afterImages[_index].Add(new Vector4(position[_index].X, position[_index].Y, height[_index], 1f));
+            for (int i = 0; i < afterImages[_index].Count; i++)
+            {
+                afterImages[_index][i] =  new(afterImages[_index][i].X, afterImages[_index][i].Y, afterImages[_index][i].Z, afterImages[_index][i].W - .1f);
+                if (afterImages[_index][i].W <= 0)
+                {
+                    afterImages[_index].RemoveAt(i);
+                }
+            }
+
             position[_index] += speed[_index];
 
             if (projectileType.HOMING_PROJECTILE == Projectile.Type[_index])
             {
 
                 Vector2 difference = General.Difference(Player.position, Projectile.position[_index]);
-                //float num = 1f / MathF.Sqrt(difference.X * difference.X + difference.Y * difference.Y);
-                //speed[_index] += difference * num;
-                if (difference.X < speed[_index].X)
-                {
-                    speed[_index] = speed[_index] - new Vector2(Constants.homingStrength, 0);
-                }
-                else
-                {
-                    speed[_index] = speed[_index] + new Vector2(Constants.homingStrength, 0);
-                }
-                if (difference.Y < speed[_index].Y)
-                {
-                    speed[_index] = speed[_index] - new Vector2(0, Constants.homingStrength);
-                }
-                else
-                {
-                    speed[_index] = speed[_index] + new Vector2(0, Constants.homingStrength);
-                }
+                float num = Constants.homingStrength / MathF.Sqrt(difference.X * difference.X + difference.Y * difference.Y);
+                speed[_index] += difference * num;
+                //if (difference.X < speed[_index].X)
+                //{
+                //    speed[_index] = speed[_index] - new Vector2(Constants.homingStrength, 0);
+                //}
+                //else
+                //{
+                //    speed[_index] = speed[_index] + new Vector2(Constants.homingStrength, 0);
+                //}
+                //if (difference.Y < speed[_index].Y)
+                //{
+                //    speed[_index] = speed[_index] - new Vector2(0, Constants.homingStrength);
+                //}
+                //else
+                //{
+                //    speed[_index] = speed[_index] + new Vector2(0, Constants.homingStrength);
+                //}
             }
 
             for (int iFramesIndex = 0; iFramesIndex < Iframes[_index].Count; iFramesIndex++)
@@ -123,7 +135,7 @@ namespace first_game
             if (projectileType.PLAYER_PROJECTILE == Projectile.Type[_index])
                 for (int EnemyIndex = 0; EnemyIndex < Enemy.health.Count; EnemyIndex++)
                 {
-                    if (!IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
+                    if (!Enemy.isDead[_index] && !IframesEnemyIndex[_index].Contains(EnemyIndex) && new Rectangle((int)(position[_index].X - collisionSizeData[(int)Type[_index]]), (int)(position[_index].Y - collisionSizeData[(int)Type[_index]]), collisionSizeData[(int)Type[_index]] * 2, collisionSizeData[(int)Type[_index]] * 2).Intersects(Enemy.collideRectangle[EnemyIndex]))
                     {
                         Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                         pierce[_index] -= 1;
@@ -181,6 +193,7 @@ namespace first_game
             Iframes.RemoveAt(_index);
             IframesEnemyIndex.RemoveAt(_index);
             damage.RemoveAt(_index);
+            afterImages.RemoveAt(_index);
         }
 
     }

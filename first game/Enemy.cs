@@ -34,6 +34,21 @@ namespace first_game
             }
             return false;
         }
+        public static bool IsEnemyCollide(Vector2 point, float radius, int _index)
+        {
+            if (Constants.EnemyStats.circle[(int)Enemy.enemyType[_index]])
+            {
+                if (Vector2.Distance(point, Enemy.position[_index]) < radius)
+                {
+                    return true;
+                }
+            }
+            else if (General.CircleCollisionBool(point, radius, Enemy.collideRectangle[_index]))
+            {
+                return true;
+            }
+            return false;
+        }
 
         static readonly Random rnd = new();
         public static void RandomizePositions()
@@ -57,12 +72,12 @@ namespace first_game
                     switch (Tiles.tileType[tileIndex])
                     {
                         case (int)Tiles.tileTypes.SOLID:
-                        return true;
+                            return true;
 
                         case (int)Tiles.tileTypes.BRICK:
-                        Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
-                        Tiles.loadTiles(tileIndex, tileIndex);
-                        return true;
+                            Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
+                            Tiles.loadTiles(tileIndex, tileIndex);
+                            return true;
 
                     }
 
@@ -86,7 +101,7 @@ namespace first_game
             health[_index] -= _damage;
             if (health[_index] <= 0)
             {
-                Kill(_index);
+                Enemy.Kill(_index);
                 return true;
             }
             else return false;
@@ -102,6 +117,7 @@ namespace first_game
         }
         public static void Create(Vector2 _spawnLocation, EnemyType _EnemyType)
         {
+            isDead.Add(false);
             abilityTimer.Add(0);
             health.Add(Constants.EnemyStats.health[(int)_EnemyType]);
             textureRectangle.Add(new Rectangle(0, 0, (int)(Enemy.textures[(int)_EnemyType].Width / Enemy.textureArray[(int)_EnemyType].X), (int)(Enemy.textures[(int)_EnemyType].Height / Enemy.textureArray[(int)_EnemyType].X)));
@@ -113,14 +129,25 @@ namespace first_game
             enemyType.Add(_EnemyType);
             colorFilter.Add(Color.DarkSalmon);
         }
-        public static void KillAll()
+        public static void DeleteAll()
         {
-            for (int _index = health.Count - 1; _index >= 0; _index--)
+            for (int _index = health.Count - 1; _index > 0; _index--)
             {
-                Kill(_index);
+                Delete(_index);
             }
         }
         public static void Kill(int _index)
+        {
+            isDead[_index] = true;
+            colorFilter[_index] = Color.White;
+            switch (enemyType[_index])
+            {
+                case EnemyType.SMALL:
+                    textureRectangle[_index] = new(0, 480, 75, 79);
+                    break;
+            }
+        }
+        public static void Delete(int _index)
         {
             //Game1.playerLightEmit -= Constants.maxPlayerLightEmit / 200 * Constants.EnemyStats.health[(int)Enemy.enemyType[_index]];
             //if (Game1.playerLightEmit >= Constants.maxPlayerLightEmit)
@@ -131,6 +158,7 @@ namespace first_game
                 Projectile.Iframes[ProjectileIndex].Remove(_index);
                 Projectile.IframesEnemyIndex[ProjectileIndex].Remove(_index);
             }
+            isDead.RemoveAt(_index);
             abilityTimer.RemoveAt(_index);
             health.RemoveAt(_index);
             textureRectangle.RemoveAt(_index);
@@ -147,6 +175,7 @@ namespace first_game
         public static Vector2[] textureArray = new Vector2[5];
         public static Vector2[] visualTextureSize = new Vector2[5];
 
+        public static List<bool> isDead = new();
         public static List<int> damage = new();
         public static List<int> abilityTimer = new();
         public static List<float> movementSpeed = new();
@@ -174,151 +203,204 @@ namespace first_game
             }
             return true; // No obstacles in the way
         }
-        public static void TextureRectSetup()
-        {
-
-        }
         public static void Update(int _index)
         {
-            Vector2 _difference = General.Difference(target[_index], position[_index]); //X and Y difference 
-            if (_difference == new Vector2(0, 0))
+            if (!isDead[_index])
             {
-                return;
-            }
-            float _distance = General.DistanceFromDifference(_difference); //hypotinuse/distance to target
-            _difference.Normalize();
-
-            if (EnemyType.BOSS == enemyType[_index])
-            {
-                //if (_distance < 100)
-                //{
-                //    Enemy.Push(10, _difference, _index);
-                //}
-                //else
-                //{
-                //}
-            }
-
-            Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
-            bool _sightline = SightLine(position[_index]);
-
-            Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
-            while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
-
-            _newTargetAngle.Normalize();
-
-
-            if (Game1.EnemyTargetTimer <= 0)
-            {
-                switch (enemyType[_index])
+                Vector2 _difference = General.Difference(target[_index], position[_index]); //X and Y difference 
+                if (_difference == new Vector2(0, 0))
                 {
-                    case EnemyType.ARCHER:
-                    if (rnd.Next(4) == 1)
-                    {
-                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
-                    }
-                    break;
-                    case EnemyType.BOSS:
-                    while (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(30) == 1)
-                    {
-                        Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
-                        target[_index] = new(position.X, position.Y);
-                    }
-                    break;
-                    default:
-                    if (rnd.Next(20) == 1)
-                        target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
-                    break;
+                    return;
                 }
-                if (_sightline && EnemyType.BOSS != enemyType[_index])
+                float _distance = General.DistanceFromDifference(_difference); //hypotinuse/distance to target
+                _difference.Normalize();
+
+                if (EnemyType.BOSS == enemyType[_index])
                 {
-                    colorFilter[_index] = Color.Coral;
-                    target[_index] = Player.position;
+                    //if (_distance < 100)
+                    //{
+                    //    Enemy.Push(10, _difference, _index);
+                    //}
+                    //else
+                    //{
+                    //}
                 }
 
-            }
-            if (_distance > 10)
-            {
-                if (iFrames[_index] == 0)
-                {
-                    if (_sightline)
-                    {
-                        colorFilter[_index] = Color.Red;
-                    }
+                Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
+                bool _sightline = SightLine(position[_index]);
 
-                    _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
+                Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
+                while (_newTargetAngle == new Vector2(0, 0)) _newTargetAngle = new Vector2(rnd.Next(-50, 50), rnd.Next(-50, 50));
+
+                _newTargetAngle.Normalize();
+
+
+                if (Game1.EnemyTargetTimer <= 0)
+                {
                     switch (enemyType[_index])
                     {
                         case EnemyType.ARCHER:
+                            if (rnd.Next(4) == 1)
+                            {
+                                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]] * Constants.Archer.archerStopRange;
+                            }
+                            break;
+                        case EnemyType.BOSS:
+                            if (_distance < 10)
+                            {
+                                Vector2 differenceToPlayer = General.Difference(position[_index], Player.position);
+                                float angleToPlayer = General.Vector2ToAngle(differenceToPlayer);
+                                angleToPlayer += .1f;
+                                target[_index] = Player.position + (General.DistanceFromDifference(differenceToPlayer) + 10) * new Vector2((float)Math.Cos(angleToPlayer), (float)Math.Sin(angleToPlayer));
+                            }
+                            if (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(300) == 1)
+                            {
+                                Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
+                                target[_index] = new(position.X, position.Y);
+                            }
+                            if (rnd.Next(100) == 1)
+                            {
+                                for (int x = -1; x < 1; x++)
+                                    for (int y = -1; y < 1; y++)
+                                        Create(position[_index] + new Vector2(Tiles.tileXY * x, Tiles.tileXY * y), (EnemyType)(rnd.Next(0, 2) * 3));
+                            }
+
+
+                            break;
+                        default:
+                            if (rnd.Next(20) == 1)
+                                target[_index] = position[_index] + _newTargetAngle * rnd.Next(10, 30) * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
+                            break;
+                    }
+                    if (_sightline && EnemyType.BOSS != enemyType[_index])
+                    {
+                        colorFilter[_index] = Color.Coral;
+                        target[_index] = Player.position;
+                    }
+
+                }
+                if (_distance > 10)
+                {
+                    if (iFrames[_index] <= 0)
+                    {
                         if (_sightline)
                         {
-                            if (abilityTimer[_index] < 0)
-                            {
-                                abilityTimer[_index] = Constants.Archer.attackDelay;
-                                Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE,
-                                    position[_index],
-                                    10,
-                                    General.Difference(Player.position, Enemy.position[_index]),
-                                    7f,
-                                    1000,
-                                    10,
-                                    1,
-                                    Constants.Archer.archerDamage,
-                                    3000);
-                            }
-                            else
-                            {
-                                abilityTimer[_index] -= 1;
-                            }
-                            if (_distance < Constants.Archer.archerStopRange)
-                            {
-                                _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
-                                if (_distance < Constants.Archer.archerBackupRange)
+                            colorFilter[_index] = Color.White;
+                        }
+
+                        _speed += _difference * Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]];
+                        switch (enemyType[_index])
+                        {
+                            case EnemyType.ARCHER:
+                                if (_sightline)
                                 {
-                                    _speed -= _difference * Constants.Archer.archerBackupSpeed;
+                                    if (abilityTimer[_index] < 0)
+                                    {
+                                        abilityTimer[_index] = Constants.Archer.attackDelay;
+                                        Projectile.create(Projectile.projectileType.ENEMY_PROJECTILE,
+                                            position[_index],
+                                            10,
+                                            General.Difference(Player.position, Enemy.position[_index]),
+                                            7f,
+                                            1000,
+                                            10,
+                                            1,
+                                            Constants.Archer.archerDamage,
+                                            3000);
+                                    }
+                                    else
+                                    {
+                                        abilityTimer[_index] -= 1;
+                                    }
+                                    if (_distance < Constants.Archer.archerStopRange)
+                                    {
+                                        _speed -= _difference * Constants.EnemyStats.movementSpeed[(int)EnemyType.ARCHER];
+                                        if (_distance < Constants.Archer.archerBackupRange)
+                                        {
+                                            _speed -= _difference * Constants.Archer.archerBackupSpeed;
+                                        }
+                                    }
                                 }
+                                break;
+                            case EnemyType.BOSS:
+
+                                if (abilityTimer[_index] <= 0 && (_distance > 50))
+                                {
+                                    Projectile.create(projectileType.HOMING_PROJECTILE,
+                                        position[_index],
+                                        rnd.Next(-1000, 500),
+                                        new((float)rnd.NextDouble() - .5f, (float)rnd.NextDouble() - .5f),
+                                        (float)rnd.Next(10, 40),
+                                        4,
+                                        0,
+                                        1,
+                                        50,
+                                        100
+                                        );
+                                    abilityTimer[_index] += rnd.Next(1, 8);
+                                }
+                                else
+                                {
+                                    abilityTimer[_index] -= 1;
+                                }
+
+                                break;
+                        }
+                    }
+                    Vector2 _position = position[_index];
+                    if (Constants.EnemyStats.circle[(int)enemyType[_index]])
+                    {
+                        General.CircleMovement(false, ref _position, Enemy.collideRectangle[_index].Width / 2, ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
+                        position[_index] = _position;
+                        for (int i = 0; i < Enemy.health.Count; i++)
+                        {
+                            while (!isDead[_index] && IsEnemyCollide(position[_index], Enemy.collideRectangle[_index].Width, i) && i != _index)
+                            {
+                                Vector2 difference = General.Difference(position[_index], Enemy.position[i]);
+                                difference.Normalize();
+                                position[_index] += difference;
                             }
                         }
-                        break;
-                        case EnemyType.BOSS:
-
-                            if (abilityTimer[_index] <= 0)
-                            {
-                                Projectile.create(projectileType.HOMING_PROJECTILE,
-                                    position[_index],
-                                    rnd.Next(0, 50),
-                                    new((float)rnd.NextDouble() - .5f, (float)rnd.NextDouble() - .5f),
-                                    (float)rnd.Next(5, 20),
-                                    4,
-                                    0,
-                                    1,
-                                    5,
-                                    100
-                                    );
-                                abilityTimer[_index] += rnd.Next(1, 8);
-                            }
-                            else
-                            {
-                                abilityTimer[_index] -= 1;
-                            }
-                        break;
                     }
+                    else
+                    {
+                        General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
+                        position[_index] = _position;
+                        for (int i = 0; i < Enemy.health.Count; i++)
+                        {
+                            while (IsEnemyCollide(General.Vector2toRectangle(Enemy.position[_index], Enemy.collideRectangle[_index].Width, Enemy.collideRectangle[_index].Height), i) && i != _index)
+                            {
+                                Vector2 difference = General.Difference(position[_index], Enemy.position[i]);
+                                difference.Normalize();
+                                Enemy.position[_index] += difference;
+                            }
+                        }
+                    }
+                    speed[_index] *= 0.6f;
+                    collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
+                    collideRectangle[_index] = General.Vector2toRectangle(position[_index], collideRectangle[_index].Width, collideRectangle[_index].Height);
                 }
-                Vector2 _position = position[_index];
-                if (Constants.EnemyStats.circle[(int)enemyType[_index]])
-                {
-                    General.CircleMovement(false, ref _position, Enemy.collideRectangle[_index].Width / 2, ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
-                }
-                else
-                {
-                    General.RectMovement(false, ref _position, new Vector2(collideRectangle[_index].Width, collideRectangle[_index].Height), ref _speed, Constants.EnemyStats.movementSpeed[(int)Enemy.enemyType[_index]]);
-                }
-                position[_index] = _position;
-                speed[_index] *= 0.6f;
-                collideRectangle[_index] = new Rectangle((int)position[_index].X - collideRectangle[_index].Width / 2, (int)position[_index].Y - collideRectangle[_index].Height / 2, collideRectangle[_index].Width, collideRectangle[_index].Height);
-                collideRectangle[_index] = General.Vector2toRectangle(position[_index], collideRectangle[_index].Width, collideRectangle[_index].Height);
             }
-
+        }
+        public static void UpdateTexture(int _index)
+        {
+            switch (enemyType[_index])
+            {
+                case EnemyType.SMALL:
+                    if (isDead[_index])
+                    {
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 375), 480, 75, 79);
+                    }
+                    else
+                    {
+                        textureRectangle[_index] = new(43, textureRectangle[_index].Y + textureRectangle[_index].Height, 75, 79);
+                        if (textureRectangle[_index].Y >= textureRectangle[_index].Height * 6)
+                        {
+                            textureRectangle[_index] = new(43, 0, 75, 79);
+                        }
+                    }
+                    break;
+            }
         }
         public enum EnemyType
         {

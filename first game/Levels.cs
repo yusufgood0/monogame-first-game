@@ -17,7 +17,7 @@ namespace first_game
             if (_Level > levelMaps.Length - 1)
                 return;
             Level = _Level;
-            Enemy.KillAll();
+            Enemy.DeleteAll();
             Player.reloadPlayerPosition();
             Levels.UpdateTileMap();
             Enemy.CreateEnemies(EnemySaves[Level]);
@@ -34,7 +34,7 @@ namespace first_game
             new int[] { 0, 0, 0, 8, 0 },
             new int[] { 2, 0, 3, 3, 0 },
             new int[] { 4, 2, 0, 3, 0 },
-            new int[] { 0, 0, 0, 0, 1 },
+            new int[] { 0, 0, 2, 0, 1 },
         };
         private static bool[] breakableObsticales =
         {
@@ -42,7 +42,7 @@ namespace first_game
             true,
             false,
             false,
-            false
+            true
         };
 
         public static int[][] levelMaps = {
