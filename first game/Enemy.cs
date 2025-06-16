@@ -78,9 +78,7 @@ namespace first_game
                             Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
                             Tiles.loadTiles(tileIndex, tileIndex);
                             return true;
-
                     }
-
                 }
             return false;
         }
@@ -95,16 +93,20 @@ namespace first_game
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
-            Game1.LightLevel += _damage * 3;
-            colorFilter[_index] = _color;
-            iFrames[_index] = _iFrames;
-            health[_index] -= _damage;
-            if (health[_index] <= 0)
+            if (health[_index] > 0)
             {
-                Enemy.Kill(_index);
-                return true;
+                Game1.LightLevel += _damage * 3;
+                colorFilter[_index] = _color;
+                iFrames[_index] = _iFrames;
+                health[_index] -= _damage;
+                if (health[_index] <= 0)
+                {
+                    Enemy.Kill(_index);
+                    return true;
+                }
+                else return false;
             }
-            else return false;
+            return true;
         }
         public static void CreateEnemies(int[] _enemyTypes)
         {
@@ -112,7 +114,6 @@ namespace first_game
             {
                 for (int i2 = 0; i2 < _enemyTypes[i]; i2++)
                     Create(new(), (EnemyType)i);
-
             }
         }
         public static void Create(Vector2 _spawnLocation, EnemyType _EnemyType)
