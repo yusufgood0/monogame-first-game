@@ -17,6 +17,7 @@ using static first_game.Projectile;
 using static first_game.Tiles;
 using static first_game.Gems;
 using System.Reflection.PortableExecutable;
+using Microsoft.Xna.Framework.Audio;
 
 namespace first_game
 {
@@ -626,6 +627,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     }
     public class Game1 : Game
     {
+        public static AudioListener AudioListener = new();
+        public static AudioEmitter audioEmmiter = new();
+        public static SoundEffectInstance playerTakeDamage;
+        public static SoundEffectInstance punchSwish;
+        public static SoundEffectInstance punchHit;
+        public static SoundEffectInstance projectileFire;
+        public static SoundEffectInstance projectileHit;
+
+
+
         public static float jumpTime = Constants.jumpWidth;
 
         public static float detail = Constants.maxDetail * .7f;
@@ -772,7 +783,13 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void LoadContent()
         {
-            Gems.gemTexture = Content.Load<Texture2D>("Gems");
+            playerTakeDamage = Content.Load<SoundEffectInstance>("");
+            punchSwish = Content.Load<SoundEffectInstance>("");
+            punchHit = Content.Load<SoundEffectInstance>("");
+            projectileFire = Content.Load<SoundEffectInstance>("");
+            projectileHit = Content.Load<SoundEffectInstance>("");
+
+        Gems.gemTexture = Content.Load<Texture2D>("Gems");
             Gems.setup();
 
             Projectile.Setup(new object[] {
@@ -793,6 +810,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void Update(GameTime gameTime)
         {
+            AudioListener.Position = new(Player.position.X, 0, Player.position.Y);
+            audioEmmiter.Position = new(Player.position.X, 0, Player.position.Y + 1);
+            punchSwish.Pan = -1;
+            punchSwish.Play();
 
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
 
