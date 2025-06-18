@@ -139,6 +139,7 @@ namespace first_game
                     {
                         Enemy.Push(damage[_index] * 2, speed[_index], EnemyIndex);
                         pierce[_index] -= 1;
+                        Game1.punchHit.Play(.05f, .7f, 0);
                         if (!Enemy.TakeDamage(Color.Purple, damage[_index], 10, EnemyIndex)
                             || pierce[_index] >= 0
                             )

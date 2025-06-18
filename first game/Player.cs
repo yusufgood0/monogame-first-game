@@ -140,6 +140,7 @@ namespace first_game
                             pierce > 0)
                         {
                             Enemy.Push(swingRange*20, Enemy.position[index] - position, index);
+                            Game1.punchHit.Play(.05f, 0f, 0);
                             Enemy.TakeDamage(Color.Purple, swingDamage, swingDamage, index);
                             pierce -= 1;
                         }

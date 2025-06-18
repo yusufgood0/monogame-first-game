@@ -627,10 +627,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     }
     public class Game1 : Game
     {
-        public static AudioListener AudioListener = new();
-        public static AudioEmitter audioEmmiter = new();
+        //public static AudioListener AudioListener = new();
+        //public static AudioEmitter audioEmmiter = new();
         public static SoundEffect playerTakeDamage;
-        public static SoundEffect punchSwish;
+        public static SoundEffect EnemyDeath;
         public static SoundEffect punchHit;
         public static SoundEffect projectileFire;
         public static SoundEffect projectileHit;
@@ -769,7 +769,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             });
             Portal.Setup(Content.Load<Texture2D>("transparentPortal"));
 
-
             Constants.EnemyStats.Setup();
             Portal.ReloadPortalPosition();
 
@@ -784,7 +783,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         protected override void LoadContent()
         {
             playerTakeDamage = Content.Load<SoundEffect>("windBlowing");
-            punchSwish = Content.Load<SoundEffect>("enemyKill");
+            EnemyDeath = Content.Load<SoundEffect>("enemyKill");
             punchHit = Content.Load<SoundEffect>("punchSwoosh");
             projectileFire = Content.Load<SoundEffect>("windBlowing");
             projectileHit = Content.Load<SoundEffect>("windBlowing");
@@ -926,7 +925,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     if (!keyboardState.IsKeyDown(Keys.LeftControl))
                         Projectile.create(projectileType.PLAYER_PROJECTILE,
                             Player.position,
-                            Player.height,
+                            Constants.floorLevel + Constants.defaultPlayerHeight,
                             Player.angleVector,
                             25 + (int)bowCharge / 5,
                             2,
@@ -1073,7 +1072,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 for (int i = 0; i < Projectile.position.Count; i++) Projectile.update(i);
 
-                General.CircleMovement(false, ref Player.position, Player.width / 2, ref Player.speed, Player.movementSpeed * (combo / 2));
+                General.CircleMovement(false, ref Player.position, Player.width / 2, ref Player.speed, (Player.movementSpeed * (combo / 2)));
                 //General.CircleMovement(true, ref Player.position, Player.width/2, ref Player.speed, Player.movementSpeed);
 
                 gametimer -= 1000 / Constants.tps;

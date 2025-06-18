@@ -103,7 +103,7 @@ namespace first_game
 
                 if (health[_index] <= 0)
                 {
-                    Game1.punchSwish.Play(.06f, 0, 0);
+                    Game1.EnemyDeath.Play(.06f, 0, 0);
                     Enemy.Kill(_index);
                     return true;
                 }
