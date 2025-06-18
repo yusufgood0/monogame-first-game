@@ -49,6 +49,12 @@
 /processorParam:TextureFormat=Color
 /build:circle.png
 
+#begin classic-punch-impact-352711.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:classic-punch-impact-352711.mp3;punchSwoosh.mp3
+
 #begin dirt.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -120,6 +126,12 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Portal.png
+
+#begin punch-3-352040.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:punch-3-352040.mp3;enemyKill.mp3
 
 #begin PunchTexture/punchFrame1.png
 /importer:TextureImporter
@@ -463,4 +475,10 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:transparentPortal.png
+
+#begin wind-blowing-sfx-12809.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:wind-blowing-sfx-12809.mp3;windBlowing.mp3
 

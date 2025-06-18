@@ -99,8 +99,11 @@ namespace first_game
                 colorFilter[_index] = _color;
                 iFrames[_index] = _iFrames;
                 health[_index] -= _damage;
+                Game1.punchHit.Play(.05f, 0, 0);
+
                 if (health[_index] <= 0)
                 {
+                    Game1.punchSwish.Play(.06f, 0, 0);
                     Enemy.Kill(_index);
                     return true;
                 }

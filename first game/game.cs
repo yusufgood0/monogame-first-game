@@ -629,11 +629,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     {
         public static AudioListener AudioListener = new();
         public static AudioEmitter audioEmmiter = new();
-        public static SoundEffectInstance playerTakeDamage;
-        public static SoundEffectInstance punchSwish;
-        public static SoundEffectInstance punchHit;
-        public static SoundEffectInstance projectileFire;
-        public static SoundEffectInstance projectileHit;
+        public static SoundEffect playerTakeDamage;
+        public static SoundEffect punchSwish;
+        public static SoundEffect punchHit;
+        public static SoundEffect projectileFire;
+        public static SoundEffect projectileHit;
 
 
 
@@ -783,11 +783,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void LoadContent()
         {
-            playerTakeDamage = Content.Load<SoundEffectInstance>("");
-            punchSwish = Content.Load<SoundEffectInstance>("");
-            punchHit = Content.Load<SoundEffectInstance>("");
-            projectileFire = Content.Load<SoundEffectInstance>("");
-            projectileHit = Content.Load<SoundEffectInstance>("");
+            playerTakeDamage = Content.Load<SoundEffect>("windBlowing");
+            punchSwish = Content.Load<SoundEffect>("enemyKill");
+            punchHit = Content.Load<SoundEffect>("punchSwoosh");
+            projectileFire = Content.Load<SoundEffect>("windBlowing");
+            projectileHit = Content.Load<SoundEffect>("windBlowing");
 
         Gems.gemTexture = Content.Load<Texture2D>("Gems");
             Gems.setup();
@@ -805,15 +805,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            //punchHit.Pan = -1;
+            //punchSwish.Pan = 0;
+
             // TODO: use this.Content to load your game content here
         }
 
         protected override void Update(GameTime gameTime)
         {
-            AudioListener.Position = new(Player.position.X, 0, Player.position.Y);
-            audioEmmiter.Position = new(Player.position.X, 0, Player.position.Y + 1);
-            punchSwish.Pan = -1;
-            punchSwish.Play();
+            //punchSwish.Pan += 0.001f;
+            //punchSwish.Play();
 
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
 
@@ -893,6 +894,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
                 {
+                    
 
                     if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
                     {
