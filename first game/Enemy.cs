@@ -19,6 +19,16 @@ namespace first_game
 {
     public class Enemy
     {
+        public static List<int> livingEnemies()
+        {
+            List<int> list = new();
+            for (int i = 0; i < Enemy.health.Count; i++)
+            {
+                if (!isDead[i])
+                list.Add(i);
+            }
+            return list;
+        }
         public static bool IsEnemyCollide(Rectangle _rect, int _index)
         {
             if (Constants.EnemyStats.circle[(int)Enemy.enemyType[_index]])

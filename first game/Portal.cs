@@ -46,7 +46,7 @@ namespace first_game
         }
         public static bool RequirementsMet()
         {
-            if (Enemy.health.Count <= Levels.EnemySaves[Levels.Level].Sum() / 2) 
+            if (Enemy.livingEnemies().Count <= Levels.EnemySaves[Levels.Level].Sum() / 2) 
             {
                 return true;
             }
