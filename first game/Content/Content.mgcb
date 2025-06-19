@@ -13,6 +13,12 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin bossMusicmp3.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:bossMusicmp3.mp3
+
 #begin Brickwall4_Texture.png
 /importer:TextureImporter
 /processor:TextureProcessor

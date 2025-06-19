@@ -67,6 +67,7 @@ namespace first_game
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _recoveryTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
+            Game1.playerTakeDamage.Play(0.1f, 0.2f, 0);
             Player.colorFilter = _color;
             if (iFrames <= _iFrames)
             iFrames = _iFrames;
@@ -136,7 +137,8 @@ namespace first_game
                     for (int index = 0; index < Enemy.health.Count; index++)
                     {
                         if (Enemy.IsEnemyCollide(checkrect, index) && 
-                            Enemy.iFrames[index] <= 0 && 
+                            Enemy.iFrames[index] <= 0 &&
+                            !Enemy.isDead[index] &&
                             pierce > 0)
                         {
                             Enemy.Push(swingRange*20, Enemy.position[index] - position, index);

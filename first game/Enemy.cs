@@ -93,7 +93,7 @@ namespace first_game
         }
         public static bool TakeDamage(Color _color, int _damage, int _iFrames, int _index)
         {
-            if (health[_index] > 0)
+            if (!isDead[_index])
             {
                 Game1.LightLevel += _damage * 3;
                 colorFilter[_index] = _color;
@@ -135,7 +135,7 @@ namespace first_game
         }
         public static void DeleteAll()
         {
-            for (int _index = health.Count - 1; _index > 0; _index--)
+            for (int _index = health.Count - 1 ; _index >= 0; _index--)
             {
                 Delete(_index);
             }

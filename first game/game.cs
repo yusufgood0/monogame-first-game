@@ -629,6 +629,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     {
         //public static AudioListener AudioListener = new();
         //public static AudioEmitter audioEmmiter = new();
+
+        public static SoundEffectInstance music;
         public static SoundEffect playerTakeDamage;
         public static SoundEffect EnemyDeath;
         public static SoundEffect punchHit;
@@ -782,7 +784,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void LoadContent()
         {
-            playerTakeDamage = Content.Load<SoundEffect>("windBlowing");
+            music = Content.Load<SoundEffect>("bossMusicmp3").CreateInstance();
+            music.IsLooped = true;
+            music.Volume = 0.1f;
+            music.Play();
+            playerTakeDamage = Content.Load<SoundEffect>("enemyKill");
             EnemyDeath = Content.Load<SoundEffect>("enemyKill");
             punchHit = Content.Load<SoundEffect>("punchSwoosh");
             projectileFire = Content.Load<SoundEffect>("windBlowing");
@@ -1238,7 +1244,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     Enemy.textureRectangle[i],
                     Enemy.colorFilter[i],
                     Enemy.position[i],
-                    -100,
+                    -80,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X);
         }
