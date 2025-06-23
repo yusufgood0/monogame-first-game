@@ -38,15 +38,14 @@ namespace first_game
                 {
                     Levels.SetLevel(Levels.Level + 1);
                     ReloadPortalPosition();
-                }
+                } 
             }
-            
-
             updateTexture();
         }
         public static bool RequirementsMet()
         {
-            if (Enemy.livingEnemies().Count <= Levels.EnemySaves[Levels.Level].Sum() / 2) 
+            //if (Enemy.livingEnemies().Count <= Levels.EnemySaves[Levels.Level].Sum() / 2) // for half enemies killed
+            if (Enemy.livingEnemies().Count == 0) // every enemy killed 
             {
                 return true;
             }

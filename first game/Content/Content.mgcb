@@ -13,11 +13,41 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin archerEnemySpritesheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:archerEnemySpritesheet.png
+
+#begin bloodstain.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:bloodstain.png
+
 #begin bossMusicmp3.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:bossMusicmp3.mp3
+
+#begin brick.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:brick.mp3
 
 #begin Brickwall4_Texture.png
 /importer:TextureImporter
@@ -73,6 +103,12 @@
 /processorParam:TextureFormat=Color
 /build:dirt.png
 
+#begin explosion.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:explosion.mp3
+
 #begin ezgif-846198bf70e79.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -96,6 +132,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Gems.png
+
+#begin largeEnemySpritesheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:largeEnemySpritesheet.png
 
 #begin mediumEnemySpritesheet (1).png
 /importer:TextureImporter
@@ -487,4 +535,16 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:wind-blowing-sfx-12809.mp3;windBlowing.mp3
+
+#begin you diedjpg.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:you diedjpg.jpg;youDied.jpg
 

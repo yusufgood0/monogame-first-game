@@ -51,6 +51,7 @@ namespace first_game
 
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int index)
         {
+            Game1.brickHit.Play(Game1.sfxVolume * 0.25F, 0, 0);
             Tiles.swingIFrames[index] = _iFrames;
             Tiles.health[index] -= _damage;
             if (Tiles.health[index] <= 0)
@@ -93,7 +94,7 @@ namespace first_game
                     if (_index <= index_end && _index >= index_start)
                     {
                         int _tileXY = textures[tileType[_index]].Height / (int)textureArray[tileType[_index]].Y;
-                        health[_index] = 25;
+                        health[_index] = 40;
                         collideRectangle[_index] = new Rectangle(tileXY * _rows, tileXY * _columns, tileXY, tileXY);
                         textureRectangle[_index] = new Rectangle(Generator.Next((int)textureArray[tileType[_index]].X) * _tileXY, Generator.Next((int)textureArray[tileType[_index]].Y) * _tileXY, _tileXY, _tileXY);
                     }

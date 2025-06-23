@@ -26,6 +26,8 @@ namespace first_game
         public static Rectangle healthSliderRect;
         public static Rectangle staminaSliderRect;
 
+        public static Rectangle sfxVolumeSliderRect;
+        public static Rectangle musicVolumeSliderRect;
         public static Rectangle sensitivitySliderRect;
         public static Rectangle FOVSliderRect;
         public static Rectangle detailSliderRect;
@@ -54,9 +56,9 @@ namespace first_game
         public class Luminance
         {
             public static float Player = 0.25f;
-            public static float Projectile = .1f;
-            public static float Enemy = .00f;
-            public static float LevelEnd = .1f;
+            //public static float Projectile = .0f;
+            //public static float Enemy = .00f;
+            public static float LevelEnd = .10f;
         }
 
         public static readonly float maxPlayerLightEmit = (float)Luminance.Player;
@@ -79,7 +81,7 @@ namespace first_game
                 //stats for Small enemies
                 movementSpeed.Add(5f);
                 damage.Add(80);
-                health.Add(50);
+                health.Add(80);
                 height.Add(24);
                 width.Add(24);
                 circle.Add(true);
@@ -93,17 +95,17 @@ namespace first_game
                 circle.Add(true);
 
                 //stats for Large enemies
-                movementSpeed.Add(2.1f);
-                damage.Add(350);
-                health.Add(300);
+                movementSpeed.Add(1.8f);
+                damage.Add(300);
+                health.Add(250);
                 height.Add(60);
                 width.Add(60);
                 circle.Add(true);
 
                 //stats for Archer enemies
-                movementSpeed.Add(1.5f);
-                damage.Add(100);
-                health.Add(100);
+                movementSpeed.Add(2.3f);
+                damage.Add(40);
+                health.Add(160);
                 height.Add(30);
                 width.Add(30);
                 circle.Add(false);
@@ -111,7 +113,7 @@ namespace first_game
                 //stats for BOSS enemy
                 movementSpeed.Add(9f);
                 damage.Add(10);
-                health.Add(800);
+                health.Add(500);
                 height.Add(80);
                 width.Add(80);
                 circle.Add(false);

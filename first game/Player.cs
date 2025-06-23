@@ -67,7 +67,7 @@ namespace first_game
         }
         public static void TakeDamage(Color _color, int _damage, int _iFrames, int _recoveryTime, float _knockback, Vector2 _enemyPlayerAngle)
         {
-            Game1.playerTakeDamage.Play(0.1f, 0.2f, 0);
+            Game1.playerTakeDamage.Play(0.5f * Game1.sfxVolume, 0.2f, 0);
             Player.colorFilter = _color;
             if (iFrames <= _iFrames)
             iFrames = _iFrames;
@@ -86,13 +86,13 @@ namespace first_game
             private static float swingRange;
             private static int swingDamage;
             public static float swingAngle;
-            private static Vector2 attackAngleVector;
+            //private static Vector2 attackAngleVector;
             private static float startAngle;
             private static float endAngle;
             public static float swingSpeed;
             private static int pierce;
             private static readonly int swingHitboxSize = 40;
-            private static readonly int projectileHitboxSize = 30;
+            //private static readonly int projectileHitboxSize = 30;
             public static int flipped = -1;
             public static void SwingStart(int _flipped, float _swingWidth, float _swingRange, int _damage, int _recoveryTime, float _swingSpeed, int _pierce)
             {
@@ -144,6 +144,7 @@ namespace first_game
                             Enemy.Push(swingRange*20, Enemy.position[index] - position, index);
                             Game1.punchHit.Play(.05f, 0f, 0);
                             Enemy.TakeDamage(Color.Purple, swingDamage, swingDamage, index);
+                            Game1.LightLevel += swingDamage * 2;
                             pierce -= 1;
                         }
                     }
@@ -158,7 +159,8 @@ namespace first_game
 
                     for (int index = 0; index < Projectile.position.Count; index++)
                     {
-                        if (Projectile.Type[index] != Projectile.projectileType.PLAYER_PROJECTILE && checkrect.Contains(Projectile.position[index]))
+                        if (Projectile.Type[index] != Projectile.projectileType.PLAYER_PROJECTILE && checkrect.Intersects(
+                            General.Vector2toRectangle(Projectile.position[index], Projectile.collisionSizeData[(int)Projectile.Type[index]], Projectile.collisionSizeData[(int)Projectile.Type[index]])))
                         {
                             //Projectile.pierce[index] += 1;
                             Projectile.speed[index] *= -2;

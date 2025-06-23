@@ -1,17 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography;
-using System.Threading;
-using first_game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using static first_game.Enemy;
 using static first_game.Projectile;
 using static first_game.Tiles;
 
@@ -25,7 +15,7 @@ namespace first_game
             for (int i = 0; i < Enemy.health.Count; i++)
             {
                 if (!isDead[i])
-                list.Add(i);
+                    list.Add(i);
             }
             return list;
         }
@@ -105,15 +95,14 @@ namespace first_game
         {
             if (!isDead[_index])
             {
-                Game1.LightLevel += _damage * 3;
                 colorFilter[_index] = _color;
                 iFrames[_index] = _iFrames;
                 health[_index] -= _damage;
-                Game1.punchHit.Play(.05f, 0, 0);
+                Game1.punchHit.Play(.5f * Game1.sfxVolume, 0, 0);
 
                 if (health[_index] <= 0)
                 {
-                    Game1.EnemyDeath.Play(.06f, 0, 0);
+                    Game1.EnemyDeath.Play(.3f * Game1.sfxVolume, 0, 0);
                     Enemy.Kill(_index);
                     return true;
                 }
@@ -145,7 +134,7 @@ namespace first_game
         }
         public static void DeleteAll()
         {
-            for (int _index = health.Count - 1 ; _index >= 0; _index--)
+            for (int _index = health.Count - 1; _index >= 0; _index--)
             {
                 Delete(_index);
             }
@@ -162,7 +151,14 @@ namespace first_game
                 case EnemyType.MEDIUM:
                     textureRectangle[_index] = new(0, 635, 85, 75);
                     break;
+                case EnemyType.LARGE:
+                    textureRectangle[_index] = new(10, 632, 132, 102);
+                    break;
+                case EnemyType.ARCHER:
+                    textureRectangle[_index] = new(0, 640, 160, 160);
+                    break;
             }
+
         }
         public static void Delete(int _index)
         {
@@ -220,8 +216,13 @@ namespace first_game
             }
             return true; // No obstacles in the way
         }
-        public static void Update(int _index)
+        public static void Update(int _index, SpriteBatch spriteBatch)
         {
+            if (Enemy.position[_index].X < 0 || Enemy.position[_index].X > Tiles.tileXY * Tiles.columns || Enemy.position[_index].Y < 0 || Enemy.position[_index].Y > Tiles.tileXY * Tiles.rows)
+            {
+                Enemy.position[_index] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)]);
+            }
+
             if (!isDead[_index])
             {
                 Vector2 _difference = General.Difference(target[_index], position[_index]); //X and Y difference 
@@ -232,18 +233,8 @@ namespace first_game
                 float _distance = General.DistanceFromDifference(_difference); //hypotinuse/distance to target
                 _difference.Normalize();
 
-                if (EnemyType.BOSS == enemyType[_index])
-                {
-                    //if (_distance < 100)
-                    //{
-                    //    Enemy.Push(10, _difference, _index);
-                    //}
-                    //else
-                    //{
-                    //}
-                }
 
-                Vector2 _speed = speed[_index] / ((textureRectangle[_index].Height + textureRectangle[_index].Width) / 7);
+                Vector2 _speed = speed[_index] / ((collideRectangle[_index].Height + collideRectangle[_index].Width) / 7);
                 bool _sightline = SightLine(position[_index]);
 
                 Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
@@ -263,26 +254,27 @@ namespace first_game
                             }
                             break;
                         case EnemyType.BOSS:
-                            if (_distance < 10)
+                            if (_distance <= 10)
                             {
-                                Vector2 differenceToPlayer = General.Difference(position[_index], Player.position);
+                                Vector2 differenceToPlayer = General.Difference(Player.position, position[_index]);
                                 float angleToPlayer = General.Vector2ToAngle(differenceToPlayer);
-                                angleToPlayer += .1f;
+                                angleToPlayer += .3f;
                                 target[_index] = Player.position + (General.DistanceFromDifference(differenceToPlayer) + 10) * new Vector2((float)Math.Cos(angleToPlayer), (float)Math.Sin(angleToPlayer));
+
+                                //differenceToPlayer.Normalize();
+                                //target[_index] = differenceToPlayer * 20;
                             }
-                            if (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(300) == 1)
+                            if (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(50) == 1)
                             {
                                 Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
                                 target[_index] = new(position.X, position.Y);
                             }
-                            if (rnd.Next(100) == 1)
+                            if (rnd.Next(100) == 1 || Player.health > Constants.maxHealth/2 && rnd.Next(100) == 1)
                             {
                                 for (int x = -1; x < 1; x++)
                                     for (int y = -1; y < 1; y++)
                                         Create(position[_index] + new Vector2(Tiles.tileXY * x, Tiles.tileXY * y), (EnemyType)(rnd.Next(0, 2) * 3));
                             }
-
-
                             break;
                         default:
                             if (rnd.Next(20) == 1)
@@ -341,7 +333,7 @@ namespace first_game
                                 break;
                             case EnemyType.BOSS:
 
-                                if (abilityTimer[_index] <= 0 && (_distance > 50))
+                                if (abilityTimer[_index] <= 0)
                                 {
                                     Projectile.create(projectileType.HOMING_PROJECTILE,
                                         position[_index],
@@ -420,7 +412,7 @@ namespace first_game
                 case EnemyType.MEDIUM:
                     if (isDead[_index])
                     {
-                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 425-85), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 425 - 85), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
                     }
                     else
                     {
@@ -430,6 +422,33 @@ namespace first_game
                             textureRectangle[_index] = new(textureRectangle[_index].X, 20, textureRectangle[_index].Width, textureRectangle[_index].Height);
                         }
                     }
+                    break;
+                case EnemyType.LARGE:
+                    if (isDead[_index])
+                    {
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 519), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                    }
+                    else
+                    {
+                        textureRectangle[_index] = new(10, textureRectangle[_index].Y + textureRectangle[_index].Height, 130, 102);
+                        if (textureRectangle[_index].Y >= textureRectangle[_index].Height * 5)
+                        {
+                            textureRectangle[_index] = new(textureRectangle[_index].X, 20, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                        }
+                    }
+                    break;
+                case EnemyType.ARCHER:
+
+                    textureRectangle[_index] = new(textureRectangle[_index].X + textureRectangle[_index].Width, textureRectangle[_index].Y, 160, 160);
+                    if (textureRectangle[_index].X >= textureRectangle[_index].Width * 4)
+                    {
+                        if (!isDead[_index] && textureRectangle[_index].Y >= textureRectangle[_index].Height * 3)
+                        {
+                            textureRectangle[_index] = new(0, 0, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                        }
+                        textureRectangle[_index] = new(0, textureRectangle[_index].Y + textureRectangle[_index].Height, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                    }
+
                     break;
             }
         }

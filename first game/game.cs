@@ -18,6 +18,7 @@ using static first_game.Tiles;
 using static first_game.Gems;
 using System.Reflection.PortableExecutable;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 
 namespace first_game
 {
@@ -327,11 +328,6 @@ namespace first_game
         }
         public static Color Darkness(Color _color, Vector2 _position)
         {
-            //if (!Enemy.SightLine(_position, DistanceFromPoints(_position, Player.position)))
-            //{
-            //    return Color.Black;
-            //}
-
             List<Vector2> _points = new();
             List<float> _luminanceLevels = new();
             float _finalLuminance = 0;
@@ -340,17 +336,17 @@ namespace first_game
             _points.Add(Player.position);
             _luminanceLevels.Add(Constants.Luminance.Player);
 
-            foreach (Vector2 _projectilePosition in Projectile.position)
-            {
-                _points.Add(_projectilePosition);
-                _luminanceLevels.Add(Constants.Luminance.Projectile);
-            }
+            //foreach (Vector2 _projectilePosition in Projectile.position)
+            //{
+            //    _points.Add(_projectilePosition);
+            //    _luminanceLevels.Add(Constants.Luminance.Projectile);
+            //}
 
-            for (int i = 0; i < Enemy.position.Count; i++)
-            {
-                _points.Add(Enemy.position[i]);
-                _luminanceLevels.Add(Constants.Luminance.Enemy * Enemy.health[i]);
-            }
+            //for (int i = 0; i <Enemy.position.Count; i++)
+            //{
+            //    _points.Add(Enemy.position[i]);
+            //    _luminanceLevels.Add(Constants.Luminance.Enemy * Enemy.health[i]);
+            //}
 
             for (int i = 0; i < numTiles; i++)
             {
@@ -610,6 +606,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 if (Tiles.tileType[i] != 0 && CircleCollisionBool(position, radius, Tiles.collideRectangle[i]))
                 {
                     Vector2 difference = Difference(position, CircleCollisionPoint(position, radius, Tiles.collideRectangle[i]));
+                    if (difference == Vector2.Zero)
+                    {
+                        difference = Vector2.One;
+                    }
                     position -= difference - difference * (radius / MathF.Sqrt(difference.X * difference.X + difference.Y * difference.Y));
                 }
             }
@@ -629,9 +629,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     {
         //public static AudioListener AudioListener = new();
         //public static AudioEmitter audioEmmiter = new();
+        static Texture2D healthFilter;
+        static Texture2D youDied;
+        static float deathFilter = 0;
+
+        public static float sfxVolume;
+        public static float musicVolume;
 
         public static SoundEffectInstance music;
         public static SoundEffect playerTakeDamage;
+        public static SoundEffect brickHit;
         public static SoundEffect EnemyDeath;
         public static SoundEffect punchHit;
         public static SoundEffect projectileFire;
@@ -652,8 +659,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         private enum GameState
         {
             Playing,
-            paused
+            Paused,
+            End
         }
+
         private static GameState gameState = GameState.Playing;
 
         private static float sensitivity = Constants.maxSensitivity;
@@ -703,11 +712,10 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         float stamina = Constants.maxStamina;
         int timeElapsed;
 
-        readonly float BowRechargeRate = 1f;
-        readonly int MinBowCharge = 5;
+        readonly float BowRechargeRate = 2f;
+        readonly int MinBowCharge = 15;
         readonly int MaxBowCharge = 100;
         float bowCharge = 0;
-
 
         readonly Vector2 bowBarSize = new Vector2(1000, 30);
         Color bowChargeBarColor;
@@ -721,9 +729,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             IsMouseVisible = false;
             _graphics.IsFullScreen = true;
         }
+        public ContentManager _Content { get => Content; }
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
             screenSize = new Vector2(GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height);
             _graphics.PreferredBackBufferWidth = (int)screenSize.X; // Sets the width of the window
             _graphics.PreferredBackBufferHeight = (int)screenSize.Y; // Sets the height of the window
@@ -741,6 +749,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 punchTextures[i - 1] = Content.Load<Texture2D>("PunchTexture/punchFrame" + i.ToString());
             }
 
+            healthFilter = Content.Load<Texture2D>("bloodStain");
+            youDied = Content.Load<Texture2D>("youDied");
+
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("smallEnemySpritesheet"),
                 new Vector2(1, 1),
@@ -748,12 +759,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Content.Load<Texture2D>("mediumEnemySpritesheet"),
                 new Vector2(1, 1),
                 new Vector2(1.25f, 55),
-                Content.Load<Texture2D>("circle"),
+                Content.Load<Texture2D>("largeEnemySpritesheet"),
                 new Vector2(1, 1),
-                new Vector2(1, 70),
-                Content.Load<Texture2D>("square"),
+                new Vector2(0.7846f, 70),
+                Content.Load<Texture2D>("archerEnemySpritesheet"),
                 new Vector2(1, 1),
-                new Vector2(2f, 60),
+                new Vector2(1f, 60),
                 Content.Load<Texture2D>("square"),
                 new Vector2(1, 1),
                 new Vector2(1.75f, 90),
@@ -779,6 +790,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             handRectSize = new Vector2(punchTextures[0].Width * 2.5f, punchTextures[0].Height * 2.5f);
 
+            sfxVolume = .6F;
+            musicVolume = .6F;
+
             base.Initialize();
         }
 
@@ -786,15 +800,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         {
             music = Content.Load<SoundEffect>("bossMusicmp3").CreateInstance();
             music.IsLooped = true;
-            music.Volume = 0.1f;
+            music.Volume = musicVolume;
             music.Play();
             playerTakeDamage = Content.Load<SoundEffect>("enemyKill");
-            EnemyDeath = Content.Load<SoundEffect>("enemyKill");
+            EnemyDeath = Content.Load<SoundEffect>("explosion");
             punchHit = Content.Load<SoundEffect>("punchSwoosh");
             projectileFire = Content.Load<SoundEffect>("windBlowing");
             projectileHit = Content.Load<SoundEffect>("windBlowing");
+            brickHit = Content.Load<SoundEffect>("brick");
 
-        Gems.gemTexture = Content.Load<Texture2D>("Gems");
+            Gems.gemTexture = Content.Load<Texture2D>("Gems");
             Gems.setup();
 
             Projectile.Setup(new object[] {
@@ -808,6 +823,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Constants.healthSliderRect = new Rectangle((int)(Game1.screenSize.X * .04f), (int)(Game1.screenSize.Y * .05f), (int)(Game1.screenSize.X * .4f), (int)(Game1.screenSize.Y * .05f));
             Constants.staminaSliderRect = new Rectangle((int)(Game1.screenSize.X * .04f), (int)(Game1.screenSize.Y * .1f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            Constants.sfxVolumeSliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .8f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            Constants.musicVolumeSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .8f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             //punchHit.Pan = -1;
@@ -818,8 +835,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void Update(GameTime gameTime)
         {
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Tab) && keyboardState.IsKeyDown(Keys.Escape))
+                Exit();
             //punchSwish.Pan += 0.001f;
             //punchSwish.Play();
+            music.Volume = musicVolume;
 
             timeElapsed = gameTime.ElapsedGameTime.Milliseconds;
 
@@ -828,11 +848,15 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             while (enemyAnimationTimer > 100)
             {
-                for (int i = 0; i < Enemy.health.Count; i++)
+                if (gameState == GameState.Playing)
                 {
-                    if (rnd.Next(1, 5) != 1)
-                    Enemy.UpdateTexture(i);
+                    for (int i = 0; i < Enemy.health.Count; i++)
+                    {
+                        if (rnd.Next(1, 5) != 1)
+                            Enemy.UpdateTexture(i);
+                    }
                 }
+
                 enemyAnimationTimer -= rnd.Next(75, 100);
             }
 
@@ -857,38 +881,52 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             keyboardState = Keyboard.GetState();
             mouseState = Mouse.GetState();
 
-            if (OnKeyPress(Keys.V))
+            if (OnKeyPress(Keys.Escape))
             {
                 switch (gameState)
                 {
                     case GameState.Playing:
-                        gameState = GameState.paused;
+                        gameState = GameState.Paused;
                         IsMouseVisible = true;
                         break;
-                    case GameState.paused:
+                    case GameState.Paused:
                         gameState = GameState.Playing;
                         IsMouseVisible = false;
                         Mouse.SetPosition((int)screenSize.X / 2, (int)screenSize.Y / 2);
                         break;
                 }
             }
-            if (OnKeyPress(Keys.LeftAlt))
+            if (OnKeyPress(Keys.LeftAlt) && keyboardState.IsKeyDown(Keys.Tab))
             {
                 cheats = !cheats;
             }
-            if (gameState == GameState.paused)
+
+            if (gameState == GameState.Paused)
             {
                 Slider(mouseState, previousMouseState, ref sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect);
                 Slider(mouseState, previousMouseState, ref FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect);
                 Slider(mouseState, previousMouseState, ref detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect);
+                Slider(mouseState, previousMouseState, ref sfxVolume, 0, 1, Constants.sfxVolumeSliderRect);
+                Slider(mouseState, previousMouseState, ref musicVolume, 0, 1, Constants.musicVolumeSliderRect);
+            }
+
+            if (Player.health <= 0)
+            {
+                gameState = GameState.End;
+                deathFilter = Math.Min(deathFilter + 0.005f, .8f);
+                if (General.OnLeftButtonPress())
+                {
+                    gameState = GameState.Playing;
+                    deathFilter = 0;
+                    Player.health = Constants.maxHealth;
+                    stamina = Constants.maxStamina;
+                    Levels.SetLevel(0);
+                }
             }
 
             if (gameState == GameState.Playing)
             {
-
-
                 gametimer += timeElapsed;
-
 
                 PlayerHeight = Constants.floorLevel + Constants.defaultPlayerHeight + (-4 * Constants.jumpHeight / (Constants.jumpWidth * Constants.jumpWidth) * jumpTime * (jumpTime - Constants.jumpWidth));
                 jumpTime = Math.Min(jumpTime + 0.1f, Constants.jumpWidth);
@@ -899,11 +937,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
                 {
-                    
+
 
                     if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                        Player.Attacks.SwingStart(1, 0.2f, 20f, 25, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_1;
                         stamina -= 200;
                         combo += 1;
@@ -913,7 +951,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     }
                     else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(-1, 0.2f, 20f, 10, 200, combo / 40f + 0.1f, 20);
+                        Player.Attacks.SwingStart(-1, 0.2f, 20f, 25, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_2;
                         stamina -= 200;
                         combo += 1;
@@ -937,7 +975,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             2,
                             5,
                             1 + (int)(bowCharge / MaxBowCharge),
-                            5 + (int)bowCharge / 5,
+                            5 + (int)(bowCharge * .35),
                             100);
                 }
             }
@@ -954,24 +992,28 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 Player.iFrames = Math.Max(Player.iFrames - 1, 0);
 
-                if (OnKeyPress(Keys.Tab))
+                if (keyboardState.IsKeyDown(Keys.Tab))
                 {
-                    Levels.SetLevel(Levels.Level + 1);
-                    Enemy.RandomizePositions();
+                    for (int i = 0; i < 5; i++)
+                    {
+                        if (OnKeyPress((Keys)(i + 49)))
+                        {
+                            Levels.SetLevel(i);
+                        }
+                    }
                 }
 
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                    Exit();
+                
 
                 Player.speed /= 2;
 
                 MoveKeyPressed(keyboardState);
 
-                if (keyboardState.IsKeyDown(Keys.H) && Player.health < Constants.maxHealth && LightLevel > Constants.minLightLevel)
+                if (keyboardState.IsKeyDown(Keys.E) && Player.health < Constants.maxHealth && LightLevel > Constants.minLightLevel)
                 {
                     healthBarColor = Color.MediumVioletRed;
                     LightLevel -= Constants.lightlevelLoss;
-                    Player.health += 2;
+                    Player.health += 3;
                 }
                 else
                 {
@@ -991,29 +1033,20 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     bowChargeBarColor = Color.Blue;
                     bowCharge = 0;
                 }
-                //if (Player.health <= 0)
-                //{
-                //    state = State.Dead;
-                //}
-                switch (Player.state)
-                {
-                    //case State.Drawing_Bow:
-                    //Player.colorFilter = Color.AliceBlue;
-                    //break;
-                    case State.Attacking_1:
-                        Player.colorFilter = new Color(0, combo * 8, combo * 8);
-                        break;
-                    case State.Attacking_2:
-                        Player.colorFilter = new Color(0, combo * 8, combo * 8);
-                        break;
-                    case State.Dashing:
-                        Player.colorFilter = Color.Purple;
-                        break;
-                    case State.Dead:
-                        Player.colorFilter = Color.Black;
-                        break;
 
-                }
+                //if (Player.colorFilter == Color.Black)
+                //switch (Player.state)
+                //{
+                //    //case State.Drawing_Bow:
+                //    //Player.colorFilter = Color.AliceBlue;
+                //    //break;
+                //    case State.Attacking_1:
+                //        Player.colorFilter = new Color(0, combo * 8, combo * 8);
+                //        break;
+                //    case State.Attacking_2:
+                //        Player.colorFilter = new Color(0, combo * 8, combo * 8);
+                //        break;
+                //}
 
                 if (dashLengthTimer < 0)
                 {
@@ -1035,6 +1068,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 }
                 else
                 {
+                    Player.colorFilter = Color.Purple;
                     Player.state = Player.State.Dashing;
                     Player.movementSpeed = dashSpeed;
                     dashLengthTimer -= timeElapsed;
@@ -1069,7 +1103,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 for (int i = 0; i < Enemy.health.Count; i++)
                 {
-                    Enemy.Update(i);
+                    Enemy.Update(i, _spriteBatch);
                 }
                 while (Game1.EnemyTargetTimer <= 0)
                 {
@@ -1086,7 +1120,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 {
                     gametimer = 0;
                 }
-
             }
             // TODO: Add your update logic here
 
@@ -1231,7 +1264,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     );
             }
 
-            _spriteBatch.Draw(crosshairTexture, new(), null, Color.White, 0, new(), 0, 0, 1.99f);
+            _spriteBatch.Draw(crosshairTexture, new(), null, Color.White, 0, new(), 100, 0, .99f);
 
             for (int i = 0; i < (int)(2 * FOV / detail) + 1; i++)
             {
@@ -1242,14 +1275,24 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 drawObject(_spriteBatch,
                     Enemy.textures[(int)Enemy.enemyType[i]],
                     Enemy.textureRectangle[i],
-                    Enemy.colorFilter[i],
+                    General.Darkness(Enemy.colorFilter[i], Enemy.position[i]),
                     Enemy.position[i],
-                    -80,
+                    -75,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].Y,
                     Enemy.visualTextureSize[(int)Enemy.enemyType[i]].X);
-        }
+                if (Enemy.enemyType[i] == Enemy.EnemyType.BOSS)
+                {
+                    General.SliderDraw(_spriteBatch,
+                                Enemy.health[i], 0, Constants.EnemyStats.health[(int)Enemy.EnemyType.BOSS],
+                                new Rectangle((int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .8f), (int)(Game1.screenSize.X * .4f), (int)(Game1.screenSize.Y * .03f)),
+                                Color.DarkSlateGray, Color.Crimson,
+                                "",
+                                0
+                                );
+                }
+            }
 
-            for (int projectileIndex = 0; projectileIndex<Projectile.position.Count; projectileIndex++)
+            for (int projectileIndex = 0; projectileIndex < Projectile.position.Count; projectileIndex++)
             {
                 drawObject(_spriteBatch,
                     Gems.gemTexture,
@@ -1257,118 +1300,121 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     GetProjectileColor(projectileIndex),
                     Projectile.position[projectileIndex],
                     Projectile.height[projectileIndex],
-                    Projectile.collisionSizeData[(int)Projectile.Type[projectileIndex]]* 2,
+                    Projectile.collisionSizeData[(int)Projectile.Type[projectileIndex]] * 2,
                     1);
-                for (int afterImageIndex = 0; afterImageIndex<Projectile.afterImages[projectileIndex].Count; afterImageIndex++)
+                for (int afterImageIndex = 0; afterImageIndex < Projectile.afterImages[projectileIndex].Count; afterImageIndex++)
                 {
                     drawObject(_spriteBatch,
                     Gems.gemTexture,
                     Projectile.textureRects[(int)Projectile.Type[projectileIndex]],
-                    (GetProjectileColor(projectileIndex)* afterImages[projectileIndex][afterImageIndex].W),
-                    new (afterImages[projectileIndex][afterImageIndex].X, afterImages[projectileIndex][afterImageIndex].Y),
+                    (GetProjectileColor(projectileIndex) * afterImages[projectileIndex][afterImageIndex].W),
+                    new(afterImages[projectileIndex][afterImageIndex].X, afterImages[projectileIndex][afterImageIndex].Y),
                     afterImages[projectileIndex][afterImageIndex].Z,
-                    Projectile.collisionSizeData[(int)Projectile.Type[projectileIndex]]* 2,
+                    Projectile.collisionSizeData[(int)Projectile.Type[projectileIndex]] * 2,
                     1);
                 }
-}
+            }
 
-drawObject(_spriteBatch,
-    Portal.texture,
-    new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
-    Portal.Color,
-    RectangleToVector2(Portal.collideRectangle),
-    10,
-    Portal.portalVisualSize,
-    1);
+            drawObject(_spriteBatch,
+                Portal.texture,
+                new Rectangle((int)((Portal.texture.Width / Portal.amountOfFrames) * (int)Portal.textureFrame), 0, Portal.texture.Width / Portal.amountOfFrames, Portal.texture.Height),
+                Portal.Color,
+                RectangleToVector2(Portal.collideRectangle),
+                10,
+                Portal.portalVisualSize,
+                1);
 
-_spriteBatch.Draw(
-                blankTexture,
-                new Rectangle((int)(screenSize.X / 2 - bowBarSize.X / 2), (int)(screenSize.Y * .9f), (int)((float)(bowCharge / MaxBowCharge) * bowBarSize.X), (int)bowBarSize.Y),
-                null,
-                bowChargeBarColor,
-                0,
-                new Vector2(0, 0),
-                0f,
-                0.99f
-                );
+            _spriteBatch.Draw(
+                            blankTexture,
+                            new Rectangle((int)(screenSize.X / 2 - bowBarSize.X / 2), (int)(screenSize.Y * .9f), (int)((float)(bowCharge / MaxBowCharge) * bowBarSize.X), (int)bowBarSize.Y),
+                            null,
+                            bowChargeBarColor,
+                            0,
+                            new Vector2(0, 0),
+                            0f,
+                            0.99f
+                            );
 
-//draws the health and stamina bars
-SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, ColorMultiply(healthBarColor, 0.55f), healthBarColor, "", 0);
-SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, new Color(5, 15, 50), Color.MediumPurple, "", 0);
+            //draws the health and stamina bars
+            SliderDraw(_spriteBatch, Player.health, 0, Constants.maxHealth, Constants.healthSliderRect, ColorMultiply(healthBarColor, 0.55f), healthBarColor, "", 0);
+            SliderDraw(_spriteBatch, stamina, 0, Constants.maxStamina, Constants.staminaSliderRect, new Color(5, 15, 50), Color.MediumPurple, "", 0);
 
-Gems.Draw(_spriteBatch,
-        new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom),
-        1,
-        Color.DarkSlateBlue,
-        Constants.healthSliderRect.Height * 4,
-        .97f);
-//draws the heart gem
-Gems.Draw(_spriteBatch,
-        new Vector2(Constants.healthSliderRect.Left + Constants.healthSliderRect.Width * ((float)Player.health / Constants.maxHealth), Constants.healthSliderRect.Center.Y - 10),
-        6,
-        Color.Pink,
-        Constants.healthSliderRect.Height * 2,
-        .96f);
-Gems.Draw(_spriteBatch,
-        new Vector2(Constants.healthSliderRect.Right, Constants.healthSliderRect.Center.Y - 10),
-        6,
-        Color.DeepPink,
-        Constants.healthSliderRect.Height * 2,
-        .95f);
-//draws the stamina gems
-for (int i = 1; i < maxDashCharge + 1; i++)
-{
-    Color gemColor;
-    if (stamina >= i * (Constants.maxStamina / maxDashCharge))
-    {
-        gemColor = Color.AliceBlue;
-    }
-    else
-    {
-        gemColor = Color.DarkSlateGray;
-    }
-    Gems.Draw(_spriteBatch,
-        new Vector2((i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 12),
-        2,
-        gemColor,
-        Constants.staminaSliderRect.Height * 2,
-        .96f);
-}
-colorFilter = new Color(colorFilter.R - 5, colorFilter.G - 5, colorFilter.B - 5);
+            Gems.Draw(_spriteBatch,
+                    new Vector2(Constants.healthSliderRect.Left - 30, Constants.healthSliderRect.Bottom),
+                    1,
+                    Color.DarkSlateBlue,
+                    Constants.healthSliderRect.Height * 4,
+                    .97f);
+            //draws the heart gem
+            Gems.Draw(_spriteBatch,
+                    new Vector2(Constants.healthSliderRect.Left + Constants.healthSliderRect.Width * ((float)Player.health / Constants.maxHealth), Constants.healthSliderRect.Center.Y - 10),
+                    6,
+                    Color.Pink,
+                    Constants.healthSliderRect.Height * 2,
+                    .96f);
+            Gems.Draw(_spriteBatch,
+                    new Vector2(Constants.healthSliderRect.Right, Constants.healthSliderRect.Center.Y - 10),
+                    6,
+                    Color.DeepPink,
+                    Constants.healthSliderRect.Height * 2,
+                    .95f);
+            //draws the stamina gems
+            for (int i = 1; i < maxDashCharge + 1; i++)
+            {
+                Color gemColor;
+                if (stamina >= i * (Constants.maxStamina / maxDashCharge))
+                {
+                    gemColor = Color.AliceBlue;
+                }
+                else
+                {
+                    gemColor = Color.DarkSlateGray;
+                }
+                Gems.Draw(_spriteBatch,
+                    new Vector2((i * (Constants.staminaSliderRect.Width / maxDashCharge) + Constants.staminaSliderRect.X), Constants.staminaSliderRect.Center.Y + 12),
+                    2,
+                    gemColor,
+                    Constants.staminaSliderRect.Height * 2,
+                    .96f);
+            }
+            colorFilter = new Color(colorFilter.R - 5, colorFilter.G - 5, colorFilter.B - 5);
 
-if (punchFrame < 4)
-{
-    if (punchSideLeft)
-    {
-        _spriteBatch.Draw(punchTextures[(int)punchFrame], new(0, (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), SpriteEffects.FlipHorizontally, 1);
+            if (punchFrame < 4)
+            {
+                if (punchSideLeft)
+                {
+                    _spriteBatch.Draw(punchTextures[(int)punchFrame], new(0, (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), SpriteEffects.FlipHorizontally, 1);
 
-    }
-    else
-    {
-        _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
-    }
-}
+                }
+                else
+                {
+                    _spriteBatch.Draw(punchTextures[(int)punchFrame], new((int)(screenSize.X - handRectSize.X), (int)(screenSize.Y - handRectSize.Y), (int)handRectSize.X, (int)handRectSize.Y), null, Color.LightGray, 0, new(), 0, 1);
+                }
+            }
 
-for (int i = 0; i < 12; i++)
-{
-    Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
-}
+            for (int i = 0; i < 12; i++)
+            {
+                Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
+            }
 
-if (gameState == GameState.paused)
-{
-    _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X * 2 / 2, screenSize.Y * 0.1f), Color.White, 0, new(), 2, 0, .99f);
-    _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.Black * 0.5f, 0, new(), 0, .97f);
+            if (gameState == GameState.Paused)
+            {
+                _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X, screenSize.Y * 0.1f), Color.White, 0, new(), 2, 0, .99f);
+                _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.Black * 0.5f, 0, new(), 0, .97f);
 
-    SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 1, 10000);
-    SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 1, 100f / Constants.maxFOV);
-    SliderDraw(_spriteBatch, detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect, Color.AliceBlue, Color.DarkBlue, "Strip Size", 1, 100f / Constants.maxDetail);
-}
+                SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 1, 10000);
+                SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 1, 100f / Constants.maxFOV);
+                SliderDraw(_spriteBatch, detail, Constants.minDetail, Constants.maxDetail, Constants.detailSliderRect, Color.AliceBlue, Color.DarkBlue, "Strip Size", 1, 100f / Constants.maxDetail);
+                SliderDraw(_spriteBatch, sfxVolume, 0, 1, Constants.sfxVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Sound Volume", 1, 100f);
+                SliderDraw(_spriteBatch, musicVolume, 0, 1, Constants.musicVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Music Volume", 1, 100f);
+            }
 
-_spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.2f, 0, new(), 0, .96f);
+            _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.2f, 0, new(), 0, .96f);
+            _spriteBatch.Draw(youDied, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, deathFilter * Color.White, 0, new(), 0, 1);
+            _spriteBatch.Draw(healthFilter, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, (1 - (Player.health / Constants.maxHealth)) * 0.2F * Color.White, 0, new(), 0, 1);
 
-
-_spriteBatch.End();
-base.Draw(gameTime);
+            _spriteBatch.End();
+            base.Draw(gameTime);
         }
     }
 }
