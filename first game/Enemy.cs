@@ -75,8 +75,11 @@ namespace first_game
                             return true;
 
                         case (int)Tiles.tileTypes.BRICK:
-                            Tiles.tileType[tileIndex] = (int)tileTypes.NONE;
+                            Tiles.TakeDamage(Color.Red, Constants.EnemyStats.damage[(int)enemyType[_index]], 10, tileIndex);
                             Tiles.loadTiles(tileIndex, tileIndex);
+                            return true;
+
+                        case (int)Tiles.tileTypes.GATE:
                             return true;
                     }
                 }
@@ -102,7 +105,7 @@ namespace first_game
 
                 if (health[_index] <= 0)
                 {
-                    Game1.EnemyDeath.Play(.3f * Game1.sfxVolume, 0, 0);
+                    Game1.EnemyDeath.Play(.6f * Game1.sfxVolume, 0, 0);
                     Enemy.Kill(_index);
                     return true;
                 }
@@ -218,6 +221,12 @@ namespace first_game
         }
         public static void Update(int _index, SpriteBatch spriteBatch)
         {
+            //if (Vector2.Distance(speed[_index], Vector2.Zero) > 300)
+            //{
+            //    speed[_index].Normalize();
+            //    speed[_index] *= 300;
+            //}
+
             if (Enemy.position[_index].X < 0 || Enemy.position[_index].X > Tiles.tileXY * Tiles.columns || Enemy.position[_index].Y < 0 || Enemy.position[_index].Y > Tiles.tileXY * Tiles.rows)
             {
                 Enemy.position[_index] = General.RectangleToVector2(Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)]);
@@ -234,7 +243,7 @@ namespace first_game
                 _difference.Normalize();
 
 
-                Vector2 _speed = speed[_index] / ((collideRectangle[_index].Height + collideRectangle[_index].Width) / 7);
+                Vector2 _speed = speed[_index] / 7;
                 bool _sightline = SightLine(position[_index]);
 
                 Vector2 _newTargetAngle = new(rnd.Next(-50, 50), rnd.Next(-50, 50));
@@ -264,16 +273,26 @@ namespace first_game
                                 //differenceToPlayer.Normalize();
                                 //target[_index] = differenceToPlayer * 20;
                             }
-                            if (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(50) == 1)
+                            if (Vector2.Distance(target[_index], Player.position) < Tiles.tileXY * 7.5f || rnd.Next(20) == 1)
                             {
                                 Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
                                 target[_index] = new(position.X, position.Y);
                             }
-                            if (rnd.Next(100) == 1 || Player.health > Constants.maxHealth/2 && rnd.Next(100) == 1)
+                            if ((Game1.LightLevel > Constants.maxLightLevel/3 && rnd.Next(100) == 1) || (rnd.Next(60+80 * health[_index]/Constants.EnemyStats.health[(int)enemyType[_index]]) == 1))
                             {
                                 for (int x = -1; x < 1; x++)
                                     for (int y = -1; y < 1; y++)
-                                        Create(position[_index] + new Vector2(Tiles.tileXY * x, Tiles.tileXY * y), (EnemyType)(rnd.Next(0, 2) * 3));
+                                    {
+                                        Create(position[_index] + new Vector2(Tiles.tileXY * x, Tiles.tileXY * y), (EnemyType)(rnd.Next(0, 4)));
+                                        foreach (Rectangle rect in Tiles.collideRectangle)
+                                        {
+                                            if (Enemy.CheckEnemyTileCollision(Enemy.health.Count - 1))
+                                            {
+                                                Enemy.Delete(Enemy.health.Count - 1);
+                                            }
+                                        }
+                                    }
+
                             }
                             break;
                         default:
@@ -363,11 +382,9 @@ namespace first_game
                         position[_index] = _position;
                         for (int i = 0; i < Enemy.health.Count; i++)
                         {
-                            while (!isDead[i] && IsEnemyCollide(position[_index], Enemy.collideRectangle[_index].Width, i) && i != _index)
+                            if (!isDead[i] && IsEnemyCollide(position[_index], Enemy.collideRectangle[_index].Width, i) && i != _index)
                             {
-                                Vector2 difference = General.Difference(position[_index], Enemy.position[i]);
-                                difference.Normalize();
-                                position[_index] += difference;
+                                Enemy.speed[_index] += General.Difference(position[_index], Enemy.position[i]);
                             }
                         }
                     }
@@ -377,11 +394,9 @@ namespace first_game
                         position[_index] = _position;
                         for (int i = 0; i < Enemy.health.Count; i++)
                         {
-                            while (IsEnemyCollide(General.Vector2toRectangle(Enemy.position[_index], Enemy.collideRectangle[_index].Width, Enemy.collideRectangle[_index].Height), i) && i != _index)
+                            if (!isDead[i] && IsEnemyCollide(General.Vector2toRectangle(Enemy.position[_index], Enemy.collideRectangle[_index].Width, Enemy.collideRectangle[_index].Height), i) && i != _index)
                             {
-                                Vector2 difference = General.Difference(position[_index], Enemy.position[i]);
-                                difference.Normalize();
-                                Enemy.position[_index] += difference;
+                                Enemy.speed[_index] += General.Difference(position[_index], Enemy.position[i]);
                             }
                         }
                     }

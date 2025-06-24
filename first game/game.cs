@@ -627,6 +627,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     }
     public class Game1 : Game
     {
+        static Button pauseRestartButton;
+        static Button endRestartButton;
+
         //public static AudioListener AudioListener = new();
         //public static AudioEmitter audioEmmiter = new();
         static Texture2D healthFilter;
@@ -660,7 +663,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         {
             Playing,
             Paused,
-            End
+            Lose,
+            Win
         }
 
         private static GameState gameState = GameState.Playing;
@@ -719,8 +723,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         readonly Vector2 bowBarSize = new Vector2(1000, 30);
         Color bowChargeBarColor;
-
-
 
         public Game1()
         {
@@ -790,8 +792,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             handRectSize = new Vector2(punchTextures[0].Width * 2.5f, punchTextures[0].Height * 2.5f);
 
-            sfxVolume = .6F;
-            musicVolume = .6F;
+            sfxVolume = .15F;
+            musicVolume = .15F;
 
             base.Initialize();
         }
@@ -825,8 +827,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Constants.sensitivitySliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.sfxVolumeSliderRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .8f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.musicVolumeSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .8f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+            Constants.restartButtonRect = new Rectangle((int)(Game1.screenSize.X * .1f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.FOVSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .4f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
             Constants.detailSliderRect = new Rectangle((int)(Game1.screenSize.X * .6f), (int)(Game1.screenSize.Y * .6f), (int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .05f));
+
+            pauseRestartButton = new Button(Constants.restartButtonRect, blankTexture, Color.Red, Color.Crimson, titleFont, 1, "Restart");
+            endRestartButton = new Button(new((int)(Game1.screenSize.X * .3f), (int)(Game1.screenSize.Y * .75f), (int)(Game1.screenSize.X * .4f), (int)(Game1.screenSize.Y * .1f)), blankTexture, Color.Red, Color.Crimson, titleFont, 3, "Restart");
             //punchHit.Pan = -1;
             //punchSwish.Pan = 0;
 
@@ -835,8 +841,42 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Tab) && keyboardState.IsKeyDown(Keys.Escape))
-                Exit();
+            keyboardState = Keyboard.GetState();
+            mouseState = Mouse.GetState();
+
+            if (
+                ((gameState == GameState.Lose || gameState == GameState.Win) && endRestartButton.buttonPressed(mouseState, previousMouseState)) ||
+                (gameState == GameState.Paused && pauseRestartButton.buttonPressed(mouseState, previousMouseState))
+                )
+            {
+                gameState = GameState.Playing;
+                deathFilter = 0;
+                Player.health = Constants.maxHealth;
+                stamina = Constants.maxStamina;
+                LightLevel = Constants.maxLightLevel;
+                Levels.SetLevel(0);
+                IsMouseVisible = false;
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Tab))
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (OnKeyPress((Keys)(i + 49)))
+                    {
+                        Levels.SetLevel(i);
+                    }
+                }
+
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
+                    Exit();
+                if (OnKeyPress(Keys.LeftAlt))
+                {
+                    cheats = !cheats;
+                }
+            }
+
+
             //punchSwish.Pan += 0.001f;
             //punchSwish.Play();
             music.Volume = musicVolume;
@@ -878,8 +918,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 punchSideLeft = !punchSideLeft;
             }
 
-            keyboardState = Keyboard.GetState();
-            mouseState = Mouse.GetState();
+            
 
             if (OnKeyPress(Keys.Escape))
             {
@@ -896,10 +935,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         break;
                 }
             }
-            if (OnKeyPress(Keys.LeftAlt) && keyboardState.IsKeyDown(Keys.Tab))
-            {
-                cheats = !cheats;
-            }
+
 
             if (gameState == GameState.Paused)
             {
@@ -912,16 +948,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             if (Player.health <= 0)
             {
-                gameState = GameState.End;
-                deathFilter = Math.Min(deathFilter + 0.005f, .8f);
-                if (General.OnLeftButtonPress())
-                {
-                    gameState = GameState.Playing;
-                    deathFilter = 0;
-                    Player.health = Constants.maxHealth;
-                    stamina = Constants.maxStamina;
-                    Levels.SetLevel(0);
-                }
+                gameState = GameState.Lose;
+                deathFilter = Math.Min(deathFilter + 0.005f, 1);
+                IsMouseVisible = true;
             }
 
             if (gameState == GameState.Playing)
@@ -941,7 +970,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                     if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(1, 0.2f, 20f, 25, 200, combo / 40f + 0.1f, 20);
+                        Player.Attacks.SwingStart(1, 0.2f, 30f, 25, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_1;
                         stamina -= 200;
                         combo += 1;
@@ -951,7 +980,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     }
                     else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(-1, 0.2f, 20f, 25, 200, combo / 40f + 0.1f, 20);
+                        Player.Attacks.SwingStart(-1, 0.2f, 30f, 25, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_2;
                         stamina -= 200;
                         combo += 1;
@@ -991,19 +1020,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Player.angleVector = General.AngleToVector2(Player.angle);
 
                 Player.iFrames = Math.Max(Player.iFrames - 1, 0);
-
-                if (keyboardState.IsKeyDown(Keys.Tab))
-                {
-                    for (int i = 0; i < 5; i++)
-                    {
-                        if (OnKeyPress((Keys)(i + 49)))
-                        {
-                            Levels.SetLevel(i);
-                        }
-                    }
-                }
-
-                
 
                 Player.speed /= 2;
 
@@ -1192,7 +1208,6 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         {
             GraphicsDevice.Clear(Color.Black);
             offset = screenSize / 2 - Player.position;
-            // TODO: Add your drawing code here
             _spriteBatch.Begin(SpriteSortMode.FrontToBack);
             if (cheats)
             {
@@ -1248,7 +1263,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                         0,
                         new Vector2(0, 0),
                         0f,
-                        0.98f);
+                        0.99f);
                 }
                 _spriteBatch.Draw(
                     blankTexture,
@@ -1392,15 +1407,17 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 }
             }
 
-            for (int i = 0; i < 12; i++)
-            {
-                Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
-            }
+            //for (int i = 0; i < 12; i++)
+            //{
+            //    Gems.Draw(_spriteBatch, new Vector2(0, i * 50), i, Color.Wheat, 50, 1);
+            //}
 
             if (gameState == GameState.Paused)
             {
                 _spriteBatch.DrawString(titleFont, "PAUSED", new Vector2(screenSize.X / 2 - titleFont.MeasureString("PAUSED").X, screenSize.Y * 0.1f), Color.White, 0, new(), 2, 0, .99f);
                 _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.Black * 0.5f, 0, new(), 0, .97f);
+
+                pauseRestartButton.Draw(_spriteBatch, mouseState, previousMouseState);
 
                 SliderDraw(_spriteBatch, sensitivity, Constants.minSensitivity, Constants.maxSensitivity, Constants.sensitivitySliderRect, Color.AliceBlue, Color.DarkBlue, "Sensitivity", 1, 10000);
                 SliderDraw(_spriteBatch, FOV, Constants.minFOV, Constants.maxFOV, Constants.FOVSliderRect, Color.AliceBlue, Color.DarkBlue, "FOV", 1, 100f / Constants.maxFOV);
@@ -1408,9 +1425,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 SliderDraw(_spriteBatch, sfxVolume, 0, 1, Constants.sfxVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Sound Volume", 1, 100f);
                 SliderDraw(_spriteBatch, musicVolume, 0, 1, Constants.musicVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Music Volume", 1, 100f);
             }
-
+            else if ((gameState == GameState.Lose && deathFilter > .9f) || gameState == GameState.Win)
+            {
+                endRestartButton.Draw(_spriteBatch, mouseState, previousMouseState);
+            }
             _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.2f, 0, new(), 0, .96f);
-            _spriteBatch.Draw(youDied, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, deathFilter * Color.White, 0, new(), 0, 1);
+            _spriteBatch.Draw(youDied, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, deathFilter * 0.8F * Color.White, 0, new(), 0, 1);
             _spriteBatch.Draw(healthFilter, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, (1 - (Player.health / Constants.maxHealth)) * 0.2F * Color.White, 0, new(), 0, 1);
 
             _spriteBatch.End();

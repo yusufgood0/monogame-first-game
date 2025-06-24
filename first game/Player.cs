@@ -141,7 +141,7 @@ namespace first_game
                             !Enemy.isDead[index] &&
                             pierce > 0)
                         {
-                            Enemy.Push(swingRange*20, Enemy.position[index] - position, index);
+                            Enemy.Push(swingRange*10, Enemy.position[index] - position, index);
                             Game1.punchHit.Play(.05f, 0f, 0);
                             Enemy.TakeDamage(Color.Purple, swingDamage, swingDamage, index);
                             Game1.LightLevel += swingDamage * 2;

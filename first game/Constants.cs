@@ -28,6 +28,7 @@ namespace first_game
 
         public static Rectangle sfxVolumeSliderRect;
         public static Rectangle musicVolumeSliderRect;
+        public static Rectangle restartButtonRect;
         public static Rectangle sensitivitySliderRect;
         public static Rectangle FOVSliderRect;
         public static Rectangle detailSliderRect;
@@ -111,9 +112,9 @@ namespace first_game
                 circle.Add(false);
 
                 //stats for BOSS enemy
-                movementSpeed.Add(9f);
-                damage.Add(10);
-                health.Add(500);
+                movementSpeed.Add(12f);
+                damage.Add(200);
+                health.Add(2000);
                 height.Add(80);
                 width.Add(80);
                 circle.Add(false);
