@@ -17,9 +17,15 @@ namespace first_game
         }
         public static void SetLevel(int _Level)
         {
-            Portal.Color = Color.Aquamarine;
             if (_Level > levelMaps.Length - 1)
+            {
+                Game1.winMusic.Play();
+                Game1.gameState = Game1.GameState.Win;
                 return;
+            }
+
+            Portal.Color = Color.Aquamarine;
+            
             Level = _Level;
             Enemy.DeleteAll();
 

@@ -160,6 +160,9 @@ namespace first_game
                 case EnemyType.ARCHER:
                     textureRectangle[_index] = new(0, 640, 160, 160);
                     break;
+                case EnemyType.BOSS:
+                    textureRectangle[_index] = new(0, 640, 137, 85);
+                    break;
             }
 
         }
@@ -278,7 +281,7 @@ namespace first_game
                                 Point position = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)].Center;
                                 target[_index] = new(position.X, position.Y);
                             }
-                            if ((Game1.LightLevel > Constants.maxLightLevel/3 && rnd.Next(100) == 1) || (rnd.Next(60+80 * health[_index]/Constants.EnemyStats.health[(int)enemyType[_index]]) == 1))
+                            if ((Game1.LightLevel > Constants.maxLightLevel / 3 && rnd.Next(100) == 1) || (rnd.Next(60 + 80 * health[_index] / Constants.EnemyStats.health[(int)enemyType[_index]]) == 1))
                             {
                                 for (int x = -1; x < 1; x++)
                                     for (int y = -1; y < 1; y++)
@@ -453,7 +456,6 @@ namespace first_game
                     }
                     break;
                 case EnemyType.ARCHER:
-
                     textureRectangle[_index] = new(textureRectangle[_index].X + textureRectangle[_index].Width, textureRectangle[_index].Y, 160, 160);
                     if (textureRectangle[_index].X >= textureRectangle[_index].Width * 4)
                     {
@@ -463,8 +465,22 @@ namespace first_game
                         }
                         textureRectangle[_index] = new(0, textureRectangle[_index].Y + textureRectangle[_index].Height, textureRectangle[_index].Width, textureRectangle[_index].Height);
                     }
-
                     break;
+                case EnemyType.BOSS:
+                    if (isDead[_index])
+                    {
+                        textureRectangle[_index] = new(Math.Min(textureRectangle[_index].X + textureRectangle[_index].Width, 685), textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                    }
+                    else
+                    {
+                        textureRectangle[_index] = new(textureRectangle[_index].X + textureRectangle[_index].Width, 0, 167, 100);
+                        if (textureRectangle[_index].X >= textureRectangle[_index].Width * 4)
+                        {
+                            textureRectangle[_index] = new(0, textureRectangle[_index].Y, textureRectangle[_index].Width, textureRectangle[_index].Height);
+                        }
+                    }
+                    break;
+
             }
         }
         public enum EnemyType

@@ -56,10 +56,10 @@ namespace first_game
 
         public class Luminance
         {
-            public static float Player = 0.25f;
+            public static float Player = 0.7f;
             //public static float Projectile = .0f;
             //public static float Enemy = .00f;
-            public static float LevelEnd = .10f;
+            public static float GateBlocks = .30f;
         }
 
         public static readonly float maxPlayerLightEmit = (float)Luminance.Player;

@@ -37,6 +37,18 @@
 /processorParam:TextureFormat=Color
 /build:bloodstain.png
 
+#begin bossEnemySpritesheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:bossEnemySpritesheet.png
+
 #begin bossMusicmp3.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
@@ -530,11 +542,35 @@
 /processorParam:TextureFormat=Color
 /build:transparentPortal.png
 
+#begin warp.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:warp.wav
+
 #begin wind-blowing-sfx-12809.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:wind-blowing-sfx-12809.mp3;windBlowing.mp3
+
+#begin winMusic.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:winMusic.mp3
+
+#begin winScreen.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:winScreen.jpg
 
 #begin you diedjpg.jpg
 /importer:TextureImporter
@@ -547,4 +583,16 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:you diedjpg.jpg;youDied.jpg
+
+#begin youWin!.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:youWin!.png
 

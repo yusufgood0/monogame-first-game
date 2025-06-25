@@ -353,7 +353,7 @@ namespace first_game
                 if (Tiles.tileType[i] == (int)Tiles.tileTypes.GATE)
                 {
                     _points.Add(RectangleToVector2(Tiles.collideRectangle[i]));
-                    _luminanceLevels.Add(Constants.Luminance.LevelEnd);
+                    _luminanceLevels.Add(Constants.Luminance.GateBlocks);
                 }
             }
 
@@ -627,6 +627,11 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
     }
     public class Game1 : Game
     {
+        public static SoundEffectInstance winMusic;
+        static Texture2D youWinText;
+        static float winFilter;
+        static Texture2D winScreen;
+
         static Button pauseRestartButton;
         static Button endRestartButton;
 
@@ -634,12 +639,13 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         //public static AudioEmitter audioEmmiter = new();
         static Texture2D healthFilter;
         static Texture2D youDied;
-        static float deathFilter = 0;
+        static float loseFilter = 0;
 
         public static float sfxVolume;
         public static float musicVolume;
 
         public static SoundEffectInstance music;
+        public static SoundEffect warp;
         public static SoundEffect playerTakeDamage;
         public static SoundEffect brickHit;
         public static SoundEffect EnemyDeath;
@@ -659,7 +665,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
         public static float texturePercent;
         public static float PlayerHeight = Constants.floorLevel;
 
-        private enum GameState
+        public enum GameState
         {
             Playing,
             Paused,
@@ -667,7 +673,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             Win
         }
 
-        private static GameState gameState = GameState.Playing;
+        public static GameState gameState = GameState.Playing;
 
         private static float sensitivity = Constants.maxSensitivity;
 
@@ -752,7 +758,13 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             }
 
             healthFilter = Content.Load<Texture2D>("bloodStain");
+
             youDied = Content.Load<Texture2D>("youDied");
+
+            winScreen = Content.Load<Texture2D>("winScreen");
+            youWinText = Content.Load<Texture2D>("youWin!");
+            winMusic = Content.Load<SoundEffect>("winMusic").CreateInstance();
+            winMusic.IsLooped = true;
 
             Enemy.Setup(new object[] {
                 Content.Load<Texture2D>("smallEnemySpritesheet"),
@@ -767,9 +779,9 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Content.Load<Texture2D>("archerEnemySpritesheet"),
                 new Vector2(1, 1),
                 new Vector2(1f, 60),
-                Content.Load<Texture2D>("square"),
+                Content.Load<Texture2D>("bossEnemySpritesheet"),
                 new Vector2(1, 1),
-                new Vector2(1.75f, 90),
+                new Vector2(0.57f, 100),
             });
             Player.Setup(Content.Load<Texture2D>("Player"));
             Tiles.setup(new object[] {
@@ -782,7 +794,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 Content.Load<Texture2D>("PurpleTile"),
                 new Vector2(4, 4),
             });
-            Portal.Setup(Content.Load<Texture2D>("transparentPortal"));
+            warp = Content.Load<SoundEffect>("warp");
+            Portal.Setup(Content.Load<Texture2D>("transparentPortal"), warp);
 
             Constants.EnemyStats.Setup();
             Portal.ReloadPortalPosition();
@@ -850,7 +863,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 )
             {
                 gameState = GameState.Playing;
-                deathFilter = 0;
+                loseFilter = 0;
+                winFilter = 0;
                 Player.health = Constants.maxHealth;
                 stamina = Constants.maxStamina;
                 LightLevel = Constants.maxLightLevel;
@@ -860,7 +874,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
             if (keyboardState.IsKeyDown(Keys.Tab))
             {
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 6; i++)
                 {
                     if (OnKeyPress((Keys)(i + 49)))
                     {
@@ -949,9 +963,21 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
             if (Player.health <= 0)
             {
                 gameState = GameState.Lose;
-                deathFilter = Math.Min(deathFilter + 0.005f, 1);
+                loseFilter = Math.Min(loseFilter + 0.005f, 1);
                 IsMouseVisible = true;
             }
+            if (gameState == GameState.Win)
+            {
+                winFilter += 0.001f;
+                if (winFilter > 3)
+                {
+                    winFilter -= 2;
+                }
+                IsMouseVisible = true;
+            }
+
+            winMusic.Volume = Math.Min(winFilter, 1) * musicVolume;
+            music.Volume = (1f - Math.Min(winFilter, 1)) * musicVolume;
 
             if (gameState == GameState.Playing)
             {
@@ -966,11 +992,16 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
 
                 if (Player.Attacks.swingSpeed == -1 && dashLengthTimer < 0)
                 {
-
+                    int damageMultiplier = 1;
+                    if (cheats)
+                    {
+                        damageMultiplier = 100;
+                    }
 
                     if (OnRightButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_2) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(1, 0.2f, 30f, 25, 200, combo / 40f + 0.1f, 20);
+                        
+                        Player.Attacks.SwingStart(1, 0.2f, 30f, 25 * damageMultiplier, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_1;
                         stamina -= 200;
                         combo += 1;
@@ -980,7 +1011,7 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                     }
                     else if (OnLeftButtonPress() && (Player.state == Player.State.Idle || Player.state == Player.State.Attacking_1) && stamina >= 200)
                     {
-                        Player.Attacks.SwingStart(-1, 0.2f, 30f, 25, 200, combo / 40f + 0.1f, 20);
+                        Player.Attacks.SwingStart(-1, 0.2f, 30f, 25 * damageMultiplier, 200, combo / 40f + 0.1f, 20);
                         Player.state = Player.State.Attacking_2;
                         stamina -= 200;
                         combo += 1;
@@ -996,6 +1027,8 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 if (OnKeyRelease(Keys.LeftControl) && bowCharge >= MinBowCharge)
                 {
                     if (!keyboardState.IsKeyDown(Keys.LeftControl))
+                    {
+                        warp.Play(0.3f * sfxVolume * bowCharge / MaxBowCharge, bowCharge / MaxBowCharge, 0);
                         Projectile.create(projectileType.PLAYER_PROJECTILE,
                             Player.position,
                             Constants.floorLevel + Constants.defaultPlayerHeight,
@@ -1003,9 +1036,12 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                             25 + (int)bowCharge / 5,
                             2,
                             5,
-                            1 + (int)(bowCharge / MaxBowCharge),
+                            (int)(bowCharge*20 / MaxBowCharge),
                             5 + (int)(bowCharge * .35),
                             100);
+                        
+                    }
+                        
                 }
             }
             while (gametimer > 1000 / Constants.tps)
@@ -1425,13 +1461,18 @@ MathHelper.Clamp(position.Y, rect.Top, rect.Bottom));
                 SliderDraw(_spriteBatch, sfxVolume, 0, 1, Constants.sfxVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Sound Volume", 1, 100f);
                 SliderDraw(_spriteBatch, musicVolume, 0, 1, Constants.musicVolumeSliderRect, Color.AliceBlue, Color.DarkBlue, "Music Volume", 1, 100f);
             }
-            else if ((gameState == GameState.Lose && deathFilter > .9f) || gameState == GameState.Win)
+            else if (((gameState == GameState.Lose || gameState == GameState.Win) && (loseFilter > .9f || winFilter > 0.9f)))
             {
                 endRestartButton.Draw(_spriteBatch, mouseState, previousMouseState);
             }
             _spriteBatch.Draw(blankTexture, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, colorFilter * 0.2f, 0, new(), 0, .96f);
-            _spriteBatch.Draw(youDied, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, deathFilter * 0.8F * Color.White, 0, new(), 0, 1);
+            _spriteBatch.Draw(youDied, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, loseFilter * 0.8F * Color.White, 0, new(), 0, 1);
             _spriteBatch.Draw(healthFilter, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, (1 - (Player.health / Constants.maxHealth)) * 0.2F * Color.White, 0, new(), 0, 1);
+            _spriteBatch.Draw(winScreen, new Rectangle(0, 0, (int)screenSize.X, (int)screenSize.Y), null, Color.White * winFilter, 0, new(), 0, .98f);
+            if (winFilter > 1 && Math.Floor(winFilter*10) % 2 == 1)
+            {
+                _spriteBatch.Draw(youWinText, new Rectangle((int)(screenSize.Y / 1.5), 0, (int)(screenSize.X / 1.5), (int)(screenSize.Y/1.5)), null, Color.White * winFilter, 0, new(), 0, 1f);
+            }
 
             _spriteBatch.End();
             base.Draw(gameTime);

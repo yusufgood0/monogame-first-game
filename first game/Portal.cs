@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using static first_game.Tiles;
 
@@ -19,14 +20,17 @@ namespace first_game
         public static readonly int amountOfFrames = 3;
         public static double textureFrame;
         public static Rectangle collideRectangle = new();
-        public static void Setup(Texture2D _texture)
+        public static SoundEffect soundEffect;
+        public static void Setup(Texture2D _texture, SoundEffect _soundEffect)
         {
             texture = _texture;
+            soundEffect = _soundEffect;
         }
 
         public static void ReloadPortalPosition()
         {
             collideRectangle = Tiles.collideRectangle[Tiles.RandomTile(tileTypes.NONE)];
+            soundEffect.Play(Game1.sfxVolume * 0.3f, 0.3f, 0);
         }
         public static void update()
         {

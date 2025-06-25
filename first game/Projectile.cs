@@ -147,7 +147,6 @@ namespace first_game
                             Iframes[_index].Add(15);
                             IframesEnemyIndex[_index].Add(EnemyIndex);
                         }
-
                     }
                 }
 
@@ -155,14 +154,15 @@ namespace first_game
             {
                 if (Tiles.collideRectangle[TileIndex].Contains(position[_index]))
                 {
-                    switch (Tiles.tileType[TileIndex])
+                    switch ((tileTypes)Tiles.tileType[TileIndex])
                     {
-                        case (int)tileTypes.BRICK:
+                        case tileTypes.BRICK:
                             Tiles.TakeDamage(Color.AliceBlue, damage[_index], 0, TileIndex);
-                            pierce[_index] -= 1;
-                            break;
+                            kill(_index);
 
-                        case (int)tileTypes.SOLID:
+                            return;
+
+                        case tileTypes.SOLID:
                             kill(_index);
                             return;
                     }
